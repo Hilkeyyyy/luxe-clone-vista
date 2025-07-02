@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Zoom, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ImageGalleryProps {
   images: string[];
@@ -47,7 +47,7 @@ const ImageGallery = ({ images, productName }: ImageGalleryProps) => {
           onClick={() => setIsZoomed(true)}
           className="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
         >
-          <Zoom size={20} />
+          <ZoomIn size={20} />
         </button>
 
         {/* Navigation Arrows */}
