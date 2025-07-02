@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Trash2, MessageCircle, ShoppingCart } from 'lucide-react';
@@ -54,23 +53,20 @@ const Cart = () => {
   const generateWhatsAppMessage = () => {
     if (cartItems.length === 0) return;
 
-    let message = "🕰️ *INTERESSE DE COMPRA*\n\nOlá! Tenho interesse nestes produtos:\n\n";
+    let message = "*INTERESSE DE COMPRA*\n\nOlá! Tenho interesse nestes produtos:\n\n";
     
     cartItems.forEach((item, index) => {
-      message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
       message += `${index + 1}. *${item.product_name}*\n`;
       message += `💰 *Preço:* R$ ${item.product_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
-      if (item.brand) message += `🏷️ *Marca:* ${item.brand}\n`;
-      if (item.clone_category) message += `⭐ *Categoria:* ${item.clone_category}\n`;
       message += `📦 *Quantidade:* ${item.quantity}\n`;
       if (item.selected_color) message += `🎨 *Cor:* ${item.selected_color}\n`;
-      if (item.selected_size) message += `📏 *Tamanho:* ${item.selected_size}\n\n`;
+      if (item.selected_size) message += `📏 *Tamanho:* ${item.selected_size}\n`;
+      if (item.product_image) message += `🖼️ *Imagem:* ${item.product_image}\n`;
+      message += `\n`;
     });
 
-    const total = cartItems.reduce((sum, item) => sum + (item.product_price * item.quantity), 0);
-    message += `💰 *Total:* R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n`;
     message += `📅 *Data:* ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}\n\n`;
-    message += "Gostaria de mais informações sobre estes produtos!\n\nAguardo seu contato! 🙂";
+    message += "Gostaria de mais informações sobre estes produtos!\n\nAguardo seu contato!";
 
     const whatsappUrl = `https://wa.me/5586988388124?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
