@@ -33,6 +33,42 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          order_position: number
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          order_position?: number
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          order_position?: number
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       carousel_config: {
         Row: {
           carousel_type: string
@@ -135,6 +171,7 @@ export type Database = {
       products: {
         Row: {
           brand: string
+          brand_category_id: string | null
           category: string
           clone_category: string | null
           colors: string[]
@@ -153,6 +190,7 @@ export type Database = {
         }
         Insert: {
           brand: string
+          brand_category_id?: string | null
           category: string
           clone_category?: string | null
           colors?: string[]
@@ -171,6 +209,7 @@ export type Database = {
         }
         Update: {
           brand?: string
+          brand_category_id?: string | null
           category?: string
           clone_category?: string | null
           colors?: string[]
@@ -187,7 +226,15 @@ export type Database = {
           specifications?: Json | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_brand_category_id_fkey"
+            columns: ["brand_category_id"]
+            isOneToOne: false
+            referencedRelation: "brand_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

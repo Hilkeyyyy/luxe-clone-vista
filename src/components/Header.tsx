@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, ShoppingBag, Menu, Heart, X } from 'lucide-react';
+import { Search, ShoppingBag, Menu, Heart, X, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
@@ -62,8 +62,11 @@ const Header = () => {
             >
               Produtos
             </button>
-            <button className="text-neutral-700 hover:text-neutral-900 font-outfit font-medium transition-colors">
-              Categorias
+            <button 
+              onClick={() => navigate('/produtos')}
+              className="text-neutral-700 hover:text-neutral-900 font-outfit font-medium transition-colors"
+            >
+              Ver Todos
             </button>
             <button className="text-neutral-700 hover:text-neutral-900 font-outfit font-medium transition-colors">
               Sobre
@@ -135,6 +138,17 @@ const Header = () => {
                   {cartItemsCount}
                 </span>
               )}
+            </motion.button>
+
+            {/* Admin Panel */}
+            <motion.button 
+              onClick={() => navigate('/admin')}
+              className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              title="Painel Administrativo"
+            >
+              <Settings size={20} />
             </motion.button>
 
             <motion.button 
