@@ -37,13 +37,23 @@ const Index = () => {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('id, name, brand, price, original_price, images, is_new, clone_category')
         .eq('in_stock', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      const productsData = data || [];
+      const productsData = (data || []).map(product => ({
+        id: product.id,
+        name: product.name,
+        brand: product.brand,
+        price: product.price,
+        original_price: product.original_price || undefined,
+        images: product.images,
+        is_new: product.is_new || false,
+        clone_category: product.clone_category || undefined
+      }));
+      
       setProducts(productsData);
       
       // Extract unique categories
