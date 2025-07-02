@@ -1,8 +1,8 @@
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Heart, ShoppingCart, MessageCircle } from 'lucide-react';
+import { Heart, ShoppingCart, MessageCircle, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
@@ -32,6 +32,20 @@ const ProductCard = ({
 }: ProductCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  useEffect(() => {
+    updateFavoriteStatus();
+    window.addEventListener('storage', updateFavoriteStatus);
+    return () => window.removeEventListener('storage', updateFavoriteStatus);
+  }, [id]);
+
+  const updateFavoriteStatus = () => {
+    if (!id) return;
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    setIsFavorite(favorites.includes(id));
+  };
 
   const handleClick = () => {
     if (id) {
@@ -39,16 +53,17 @@ const ProductCard = ({
     }
   };
 
-  const addToFavorites = (e: React.MouseEvent) => {
+  const toggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!id) return;
 
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    const isAlreadyFavorite = favorites.includes(id);
+    const isCurrentlyFavorite = favorites.includes(id);
 
-    if (isAlreadyFavorite) {
+    if (isCurrentlyFavorite) {
       const newFavorites = favorites.filter((favId: string) => favId !== id);
       localStorage.setItem('favorites', JSON.stringify(newFavorites));
+      setIsFavorite(false);
       toast({
         title: "Removido dos favoritos",
         description: `${name} foi removido dos seus favoritos.`,
@@ -56,6 +71,7 @@ const ProductCard = ({
     } else {
       favorites.push(id);
       localStorage.setItem('favorites', JSON.stringify(favorites));
+      setIsFavorite(true);
       toast({
         title: "Adicionado aos favoritos",
         description: `${name} foi adicionado aos seus favoritos.`,
@@ -90,6 +106,11 @@ const ProductCard = ({
     }
 
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
+    
+    // Animação do botão
+    setIsAddedToCart(true);
+    setTimeout(() => setIsAddedToCart(false), 2000);
+    
     toast({
       title: "Produto adicionado!",
       description: `${name} foi adicionado à sua lista de interesse.`,
@@ -102,16 +123,10 @@ const ProductCard = ({
     e.stopPropagation();
     if (!id) return;
 
-    const message = `🕰️ *INTERESSE DE COMPRA*\n\nOlá! Tenho interesse neste produto:\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔹 *Produto:* ${name}\n🔹 *Marca:* ${brand}\n🔹 *Preço:* ${price}${clone_category ? `\n🔹 *Categoria:* ${clone_category}` : ''}\n\n📅 *Data:* ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}\n\nGostaria de mais informações!\n\nAguardo seu contato! 🙂`;
+    const message = `Olá! Tenho interesse neste produto:\n\n${name} - ${brand}\nPreço: ${price}\n\nPoderia me enviar mais informações?`;
     
     const whatsappUrl = `https://wa.me/5586988388124?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
-  };
-
-  const isFavorite = () => {
-    if (!id) return false;
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    return favorites.includes(id);
   };
 
   const discountPercentage = originalPrice && originalPrice !== price
@@ -172,25 +187,39 @@ const ProductCard = ({
         {/* Action Buttons */}
         <div className="absolute top-4 right-4 z-10 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <motion.button
-            onClick={addToFavorites}
+            onClick={toggleFavorite}
             className={`p-2 rounded-full backdrop-blur-sm transition-colors ${
-              isFavorite() 
+              isFavorite 
                 ? 'bg-red-100 text-red-600' 
                 : 'bg-white/80 text-neutral-600 hover:bg-white'
             }`}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
+            animate={isFavorite ? { scale: [1, 1.2, 1] } : {}}
+            transition={{ duration: 0.3 }}
           >
-            <Heart size={18} fill={isFavorite() ? 'currentColor' : 'none'} />
+            <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} />
           </motion.button>
-          <motion.button
-            onClick={addToCart}
-            className="p-2 bg-white/80 backdrop-blur-sm rounded-full text-neutral-600 hover:bg-white transition-colors"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <ShoppingCart size={18} />
-          </motion.button>
+          
+          <AnimatePresence mode="wait">
+            <motion.button
+              onClick={addToCart}
+              className={`p-2 backdrop-blur-sm rounded-full transition-colors ${
+                isAddedToCart 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-white/80 text-neutral-600 hover:bg-white'
+              }`}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              key={isAddedToCart ? 'added' : 'add'}
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+            >
+              {isAddedToCart ? <Check size={18} /> : <ShoppingCart size={18} />}
+            </motion.button>
+          </AnimatePresence>
+
           <motion.button
             onClick={buyViaWhatsApp}
             className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors"
@@ -234,15 +263,31 @@ const ProductCard = ({
             )}
           </div>
           <motion.button
-            className="px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg font-outfit font-medium hover:bg-neutral-50 transition-colors text-sm"
+            className={`px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg font-outfit font-medium transition-all text-sm ${
+              isAddedToCart 
+                ? 'bg-green-50 border-green-300 text-green-700' 
+                : 'hover:bg-neutral-50'
+            }`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={(e) => {
               e.stopPropagation();
-              handleClick();
+              if (!isAddedToCart) {
+                addToCart(e);
+              }
             }}
           >
-            Ver Detalhes
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={isAddedToCart ? 'added' : 'add'}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                {isAddedToCart ? 'Produto Adicionado' : 'Adicionar ao Carrinho'}
+              </motion.span>
+            </AnimatePresence>
           </motion.button>
         </div>
       </div>
