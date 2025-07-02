@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          created_at: string
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          setting_key: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       carousel_config: {
         Row: {
           carousel_type: string
@@ -112,6 +136,7 @@ export type Database = {
         Row: {
           brand: string
           category: string
+          clone_category: string | null
           colors: string[]
           created_at: string
           description: string | null
@@ -129,6 +154,7 @@ export type Database = {
         Insert: {
           brand: string
           category: string
+          clone_category?: string | null
           colors?: string[]
           created_at?: string
           description?: string | null
@@ -146,6 +172,7 @@ export type Database = {
         Update: {
           brand?: string
           category?: string
+          clone_category?: string | null
           colors?: string[]
           created_at?: string
           description?: string | null
