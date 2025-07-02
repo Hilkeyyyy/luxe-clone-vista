@@ -73,9 +73,19 @@ export const useProducts = () => {
         brandCategoryId = categoryData;
       }
 
+      // Garantir que arrays não sejam null ou undefined
+      const cleanedData = {
+        ...productData,
+        colors: productData.colors || [],
+        sizes: productData.sizes || [],
+        images: productData.images || [],
+        specifications: productData.specifications || {},
+        brand_category_id: brandCategoryId
+      };
+
       const { data, error } = await supabase
         .from('products')
-        .insert([{ ...productData, brand_category_id: brandCategoryId }])
+        .insert([cleanedData])
         .select()
         .single();
 
@@ -111,9 +121,19 @@ export const useProducts = () => {
         brandCategoryId = categoryData;
       }
 
+      // Garantir que arrays não sejam null ou undefined
+      const cleanedData = {
+        ...productData,
+        colors: productData.colors || [],
+        sizes: productData.sizes || [],
+        images: productData.images || [],
+        specifications: productData.specifications || {},
+        brand_category_id: brandCategoryId
+      };
+
       const { data, error } = await supabase
         .from('products')
-        .update({ ...productData, brand_category_id: brandCategoryId })
+        .update(cleanedData)
         .eq('id', id)
         .select()
         .single();

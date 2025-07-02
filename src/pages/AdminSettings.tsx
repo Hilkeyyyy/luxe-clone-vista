@@ -2,7 +2,8 @@
 import React from 'react';
 import AdminGuard from '@/components/admin/AdminGuard';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Settings } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import SystemSettings from '@/components/admin/SystemSettings';
 
 const AdminSettings = () => {
   const navigate = useNavigate();
@@ -30,16 +31,7 @@ const AdminSettings = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200">
-            <div className="flex items-center space-x-3 mb-6">
-              <Settings className="text-neutral-600" size={24} />
-              <h2 className="text-xl font-semibold">Configurações do Sistema</h2>
-            </div>
-            <p className="text-neutral-600">
-              O painel de configurações está sendo desenvolvido. 
-              Em breve você poderá configurar WhatsApp, dados da empresa e outras configurações do sistema.
-            </p>
-          </div>
+          <SystemSettings />
         </div>
       </div>
     </AdminGuard>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Edit, Trash2, Eye, Search, Filter } from 'lucide-react';
@@ -55,6 +54,14 @@ const ProductsList: React.FC<ProductsListProps> = ({
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterCloneCategory, setFilterCloneCategory] = useState('all');
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
+
+  const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+    }).format(value);
+  };
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = 
@@ -189,14 +196,14 @@ const ProductsList: React.FC<ProductsListProps> = ({
                     <p className="text-neutral-600 text-sm">{product.brand}</p>
                   </div>
 
-                  {/* Preço */}
+                  {/* Preço com formatação brasileira */}
                   <div className="flex items-center space-x-2">
                     <span className="text-xl font-bold text-neutral-900">
-                      R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {formatCurrency(product.price)}
                     </span>
                     {product.original_price && product.original_price > product.price && (
                       <span className="text-sm text-neutral-500 line-through">
-                        R$ {product.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        {formatCurrency(product.original_price)}
                       </span>
                     )}
                   </div>
