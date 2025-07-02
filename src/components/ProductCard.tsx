@@ -2,6 +2,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { Heart, ShoppingCart } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
   id?: string;
@@ -27,11 +29,77 @@ const ProductCard = ({
   image 
 }: ProductCardProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleClick = () => {
     if (id) {
       navigate(`/produto/${id}`);
     }
+  };
+
+  const addToFavorites = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!id) return;
+
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    const isAlreadyFavorite = favorites.includes(id);
+
+    if (isAlreadyFavorite) {
+      const newFavorites = favorites.filter((favId: string) => favId !== id);
+      localStorage.setItem('favorites', JSON.stringify(newFavorites));
+      toast({
+        title: "Removido dos favoritos",
+        description: `${name} foi removido dos seus favoritos.`,
+      });
+    } else {
+      favorites.push(id);
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+      toast({
+        title: "Adicionado aos favoritos",
+        description: `${name} foi adicionado aos seus favoritos.`,
+      });
+    }
+
+    // Trigger storage event to update header
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  const addToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!id) return;
+
+    const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+    const existingItemIndex = cartItems.findIndex((item: any) => item.product_id === id);
+
+    if (existingItemIndex >= 0) {
+      cartItems[existingItemIndex].quantity += 1;
+    } else {
+      cartItems.push({
+        id: Date.now().toString(),
+        product_id: id,
+        product_name: name,
+        product_price: parseFloat(price.replace('R$ ', '').replace('.', '').replace(',', '.')),
+        product_image: image || '',
+        selected_color: '',
+        selected_size: '',
+        quantity: 1,
+      });
+    }
+
+    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+    toast({
+      title: "Produto adicionado ao carrinho!",
+      description: `${name} foi adicionado ao seu carrinho.`,
+    });
+
+    // Trigger storage event to update header
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  const isFavorite = () => {
+    if (!id) return false;
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    return favorites.includes(id);
   };
 
   // Calculate discount percentage
@@ -56,20 +124,44 @@ const ProductCard = ({
         {/* Badges */}
         <div className="absolute top-4 left-4 z-10 flex flex-col space-y-2">
           {featured && (
-            <div className="bg-neutral-900 text-white px-3 py-1 rounded-full text-xs font-outfit font-medium">
+            <div className="bg-neutral-800 text-white px-3 py-1 rounded-full text-xs font-outfit font-medium">
               Destaque
             </div>
           )}
           {isNew && (
-            <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-outfit font-medium">
+            <div className="bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-outfit font-medium">
               Novo
             </div>
           )}
           {discountPercentage > 0 && (
-            <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-outfit font-medium">
+            <div className="bg-emerald-700 text-white px-3 py-1 rounded-full text-xs font-outfit font-medium">
               -{discountPercentage}%
             </div>
           )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="absolute top-4 right-4 z-10 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <motion.button
+            onClick={addToFavorites}
+            className={`p-2 rounded-full backdrop-blur-sm transition-colors ${
+              isFavorite() 
+                ? 'bg-red-100 text-red-600' 
+                : 'bg-white/80 text-neutral-600 hover:bg-white'
+            }`}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <Heart size={18} fill={isFavorite() ? 'currentColor' : 'none'} />
+          </motion.button>
+          <motion.button
+            onClick={addToCart}
+            className="p-2 bg-white/80 backdrop-blur-sm rounded-full text-neutral-600 hover:bg-white transition-colors"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <ShoppingCart size={18} />
+          </motion.button>
         </div>
 
         {/* Product Image */}
@@ -105,7 +197,7 @@ const ProductCard = ({
             )}
           </div>
           <motion.button
-            className="px-6 py-3 bg-neutral-900 text-white rounded-xl font-outfit font-medium hover:bg-neutral-800 transition-colors"
+            className="px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg font-outfit font-medium hover:bg-neutral-50 transition-colors text-sm"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={(e) => {
