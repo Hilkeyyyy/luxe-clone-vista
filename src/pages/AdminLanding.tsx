@@ -3,6 +3,7 @@ import React from 'react';
 import AdminGuard from '@/components/admin/AdminGuard';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import CategoryManager from '@/components/admin/CategoryManager';
 
 const AdminLanding = () => {
   const navigate = useNavigate();
@@ -30,13 +31,7 @@ const AdminLanding = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200">
-            <h2 className="text-xl font-semibold mb-4">Configuração de Landing Page</h2>
-            <p className="text-neutral-600">
-              O sistema de configuração da landing page está sendo desenvolvido. 
-              Em breve você poderá configurar carrosséis, banners e seções da página inicial.
-            </p>
-          </div>
+          <CategoryManager />
         </div>
       </div>
     </AdminGuard>

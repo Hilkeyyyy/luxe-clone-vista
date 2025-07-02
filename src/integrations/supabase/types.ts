@@ -42,6 +42,7 @@ export type Database = {
           is_active: boolean
           name: string
           order_position: number
+          products_count: number | null
           slug: string
           updated_at: string
         }
@@ -53,6 +54,7 @@ export type Database = {
           is_active?: boolean
           name: string
           order_position?: number
+          products_count?: number | null
           slug: string
           updated_at?: string
         }
@@ -64,6 +66,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           order_position?: number
+          products_count?: number | null
           slug?: string
           updated_at?: string
         }
@@ -176,17 +179,26 @@ export type Database = {
           clone_category: string | null
           colors: string[]
           created_at: string
+          custom_badge: string | null
           description: string | null
+          diameter: string | null
           id: string
           images: string[]
           in_stock: boolean | null
+          is_bestseller: boolean | null
+          is_coming_soon: boolean | null
+          is_featured: boolean | null
           is_new: boolean | null
+          is_sold_out: boolean | null
+          material: string | null
+          movement: string | null
           name: string
           original_price: number | null
           price: number
           sizes: string[]
           specifications: Json | null
           updated_at: string
+          water_resistance: string | null
         }
         Insert: {
           brand: string
@@ -195,17 +207,26 @@ export type Database = {
           clone_category?: string | null
           colors?: string[]
           created_at?: string
+          custom_badge?: string | null
           description?: string | null
+          diameter?: string | null
           id?: string
           images?: string[]
           in_stock?: boolean | null
+          is_bestseller?: boolean | null
+          is_coming_soon?: boolean | null
+          is_featured?: boolean | null
           is_new?: boolean | null
+          is_sold_out?: boolean | null
+          material?: string | null
+          movement?: string | null
           name: string
           original_price?: number | null
           price: number
           sizes?: string[]
           specifications?: Json | null
           updated_at?: string
+          water_resistance?: string | null
         }
         Update: {
           brand?: string
@@ -214,17 +235,26 @@ export type Database = {
           clone_category?: string | null
           colors?: string[]
           created_at?: string
+          custom_badge?: string | null
           description?: string | null
+          diameter?: string | null
           id?: string
           images?: string[]
           in_stock?: boolean | null
+          is_bestseller?: boolean | null
+          is_coming_soon?: boolean | null
+          is_featured?: boolean | null
           is_new?: boolean | null
+          is_sold_out?: boolean | null
+          material?: string | null
+          movement?: string | null
           name?: string
           original_price?: number | null
           price?: number
           sizes?: string[]
           specifications?: Json | null
           updated_at?: string
+          water_resistance?: string | null
         }
         Relationships: [
           {
@@ -268,7 +298,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_or_create_brand_category: {
+        Args: { category_name: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
