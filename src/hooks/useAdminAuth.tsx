@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ADMIN_CONFIG } from '@/config/admin';
 
 export const useAdminAuth = () => {
   const navigate = useNavigate();
@@ -23,6 +24,16 @@ export const useAdminAuth = () => {
         return;
       }
 
+      // Verificar se é admin pelo UID configurado
+      const isAdminById = session.user.id === ADMIN_CONFIG.ADMIN_UID;
+      
+      if (isAdminById) {
+        setUser(session.user);
+        setLoading(false);
+        return;
+      }
+
+      // Verificar pelo perfil no banco
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')

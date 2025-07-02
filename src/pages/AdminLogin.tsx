@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Mail, ArrowLeft } from 'lucide-react';
+import { ADMIN_CONFIG } from '@/config/admin';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -26,6 +26,19 @@ const AdminLogin = () => {
       if (error) throw error;
 
       if (data.user) {
+        // Verificar se é admin pelo UID configurado
+        const isAdminById = data.user.id === ADMIN_CONFIG.ADMIN_UID;
+        
+        if (isAdminById) {
+          toast({
+            title: "Login realizado com sucesso",
+            description: "Redirecionando para o painel administrativo...",
+          });
+          navigate('/admin');
+          return;
+        }
+
+        // Verificar pelo perfil no banco
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -135,6 +148,9 @@ const AdminLogin = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-neutral-600">
               Apenas administradores autorizados podem acessar este painel.
+            </p>
+            <p className="text-xs text-neutral-500 mt-2">
+              ID Admin: {ADMIN_CONFIG.ADMIN_UID.substring(0, 8)}...
             </p>
           </div>
         </motion.div>
