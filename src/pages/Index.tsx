@@ -1,28 +1,78 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import HeroSection from '../components/HeroSection';
 import ProductCarousel from '../components/ProductCarousel';
 import Footer from '../components/Footer';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Product {
+  id: string;
+  name: string;
+  brand: string;
+  price: number;
+  original_price?: number;
+  images: string[];
+  is_new: boolean;
+}
 
 const Index = () => {
-  const topCarouselProducts = [
-    { id: 1, name: "Clone Tech Pro", brand: "Tech Series", price: "R$ 799", image: "" },
-    { id: 2, name: "Premium Clone V2", brand: "Premium Line", price: "R$ 1.199", image: "" },
-    { id: 3, name: "Elite Master", brand: "Elite Collection", price: "R$ 1.499", image: "" },
-    { id: 4, name: "Super Clone Plus", brand: "Super Series", price: "R$ 699", image: "" },
-    { id: 5, name: "Ultra Clone Max", brand: "Ultra Line", price: "R$ 1.799", image: "" },
-    { id: 6, name: "Pro Clone X", brand: "Professional", price: "R$ 999", image: "" }
-  ];
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const bottomCarouselProducts = [
-    { id: 7, name: "Smart Clone", brand: "Smart Series", price: "R$ 599", image: "" },
-    { id: 8, name: "Advanced Clone", brand: "Advanced Line", price: "R$ 899", image: "" },
-    { id: 9, name: "Premium Plus", brand: "Premium Collection", price: "R$ 1.399", image: "" },
-    { id: 10, name: "Master Clone Pro", brand: "Master Series", price: "R$ 1.699", image: "" },
-    { id: 11, name: "Clone Excellence", brand: "Excellence Line", price: "R$ 1.099", image: "" },
-    { id: 12, name: "Ultimate Clone", brand: "Ultimate Series", price: "R$ 1.999", image: "" }
-  ];
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('in_stock', true)
+        .order('created_at', { ascending: false })
+        .limit(12);
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatProductsForCarousel = (products: Product[]) => {
+    return products.map(product => ({
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      price: `R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      originalPrice: product.original_price 
+        ? `R$ ${product.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+        : undefined,
+      image: product.images[0] || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=400&fit=crop`,
+      isNew: product.is_new
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white font-outfit flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-neutral-600">Carregando produtos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const newProducts = products.filter(p => p.is_new).slice(0, 6);
+  const discountedProducts = products.filter(p => p.original_price && p.original_price > p.price).slice(0, 6);
+  
+  // If we don't have enough new or discounted products, use general products
+  const topCarouselProducts = newProducts.length >= 3 ? newProducts : products.slice(0, 6);
+  const bottomCarouselProducts = discountedProducts.length >= 3 ? discountedProducts : products.slice(6, 12);
 
   return (
     <div className="min-h-screen bg-white font-outfit">
@@ -31,7 +81,7 @@ const Index = () => {
       {/* Top Carousel */}
       <ProductCarousel 
         title="Novidades" 
-        products={topCarouselProducts} 
+        products={formatProductsForCarousel(topCarouselProducts)} 
       />
       
       {/* Hero Section */}
@@ -40,7 +90,7 @@ const Index = () => {
       {/* Bottom Carousel */}
       <ProductCarousel 
         title="Mais Vendidos" 
-        products={bottomCarouselProducts} 
+        products={formatProductsForCarousel(bottomCarouselProducts)} 
       />
       
       <Footer />

@@ -2,13 +2,16 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import ProductCard from './ProductCard';
 
 interface Product {
-  id: number;
+  id: string;
   name: string;
   brand: string;
   price: string;
+  originalPrice?: string;
   image: string;
+  isNew?: boolean;
 }
 
 interface ProductCarouselProps {
@@ -28,6 +31,10 @@ const ProductCarousel = ({ title, products }: ProductCarouselProps) => {
       });
     }
   };
+
+  if (products.length === 0) {
+    return null;
+  }
 
   return (
     <motion.section 
@@ -76,33 +83,15 @@ const ProductCarousel = ({ title, products }: ProductCarouselProps) => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
-              <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group">
-                <div className="aspect-square bg-gradient-to-br from-neutral-50 to-neutral-100 flex items-center justify-center">
-                  <div className="w-24 h-24 bg-neutral-200 rounded-full flex items-center justify-center">
-                    <span className="text-neutral-500 font-outfit font-medium">IMG</span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="font-outfit font-semibold text-lg text-neutral-900 mb-1 group-hover:text-neutral-700 transition-colors">
-                    {product.name}
-                  </h3>
-                  <p className="text-neutral-600 font-outfit text-sm mb-3">
-                    {product.brand}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl font-outfit font-bold text-neutral-900">
-                      {product.price}
-                    </span>
-                    <motion.button
-                      className="px-4 py-2 bg-neutral-900 text-white rounded-xl font-outfit font-medium text-sm hover:bg-neutral-800 transition-colors"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      Ver Detalhes
-                    </motion.button>
-                  </div>
-                </div>
-              </div>
+              <ProductCard
+                id={product.id}
+                name={product.name}
+                brand={product.brand}
+                price={product.price}
+                originalPrice={product.originalPrice}
+                image={product.image}
+                isNew={product.isNew}
+              />
             </motion.div>
           ))}
         </div>
