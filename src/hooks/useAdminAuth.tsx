@@ -13,6 +13,19 @@ export const useAdminAuth = () => {
 
   useEffect(() => {
     checkAuth();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          await checkUserRole(session.user);
+        } else {
+          setUser(null);
+          setLoading(false);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const checkAuth = async () => {
@@ -24,12 +37,22 @@ export const useAdminAuth = () => {
         return;
       }
 
+      await checkUserRole(session.user);
+    } catch (error) {
+      console.error('Erro ao verificar autenticação:', error);
+      navigate('/admin/login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkUserRole = async (authUser: any) => {
+    try {
       // Verificar se é admin pelo UID configurado
-      const isAdminById = session.user.id === ADMIN_CONFIG.ADMIN_UID;
+      const isAdminById = authUser.id === ADMIN_CONFIG.ADMIN_UID;
       
       if (isAdminById) {
-        setUser(session.user);
-        setLoading(false);
+        setUser(authUser);
         return;
       }
 
@@ -37,7 +60,7 @@ export const useAdminAuth = () => {
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', session.user.id)
+        .eq('id', authUser.id)
         .single();
 
       if (!profile || profile.role !== 'admin') {
@@ -50,22 +73,34 @@ export const useAdminAuth = () => {
         return;
       }
 
-      setUser(session.user);
+      setUser(authUser);
     } catch (error) {
-      console.error('Erro ao verificar autenticação:', error);
+      console.error('Erro ao verificar perfil:', error);
+      toast({
+        title: "Erro de autenticação",
+        description: "Erro ao verificar permissões de administrador.",
+        variant: "destructive",
+      });
       navigate('/admin/login');
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
-    toast({
-      title: "Logout realizado",
-      description: "Você foi desconectado com sucesso.",
-    });
+    try {
+      await supabase.auth.signOut();
+      navigate('/');
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro no logout:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao fazer logout.",
+        variant: "destructive",
+      });
+    }
   };
 
   return { user, loading, handleLogout };

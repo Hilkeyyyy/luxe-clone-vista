@@ -35,7 +35,7 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
             Acesso Negado
           </h2>
           <p className="text-neutral-600 mb-4">
-            Você não tem permissão para acessar esta área.
+            Você não tem permissão para acessar esta área administrativa.
           </p>
           <button
             onClick={() => window.location.href = '/'}

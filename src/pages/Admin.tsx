@@ -3,7 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import AdminGuard from '@/components/admin/AdminGuard';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { useAdminStats } from '@/hooks/useAdminStats';
+import { useRealTimeStats } from '@/hooks/useRealTimeStats';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminStats from '@/components/admin/AdminStats';
 import AdminNavigation from '@/components/admin/AdminNavigation';
@@ -11,7 +11,7 @@ import ProductCategories from '@/components/admin/ProductCategories';
 
 const Admin = () => {
   const { user, loading, handleLogout } = useAdminAuth();
-  const { stats } = useAdminStats();
+  const { stats } = useRealTimeStats();
 
   if (loading) {
     return (
@@ -45,6 +45,7 @@ const Admin = () => {
             </p>
           </motion.div>
 
+          {/* Real-time Stats */}
           <AdminStats stats={stats} />
 
           {/* Product Categories Overview */}

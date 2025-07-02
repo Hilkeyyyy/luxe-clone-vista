@@ -1,15 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, ShoppingBag, Menu, Heart, X, Settings } from 'lucide-react';
+import { Search, ShoppingBag, Menu, Heart, User, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuthCheck } from '@/hooks/useAuthCheck';
+import NavigationMenu from './NavigationMenu';
 
 const Header = () => {
   const navigate = useNavigate();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { user, isAdmin } = useAuthCheck();
   const [searchQuery, setSearchQuery] = useState('');
   const [cartItemsCount, setCartItemsCount] = useState(0);
   const [favoritesCount, setFavoritesCount] = useState(0);
+  const [showNavigationMenu, setShowNavigationMenu] = useState(false);
 
   useEffect(() => {
     updateCounts();
@@ -28,7 +31,6 @@ const Header = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/busca?q=${encodeURIComponent(searchQuery.trim())}`);
-      setIsSearchOpen(false);
       setSearchQuery('');
     }
   };
@@ -54,60 +56,36 @@ const Header = () => {
             </h1>
           </motion.button>
 
-          {/* Navigation - Hidden on mobile */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <button 
-              onClick={() => navigate('/')}
-              className="text-neutral-700 hover:text-neutral-900 font-outfit font-medium transition-colors"
-            >
-              Produtos
-            </button>
-            <button 
-              onClick={() => navigate('/produtos')}
-              className="text-neutral-700 hover:text-neutral-900 font-outfit font-medium transition-colors"
-            >
-              Ver Todos
-            </button>
-            <button className="text-neutral-700 hover:text-neutral-900 font-outfit font-medium transition-colors">
-              Sobre
-            </button>
-            <button className="text-neutral-700 hover:text-neutral-900 font-outfit font-medium transition-colors">
-              Contato
-            </button>
-          </nav>
+          {/* Search Bar - Desktop */}
+          <div className="hidden md:flex flex-1 max-w-lg mx-8">
+            <form onSubmit={handleSearch} className="w-full">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Buscar produtos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
+                />
+              </div>
+            </form>
+          </div>
 
           {/* Right side icons */}
           <div className="flex items-center space-x-4">
-            {/* Search */}
-            <div className="relative">
-              <motion.button 
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Search size={20} />
-              </motion.button>
-
-              {/* Search Dropdown */}
-              {isSearchOpen && (
-                <motion.div
-                  className="absolute right-0 top-12 w-80 bg-white shadow-lg rounded-xl border border-neutral-200 p-4"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
+            {/* Search - Mobile */}
+            <div className="md:hidden">
+              <form onSubmit={handleSearch}>
+                <motion.button 
+                  type="submit"
+                  className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <form onSubmit={handleSearch}>
-                    <input
-                      type="text"
-                      placeholder="Buscar produtos..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
-                      autoFocus
-                    />
-                  </form>
-                </motion.div>
-              )}
+                  <Search size={20} />
+                </motion.button>
+              </form>
             </div>
 
             {/* Favorites */}
@@ -140,35 +118,56 @@ const Header = () => {
               )}
             </motion.button>
 
-            {/* Admin Panel */}
-            <motion.button 
-              onClick={() => navigate('/admin')}
-              className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              title="Painel Administrativo"
-            >
-              <Settings size={20} />
-            </motion.button>
+            {/* Admin Settings - Only for Admins */}
+            {isAdmin && (
+              <motion.button 
+                onClick={() => navigate('/admin')}
+                className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                title="Painel Administrativo"
+              >
+                <Settings size={20} />
+              </motion.button>
+            )}
 
-            <motion.button 
-              className="md:hidden p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Menu size={20} />
-            </motion.button>
+            {/* Navigation Menu */}
+            <div className="relative">
+              <motion.button 
+                onClick={() => setShowNavigationMenu(!showNavigationMenu)}
+                className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <User size={20} />
+              </motion.button>
+
+              <NavigationMenu 
+                isOpen={showNavigationMenu} 
+                onClose={() => setShowNavigationMenu(false)} 
+                user={user}
+                isAdmin={isAdmin}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Search overlay for mobile */}
-      {isSearchOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={() => setIsSearchOpen(false)}
-        />
-      )}
+        {/* Mobile Search Bar */}
+        <div className="md:hidden pb-4">
+          <form onSubmit={handleSearch}>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={20} />
+              <input
+                type="text"
+                placeholder="Buscar produtos..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
+              />
+            </div>
+          </form>
+        </div>
+      </div>
     </motion.header>
   );
 };
