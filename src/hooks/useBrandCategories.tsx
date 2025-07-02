@@ -10,6 +10,7 @@ interface BrandCategory {
   image_url: string;
   order_position: number;
   is_active: boolean;
+  products_count: number;
 }
 
 export const useBrandCategories = () => {
@@ -24,7 +25,7 @@ export const useBrandCategories = () => {
     try {
       const { data, error } = await supabase
         .from('brand_categories')
-        .select('*')
+        .select('*, products_count')
         .eq('is_active', true)
         .order('order_position', { ascending: true });
 

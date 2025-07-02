@@ -30,7 +30,7 @@ interface BrandCategory {
   image_url: string;
   order_position: number;
   is_active: boolean;
-  products_count?: number;
+  products_count: number;
 }
 
 interface CategoryFormData {
@@ -260,7 +260,7 @@ const CategoryManager = () => {
                       size="sm"
                       variant="destructive"
                       onClick={() => setDeleteCategory(category)}
-                      disabled={category.products_count && category.products_count > 0}
+                      disabled={category.products_count > 0}
                     >
                       <Trash2 size={16} />
                     </Button>
