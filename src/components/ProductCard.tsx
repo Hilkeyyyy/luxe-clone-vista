@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Heart, ShoppingCart } from 'lucide-react';
+import { Heart, ShoppingCart, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
@@ -15,6 +15,7 @@ interface ProductCardProps {
   delay?: number;
   isNew?: boolean;
   image?: string;
+  clone_category?: string;
 }
 
 const ProductCard = ({ 
@@ -26,7 +27,8 @@ const ProductCard = ({
   featured = false, 
   delay = 0, 
   isNew = false,
-  image 
+  image,
+  clone_category
 }: ProductCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -60,7 +62,6 @@ const ProductCard = ({
       });
     }
 
-    // Trigger storage event to update header
     window.dispatchEvent(new Event('storage'));
   };
 
@@ -83,17 +84,28 @@ const ProductCard = ({
         selected_color: '',
         selected_size: '',
         quantity: 1,
+        brand: brand,
+        clone_category: clone_category
       });
     }
 
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
     toast({
-      title: "Produto adicionado ao carrinho!",
-      description: `${name} foi adicionado ao seu carrinho.`,
+      title: "Produto adicionado!",
+      description: `${name} foi adicionado à sua lista de interesse.`,
     });
 
-    // Trigger storage event to update header
     window.dispatchEvent(new Event('storage'));
+  };
+
+  const buyViaWhatsApp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!id) return;
+
+    const message = `🕰️ *INTERESSE DE COMPRA*\n\nOlá! Tenho interesse neste produto:\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔹 *Produto:* ${name}\n🔹 *Marca:* ${brand}\n🔹 *Preço:* ${price}${clone_category ? `\n🔹 *Categoria:* ${clone_category}` : ''}\n\n📅 *Data:* ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}\n\nGostaria de mais informações!\n\nAguardo seu contato! 🙂`;
+    
+    const whatsappUrl = `https://wa.me/5586988388124?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const isFavorite = () => {
@@ -102,12 +114,24 @@ const ProductCard = ({
     return favorites.includes(id);
   };
 
-  // Calculate discount percentage
   const discountPercentage = originalPrice && originalPrice !== price
     ? Math.round(((parseFloat(originalPrice.replace('R$ ', '').replace('.', '').replace(',', '.')) - 
                   parseFloat(price.replace('R$ ', '').replace('.', '').replace(',', '.'))) / 
                   parseFloat(originalPrice.replace('R$ ', '').replace('.', '').replace(',', '.'))) * 100)
     : 0;
+
+  const getCategoryBadgeColor = (category: string) => {
+    switch (category) {
+      case 'ETA Base':
+        return 'bg-blue-600 text-white';
+      case 'Clone':
+        return 'bg-amber-600 text-white';
+      case 'Super Clone':
+        return 'bg-emerald-600 text-white';
+      default:
+        return 'bg-neutral-600 text-white';
+    }
+  };
 
   return (
     <motion.div
@@ -138,6 +162,11 @@ const ProductCard = ({
               -{discountPercentage}%
             </div>
           )}
+          {clone_category && (
+            <div className={`px-3 py-1 rounded-full text-xs font-outfit font-medium ${getCategoryBadgeColor(clone_category)}`}>
+              {clone_category}
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -161,6 +190,14 @@ const ProductCard = ({
             whileTap={{ scale: 0.9 }}
           >
             <ShoppingCart size={18} />
+          </motion.button>
+          <motion.button
+            onClick={buyViaWhatsApp}
+            className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <MessageCircle size={18} />
           </motion.button>
         </div>
 

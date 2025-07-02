@@ -10,10 +10,6 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cartItemsCount, setCartItemsCount] = useState(0);
   const [favoritesCount, setFavoritesCount] = useState(0);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
-  const [cartItems, setCartItems] = useState<any[]>([]);
-  const [favorites, setFavorites] = useState<string[]>([]);
 
   useEffect(() => {
     updateCounts();
@@ -24,8 +20,6 @@ const Header = () => {
   const updateCounts = () => {
     const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
     const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-    setCartItems(cart);
-    setFavorites(favs);
     setCartItemsCount(cart.reduce((total: number, item: any) => total + item.quantity, 0));
     setFavoritesCount(favs.length);
   };
@@ -37,22 +31,6 @@ const Header = () => {
       setIsSearchOpen(false);
       setSearchQuery('');
     }
-  };
-
-  const removeFromCart = (itemId: string) => {
-    const updatedCart = cartItems.filter(item => item.id !== itemId);
-    localStorage.setItem('cartItems', JSON.stringify(updatedCart));
-    updateCounts();
-  };
-
-  const removeFromFavorites = (productId: string) => {
-    const updatedFavorites = favorites.filter(id => id !== productId);
-    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-    updateCounts();
-  };
-
-  const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => total + (item.product_price * item.quantity), 0);
   };
 
   return (
@@ -78,7 +56,10 @@ const Header = () => {
 
           {/* Navigation - Hidden on mobile */}
           <nav className="hidden md:flex items-center space-x-8">
-            <button className="text-neutral-700 hover:text-neutral-900 font-outfit font-medium transition-colors">
+            <button 
+              onClick={() => navigate('/')}
+              className="text-neutral-700 hover:text-neutral-900 font-outfit font-medium transition-colors"
+            >
               Produtos
             </button>
             <button className="text-neutral-700 hover:text-neutral-900 font-outfit font-medium transition-colors">
@@ -127,129 +108,34 @@ const Header = () => {
             </div>
 
             {/* Favorites */}
-            <div className="relative">
-              <motion.button 
-                onClick={() => setIsFavoritesOpen(!isFavoritesOpen)}
-                className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors relative"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Heart size={20} />
-                {favoritesCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {favoritesCount}
-                  </span>
-                )}
-              </motion.button>
-
-              {/* Favorites Dropdown */}
-              {isFavoritesOpen && (
-                <motion.div
-                  className="absolute right-0 top-12 w-80 bg-white shadow-lg rounded-xl border border-neutral-200 max-h-96 overflow-y-auto"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <div className="p-4 border-b border-neutral-100">
-                    <h3 className="font-semibold text-neutral-900">Favoritos ({favoritesCount})</h3>
-                  </div>
-                  {favorites.length === 0 ? (
-                    <div className="p-6 text-center text-neutral-500">
-                      Nenhum produto favoritado
-                    </div>
-                  ) : (
-                    <div className="p-2">
-                      {favorites.map((productId) => (
-                        <div key={productId} className="flex items-center justify-between p-3 hover:bg-neutral-50 rounded-lg">
-                          <span className="text-sm text-neutral-700">Produto {productId.slice(0, 8)}...</span>
-                          <button
-                            onClick={() => removeFromFavorites(productId)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
+            <motion.button 
+              onClick={() => navigate('/favoritos')}
+              className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors relative"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Heart size={20} />
+              {favoritesCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {favoritesCount}
+                </span>
               )}
-            </div>
+            </motion.button>
 
             {/* Cart */}
-            <div className="relative">
-              <motion.button 
-                onClick={() => setIsCartOpen(!isCartOpen)}
-                className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors relative"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <ShoppingBag size={20} />
-                {cartItemsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-neutral-900 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {cartItemsCount}
-                  </span>
-                )}
-              </motion.button>
-
-              {/* Cart Dropdown */}
-              {isCartOpen && (
-                <motion.div
-                  className="absolute right-0 top-12 w-96 bg-white shadow-lg rounded-xl border border-neutral-200 max-h-96 overflow-hidden"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <div className="p-4 border-b border-neutral-100">
-                    <h3 className="font-semibold text-neutral-900">Carrinho ({cartItemsCount} itens)</h3>
-                  </div>
-                  {cartItems.length === 0 ? (
-                    <div className="p-6 text-center text-neutral-500">
-                      Seu carrinho está vazio
-                    </div>
-                  ) : (
-                    <>
-                      <div className="max-h-64 overflow-y-auto p-2">
-                        {cartItems.map((item) => (
-                          <div key={item.id} className="flex items-center space-x-3 p-3 hover:bg-neutral-50 rounded-lg">
-                            <img 
-                              src={item.product_image} 
-                              alt={item.product_name}
-                              className="w-12 h-12 object-cover rounded-lg"
-                            />
-                            <div className="flex-1">
-                              <h4 className="text-sm font-medium text-neutral-900">{item.product_name}</h4>
-                              <p className="text-xs text-neutral-500">
-                                {item.selected_color && `Cor: ${item.selected_color}`}
-                                {item.selected_size && ` • Tamanho: ${item.selected_size}`}
-                              </p>
-                              <p className="text-sm font-semibold text-neutral-900">
-                                {item.quantity}x R$ {item.product_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                              </p>
-                            </div>
-                            <button
-                              onClick={() => removeFromCart(item.id)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="p-4 border-t border-neutral-100">
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="font-semibold text-neutral-900">Total:</span>
-                          <span className="font-bold text-lg text-neutral-900">
-                            R$ {getTotalPrice().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                        <button className="w-full bg-neutral-900 text-white py-3 rounded-lg font-medium hover:bg-neutral-800 transition-colors">
-                          Finalizar Compra
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </motion.div>
+            <motion.button 
+              onClick={() => navigate('/carrinho')}
+              className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors relative"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ShoppingBag size={20} />
+              {cartItemsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-neutral-900 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {cartItemsCount}
+                </span>
               )}
-            </div>
+            </motion.button>
 
             <motion.button 
               className="md:hidden p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
