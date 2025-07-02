@@ -18,6 +18,7 @@ interface Product {
   is_new: boolean;
   clone_category?: string;
   brand_category_id?: string;
+  created_at: string;
 }
 
 const Products = () => {
