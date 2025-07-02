@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Save, Phone, Building, Settings, Mail } from 'lucide-react';
@@ -102,8 +101,23 @@ const SystemSettings = () => {
       const loadedSettings = { ...settings };
       
       data?.forEach(item => {
-        if (item.setting_key in loadedSettings) {
-          loadedSettings[item.setting_key as keyof SystemSettings] = item.setting_value;
+        const key = item.setting_key as keyof SystemSettings;
+        if (key in loadedSettings) {
+          // Converter o valor Json para o tipo correto
+          const value = item.setting_value;
+          
+          // Para campos booleanos
+          if (key === 'whatsapp_enabled' || key === 'email_notifications_enabled') {
+            loadedSettings[key] = Boolean(value);
+          }
+          // Para campos numéricos
+          else if (key === 'free_shipping_minimum' || key === 'shipping_cost' || key === 'smtp_port') {
+            loadedSettings[key] = Number(value) || 0;
+          }
+          // Para campos string
+          else {
+            loadedSettings[key] = String(value || '');
+          }
         }
       });
 
