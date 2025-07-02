@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, ShoppingBag, Menu, Heart, User, Settings } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthCheck } from '@/hooks/useAuthCheck';
 import NavigationMenu from './NavigationMenu';
@@ -66,7 +66,7 @@ const Header = () => {
                   placeholder="Buscar produtos..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
+                  className="w-full pl-12 pr-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:border-transparent"
                 />
               </div>
             </form>
@@ -76,16 +76,17 @@ const Header = () => {
           <div className="flex items-center space-x-4">
             {/* Search - Mobile */}
             <div className="md:hidden">
-              <form onSubmit={handleSearch}>
-                <motion.button 
-                  type="submit"
-                  className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Search size={20} />
-                </motion.button>
-              </form>
+              <motion.button 
+                onClick={() => {
+                  const searchInput = document.getElementById('mobile-search');
+                  if (searchInput) searchInput.focus();
+                }}
+                className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Search size={20} />
+              </motion.button>
             </div>
 
             {/* Favorites */}
@@ -158,11 +159,12 @@ const Header = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={20} />
               <input
+                id="mobile-search"
                 type="text"
                 placeholder="Buscar produtos..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
+                className="w-full pl-12 pr-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:border-transparent"
               />
             </div>
           </form>
