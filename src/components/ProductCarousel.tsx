@@ -105,14 +105,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products, load
         <div 
           ref={scrollRef}
           className="flex overflow-x-auto space-x-6 pb-4 scrollbar-hide"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          <style jsx>{`
-            .scrollbar-hide::-webkit-scrollbar {
-              display: none;
-            }
-          `}</style>
-          
           {products.map((product, index) => (
             <motion.div
               key={product.id}
