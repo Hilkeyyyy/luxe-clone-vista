@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useBrandCategories } from '@/hooks/useBrandCategories';
+import CategoryImageUpload from './CategoryImageUpload';
 
 interface BrandCategory {
   id: string;
@@ -320,23 +321,12 @@ const CategoryManager = () => {
             </div>
 
             <div>
-              <Label htmlFor="image_url">URL da Imagem</Label>
-              <Input
-                id="image_url"
-                type="url"
-                value={formData.image_url}
-                onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                placeholder="https://exemplo.com/imagem.jpg"
+              <Label>Imagem da Categoria</Label>
+              <CategoryImageUpload
+                imageUrl={formData.image_url}
+                onImageUploaded={(url) => setFormData(prev => ({ ...prev, image_url: url }))}
+                onImageRemoved={() => setFormData(prev => ({ ...prev, image_url: '' }))}
               />
-              {formData.image_url && (
-                <div className="mt-2">
-                  <img
-                    src={formData.image_url}
-                    alt="Preview"
-                    className="w-32 h-20 object-cover rounded border"
-                  />
-                </div>
-              )}
             </div>
 
             <div className="flex space-x-4">

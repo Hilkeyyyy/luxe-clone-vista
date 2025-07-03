@@ -24,15 +24,15 @@ export const sanitizeUrl = (url: string): string => {
   }
 };
 
-// Schema de validação para produtos - especificações opcionais
+// Schema de validação para produtos - CORRIGIDO para aceitar valores nulos
 export const productSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório').max(200),
   brand: z.string().min(1, 'Marca é obrigatória').max(100),
   category: z.string().min(1, 'Categoria é obrigatória').max(100),
-  clone_category: z.string().optional(),
+  clone_category: z.string().nullable().optional(),
   price: z.number().min(0, 'Preço deve ser positivo'),
-  original_price: z.number().min(0).optional(),
-  description: z.string().max(5000).optional(),
+  original_price: z.number().min(0).nullable().optional(),
+  description: z.string().max(5000).nullable().optional(),
   images: z.array(z.string()).default([]),
   colors: z.array(z.string()).default([]),
   sizes: z.array(z.string()).default([]),
@@ -41,12 +41,12 @@ export const productSchema = z.object({
   is_sold_out: z.boolean().default(false),
   is_bestseller: z.boolean().default(false),
   is_coming_soon: z.boolean().default(false),
-  custom_badge: z.string().optional(),
-  movement: z.string().optional(),
-  diameter: z.string().optional(),
-  material: z.string().optional(),
-  water_resistance: z.string().optional(),
-  specifications: z.record(z.string()).optional()
+  custom_badge: z.string().nullable().optional(),
+  movement: z.string().nullable().optional(),
+  diameter: z.string().nullable().optional(),
+  material: z.string().nullable().optional(),
+  water_resistance: z.string().nullable().optional(),
+  specifications: z.record(z.string()).nullable().optional()
 });
 
 export const validateProductData = (data: any) => {
@@ -56,15 +56,16 @@ export const validateProductData = (data: any) => {
 export const sanitizeProductData = (data: any) => {
   return {
     ...data,
-    name: sanitizeHtml(data.name),
-    brand: sanitizeHtml(data.brand),
-    category: sanitizeHtml(data.category),
-    description: data.description ? sanitizeHtml(data.description) : undefined,
-    custom_badge: data.custom_badge ? sanitizeHtml(data.custom_badge) : undefined,
-    movement: data.movement ? sanitizeHtml(data.movement) : undefined,
-    diameter: data.diameter ? sanitizeHtml(data.diameter) : undefined,
-    material: data.material ? sanitizeHtml(data.material) : undefined,
-    water_resistance: data.water_resistance ? sanitizeHtml(data.water_resistance) : undefined,
+    name: sanitizeHtml(data.name || ''),
+    brand: sanitizeHtml(data.brand || ''),
+    category: sanitizeHtml(data.category || ''),
+    description: data.description ? sanitizeHtml(data.description) : null,
+    custom_badge: data.custom_badge ? sanitizeHtml(data.custom_badge) : null,
+    movement: data.movement ? sanitizeHtml(data.movement) : null,
+    diameter: data.diameter ? sanitizeHtml(data.diameter) : null,
+    material: data.material ? sanitizeHtml(data.material) : null,
+    water_resistance: data.water_resistance ? sanitizeHtml(data.water_resistance) : null,
+    clone_category: data.clone_category || 'Clone'
   };
 };
 

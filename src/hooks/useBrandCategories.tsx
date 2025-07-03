@@ -13,21 +13,26 @@ interface BrandCategory {
   products_count: number;
 }
 
-export const useBrandCategories = () => {
+export const useBrandCategories = (activeOnly: boolean = false) => {
   const [categories, setCategories] = useState<BrandCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [activeOnly]);
 
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('brand_categories')
         .select('*, products_count')
-        .eq('is_active', true)
         .order('order_position', { ascending: true });
+
+      if (activeOnly) {
+        query = query.eq('is_active', true);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setCategories(data || []);
