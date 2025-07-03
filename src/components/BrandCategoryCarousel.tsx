@@ -70,7 +70,7 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ category 
                 whileHover={{ y: -4 }}
                 onClick={() => handleCategoryClick(category)}
               >
-                <div className="relative w-full h-80 bg-gradient-to-br from-neutral-100 to-neutral-200 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300">
+                <div className="relative w-full h-80 bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-2xl overflow-hidden shadow-md group-hover:shadow-lg transition-all duration-300">
                   {/* Background Image */}
                   {category.image_url ? (
                     <img
@@ -79,7 +79,7 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ category 
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-neutral-200 to-neutral-300 flex items-center justify-center">
+                    <div className="w-full h-full bg-gradient-to-br from-neutral-100 to-neutral-200 flex items-center justify-center">
                       <span className="text-5xl font-bold text-neutral-400 font-outfit">
                         {category.name.charAt(0)}
                       </span>
@@ -87,7 +87,7 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ category 
                   )}
 
                   {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                   {/* Content */}
                   <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -130,8 +130,8 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ category 
           ))}
         </CarouselContent>
         
-        <CarouselPrevious className="hidden sm:flex -left-12 w-10 h-10 border-2 border-neutral-300 hover:border-neutral-400 bg-white/80 hover:bg-white shadow-lg" />
-        <CarouselNext className="hidden sm:flex -right-12 w-10 h-10 border-2 border-neutral-300 hover:border-neutral-400 bg-white/80 hover:bg-white shadow-lg" />
+        <CarouselPrevious className="hidden sm:flex -left-12 w-10 h-10 border-2 border-neutral-300 hover:border-neutral-400 bg-white/90 hover:bg-white shadow-md" />
+        <CarouselNext className="hidden sm:flex -right-12 w-10 h-10 border-2 border-neutral-300 hover:border-neutral-400 bg-white/90 hover:bg-white shadow-md" />
       </Carousel>
     </div>
   );

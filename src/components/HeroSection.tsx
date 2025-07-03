@@ -34,11 +34,11 @@ const HeroSection = () => {
   ];
 
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-800 to-black overflow-hidden">
+    <section className="relative min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-100 overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
-          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px)',
           backgroundSize: '60px 60px'
         }} />
       </div>
@@ -54,7 +54,7 @@ const HeroSection = () => {
               className="text-center lg:text-left"
             >
               <motion.h1 
-                className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 font-outfit leading-tight"
+                className="text-5xl sm:text-6xl lg:text-7xl font-bold text-neutral-900 mb-6 font-outfit leading-tight"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
@@ -66,7 +66,7 @@ const HeroSection = () => {
               </motion.h1>
 
               <motion.p 
-                className="text-xl text-neutral-300 mb-8 leading-relaxed font-outfit"
+                className="text-xl text-neutral-600 mb-8 leading-relaxed font-outfit"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
@@ -82,7 +82,7 @@ const HeroSection = () => {
                 transition={{ duration: 0.8, delay: 0.6 }}
               >
                 <motion.button
-                  className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-4 rounded-full font-semibold text-lg font-outfit hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-2xl"
+                  className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-4 rounded-full font-semibold text-lg font-outfit hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-lg"
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleExploreProducts}
@@ -91,7 +91,7 @@ const HeroSection = () => {
                 </motion.button>
 
                 <motion.button
-                  className="border-2 border-white text-white px-8 py-4 rounded-full font-semibold text-lg font-outfit hover:bg-white hover:text-neutral-900 transition-all duration-300"
+                  className="border-2 border-neutral-900 text-neutral-900 px-8 py-4 rounded-full font-semibold text-lg font-outfit hover:bg-neutral-900 hover:text-white transition-all duration-300"
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleExploreBrand('Rolex')}
@@ -110,7 +110,7 @@ const HeroSection = () => {
                 {brandCards.map((brand, index) => (
                   <motion.div
                     key={brand.name}
-                    className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 cursor-pointer group"
+                    className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-200 cursor-pointer group shadow-sm hover:shadow-md transition-all duration-300"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.9 + index * 0.1 }}
@@ -118,14 +118,14 @@ const HeroSection = () => {
                     onClick={() => handleExploreBrand(brand.name)}
                   >
                     <div className="text-center">
-                      <h3 className="text-white font-semibold font-outfit mb-2 text-lg">
+                      <h3 className="text-neutral-900 font-semibold font-outfit mb-2 text-lg">
                         {brand.name}
                       </h3>
-                      <p className="text-neutral-300 text-sm font-outfit mb-4">
+                      <p className="text-neutral-600 text-sm font-outfit mb-4">
                         {brand.description}
                       </p>
                       <motion.button
-                        className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-6 py-2 rounded-full font-semibold text-sm font-outfit hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-lg"
+                        className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-6 py-2 rounded-full font-semibold text-sm font-outfit hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-md"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={(e) => {
@@ -157,7 +157,7 @@ const HeroSection = () => {
       </div>
 
       {/* Bottom Gradient */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
     </section>
   );
 };
