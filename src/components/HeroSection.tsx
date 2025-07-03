@@ -15,24 +15,6 @@ const HeroSection = () => {
     navigate(`/produtos?marca=${encodeURIComponent(brand)}`);
   };
 
-  const brandCards = [
-    {
-      name: 'Rolex',
-      image: '/placeholder.svg',
-      description: 'Luxo e precisão suíça'
-    },
-    {
-      name: 'Patek Philippe',
-      image: '/placeholder.svg',
-      description: 'Alta relojoaria'
-    },
-    {
-      name: 'Omega',
-      image: '/placeholder.svg',
-      description: 'Precisão espacial'
-    }
-  ];
-
   return (
     <section className="relative min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-100 overflow-hidden">
       {/* Background Pattern */}
@@ -60,7 +42,7 @@ const HeroSection = () => {
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
                 Relógios de
-                <span className="block bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+                <span className="block text-neutral-900">
                   Luxo
                 </span>
               </motion.h1>
@@ -76,13 +58,13 @@ const HeroSection = () => {
               </motion.p>
 
               <motion.div
-                className="flex flex-col sm:flex-row gap-4 mb-12"
+                className="flex flex-col sm:flex-row gap-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
               >
                 <motion.button
-                  className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-4 rounded-full font-semibold text-lg font-outfit hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-lg"
+                  className="bg-neutral-900 text-white px-8 py-4 rounded-full font-semibold text-lg font-outfit hover:bg-neutral-800 transition-all duration-300 shadow-lg"
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleExploreProducts}
@@ -98,46 +80,6 @@ const HeroSection = () => {
                 >
                   Ver Rolex
                 </motion.button>
-              </motion.div>
-
-              {/* Brand Cards */}
-              <motion.div
-                className="grid grid-cols-1 sm:grid-cols-3 gap-4"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.8 }}
-              >
-                {brandCards.map((brand, index) => (
-                  <motion.div
-                    key={brand.name}
-                    className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-200 cursor-pointer group shadow-sm hover:shadow-md transition-all duration-300"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.9 + index * 0.1 }}
-                    whileHover={{ y: -5, scale: 1.02 }}
-                    onClick={() => handleExploreBrand(brand.name)}
-                  >
-                    <div className="text-center">
-                      <h3 className="text-neutral-900 font-semibold font-outfit mb-2 text-lg">
-                        {brand.name}
-                      </h3>
-                      <p className="text-neutral-600 text-sm font-outfit mb-4">
-                        {brand.description}
-                      </p>
-                      <motion.button
-                        className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-6 py-2 rounded-full font-semibold text-sm font-outfit hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-md"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleExploreBrand(brand.name);
-                        }}
-                      >
-                        CONFIRA
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                ))}
               </motion.div>
             </motion.div>
           </div>

@@ -22,11 +22,7 @@ interface BrandCategory {
   products_count: number;
 }
 
-interface BrandCategoryCarouselProps {
-  category?: BrandCategory;
-}
-
-const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ category }) => {
+const BrandCategoryCarousel: React.FC = () => {
   const { categories, loading } = useBrandCategories(true);
   const navigate = useNavigate();
 
