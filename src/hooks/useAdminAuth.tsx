@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ADMIN_CONFIG } from '@/config/admin';
 
 export const useAdminAuth = () => {
   const navigate = useNavigate();
@@ -48,22 +47,14 @@ export const useAdminAuth = () => {
 
   const checkUserRole = async (authUser: any) => {
     try {
-      // Verificar se é admin pelo UID configurado
-      const isAdminById = authUser.id === ADMIN_CONFIG.ADMIN_UID;
-      
-      if (isAdminById) {
-        setUser(authUser);
-        return;
-      }
-
-      // Verificar pelo perfil no banco
-      const { data: profile } = await supabase
+      // Verificar perfil no banco usando RLS
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
         .single();
 
-      if (!profile || profile.role !== 'admin') {
+      if (error || !profile || profile.role !== 'admin') {
         toast({
           title: "Acesso negado",
           description: "Você não tem permissão para acessar o painel administrativo.",

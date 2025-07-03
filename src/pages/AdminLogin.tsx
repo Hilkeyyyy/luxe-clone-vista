@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Mail, ArrowLeft } from 'lucide-react';
-import { ADMIN_CONFIG } from '@/config/admin';
+import { rateLimiter } from '@/utils/security';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -15,40 +16,43 @@ const AdminLogin = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Rate limiting
+    const userKey = `login_${email}`;
+    if (rateLimiter.isRateLimited(userKey)) {
+      toast({
+        title: "Muitas tentativas",
+        description: "Aguarde um momento antes de tentar novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
       if (error) throw error;
 
       if (data.user) {
-        // Verificar se é admin pelo UID configurado
-        const isAdminById = data.user.id === ADMIN_CONFIG.ADMIN_UID;
-        
-        if (isAdminById) {
-          toast({
-            title: "Login realizado com sucesso",
-            description: "Redirecionando para o painel administrativo...",
-          });
-          navigate('/admin');
-          return;
-        }
-
-        // Verificar pelo perfil no banco
-        const { data: profile } = await supabase
+        // Verificar se é admin pelo perfil no banco
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', data.user.id)
           .single();
 
-        if (!profile || profile.role !== 'admin') {
+        if (profileError || !profile || profile.role !== 'admin') {
           await supabase.auth.signOut();
           throw new Error('Acesso negado. Apenas administradores podem acessar.');
         }
+
+        // Reset rate limiting em caso de sucesso
+        rateLimiter.reset(userKey);
 
         toast({
           title: "Login realizado com sucesso",
@@ -58,6 +62,7 @@ const AdminLogin = () => {
         navigate('/admin');
       }
     } catch (error: any) {
+      console.error('Erro no login:', error);
       toast({
         title: "Erro no login",
         description: error.message || "Credenciais inválidas.",
@@ -114,6 +119,7 @@ const AdminLogin = () => {
                   className="w-full pl-12 pr-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
                   placeholder="admin@example.com"
                   required
+                  maxLength={320}
                 />
               </div>
             </div>
@@ -132,6 +138,7 @@ const AdminLogin = () => {
                   className="w-full pl-12 pr-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
                   placeholder="••••••••"
                   required
+                  maxLength={128}
                 />
               </div>
             </div>
@@ -148,9 +155,6 @@ const AdminLogin = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-neutral-600">
               Apenas administradores autorizados podem acessar este painel.
-            </p>
-            <p className="text-xs text-neutral-500 mt-2">
-              ID Admin: {ADMIN_CONFIG.ADMIN_UID.substring(0, 8)}...
             </p>
           </div>
         </motion.div>

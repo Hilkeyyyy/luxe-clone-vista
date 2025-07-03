@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ADMIN_CONFIG } from '@/config/admin';
 
 interface AuthUser {
   id: string;
@@ -50,28 +49,34 @@ export const useAuthCheck = () => {
 
   const checkUserRole = async (authUser: any) => {
     try {
-      const isAdminById = authUser.id === ADMIN_CONFIG.ADMIN_UID;
-      
-      const { data: profile } = await supabase
+      // Buscar perfil do usuário
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
         .single();
 
-      const isAdminByRole = profile?.role === 'admin';
-
-      setUser({
-        id: authUser.id,
-        email: authUser.email,
-        isAdmin: isAdminById || isAdminByRole,
-        profile: profile || undefined
-      });
+      if (error) {
+        console.error('Erro ao buscar perfil:', error);
+        setUser({
+          id: authUser.id,
+          email: authUser.email,
+          isAdmin: false,
+        });
+      } else {
+        setUser({
+          id: authUser.id,
+          email: authUser.email,
+          isAdmin: profile?.role === 'admin',
+          profile: profile || undefined
+        });
+      }
     } catch (error) {
       console.error('Erro ao verificar perfil:', error);
       setUser({
         id: authUser.id,
         email: authUser.email,
-        isAdmin: authUser.id === ADMIN_CONFIG.ADMIN_UID,
+        isAdmin: false,
       });
     } finally {
       setLoading(false);
