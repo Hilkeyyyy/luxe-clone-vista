@@ -16,6 +16,7 @@ interface ProductCardProps {
   isNew?: boolean;
   image?: string;
   clone_category?: string;
+  stock_status?: string;
 }
 
 const ProductCard = ({ 
@@ -28,7 +29,8 @@ const ProductCard = ({
   delay = 0, 
   isNew = false,
   image,
-  clone_category
+  clone_category,
+  stock_status = 'in_stock'
 }: ProductCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -101,7 +103,8 @@ const ProductCard = ({
         selected_size: '',
         quantity: 1,
         brand: brand,
-        clone_category: clone_category
+        clone_category: clone_category,
+        stock_status: stock_status
       });
     }
 
@@ -147,6 +150,33 @@ const ProductCard = ({
     }
   };
 
+  const getStockBadge = (status: string) => {
+    switch (status) {
+      case 'in_stock':
+        return {
+          label: 'Em Estoque',
+          color: 'bg-green-600 text-white'
+        };
+      case 'low_stock':
+        return {
+          label: 'Pouco Estoque',
+          color: 'bg-yellow-600 text-white'
+        };
+      case 'out_of_stock':
+        return {
+          label: 'Fora de Estoque',
+          color: 'bg-red-600 text-white'
+        };
+      default:
+        return {
+          label: 'Em Estoque',
+          color: 'bg-green-600 text-white'
+        };
+    }
+  };
+
+  const stockBadge = getStockBadge(stock_status);
+
   return (
     <motion.div
       className={`bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer border border-neutral-100 ${
@@ -176,6 +206,10 @@ const ProductCard = ({
               -{discountPercentage}%
             </div>
           )}
+          {/* Stock Status Badge */}
+          <div className={`px-3 py-1 rounded-full text-xs font-outfit font-semibold shadow-lg ${stockBadge.color}`}>
+            {stockBadge.label}
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -207,6 +241,7 @@ const ProductCard = ({
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.8 }}
+              disabled={stock_status === 'out_of_stock'}
             >
               {isAddedToCart ? <Check size={18} /> : <ShoppingCart size={18} />}
             </motion.button>
@@ -267,28 +302,35 @@ const ProductCard = ({
           
           <motion.button
             className={`px-4 py-2 rounded-xl font-outfit font-semibold transition-all text-sm border-2 ${
-              isAddedToCart 
-                ? 'bg-green-50 border-green-300 text-green-700' 
-                : 'bg-neutral-900 border-neutral-900 text-white hover:bg-neutral-800'
+              stock_status === 'out_of_stock'
+                ? 'bg-neutral-100 border-neutral-300 text-neutral-500 cursor-not-allowed'
+                : isAddedToCart 
+                  ? 'bg-green-50 border-green-300 text-green-700' 
+                  : 'bg-neutral-900 border-neutral-900 text-white hover:bg-neutral-800'
             }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={stock_status !== 'out_of_stock' ? { scale: 1.05 } : {}}
+            whileTap={stock_status !== 'out_of_stock' ? { scale: 0.95 } : {}}
             onClick={(e) => {
               e.stopPropagation();
-              if (!isAddedToCart) {
+              if (!isAddedToCart && stock_status !== 'out_of_stock') {
                 addToCart(e);
               }
             }}
+            disabled={stock_status === 'out_of_stock'}
           >
             <AnimatePresence mode="wait">
               <motion.span
-                key={isAddedToCart ? 'added' : 'add'}
+                key={stock_status === 'out_of_stock' ? 'unavailable' : isAddedToCart ? 'added' : 'add'}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
               >
-                {isAddedToCart ? 'Adicionado' : 'Adicionar'}
+                {stock_status === 'out_of_stock' 
+                  ? 'Indisponível' 
+                  : isAddedToCart 
+                    ? 'Adicionado' 
+                    : 'Adicionar'}
               </motion.span>
             </AnimatePresence>
           </motion.button>

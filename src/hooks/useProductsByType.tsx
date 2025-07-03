@@ -12,6 +12,7 @@ interface Product {
   is_new: boolean;
   is_featured: boolean;
   clone_category?: string;
+  stock_status: string;
   created_at: string;
 }
 

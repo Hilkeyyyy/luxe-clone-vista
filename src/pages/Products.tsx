@@ -19,6 +19,7 @@ interface Product {
   is_new: boolean;
   clone_category?: string;
   brand_category_id?: string;
+  stock_status: string;
   created_at: string;
 }
 
@@ -29,7 +30,7 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBrandCategory, setSelectedBrandCategory] = useState('');
   const [selectedCloneCategory, setSelectedCloneCategory] = useState('');
-  const [priceRange, setPriceRange] = useState([0, 10000]);
+  const [selectedStockStatus, setSelectedStockStatus] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('newest');
 
@@ -56,7 +57,7 @@ const Products = () => {
 
   useEffect(() => {
     filterProducts();
-  }, [products, selectedBrandCategory, selectedCloneCategory, priceRange, sortBy]);
+  }, [products, selectedBrandCategory, selectedCloneCategory, selectedStockStatus, sortBy]);
 
   const fetchProducts = async () => {
     try {
@@ -88,8 +89,10 @@ const Products = () => {
       filtered = filtered.filter(p => p.clone_category === selectedCloneCategory);
     }
 
-    // Filter by price range
-    filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
+    // Filter by stock status
+    if (selectedStockStatus) {
+      filtered = filtered.filter(p => p.stock_status === selectedStockStatus);
+    }
 
     // Sort products
     switch (sortBy) {
@@ -112,7 +115,7 @@ const Products = () => {
   const clearFilters = () => {
     setSelectedBrandCategory('');
     setSelectedCloneCategory('');
-    setPriceRange([0, 10000]);
+    setSelectedStockStatus('');
     setSortBy('newest');
   };
 
@@ -128,6 +131,15 @@ const Products = () => {
       return `Explore nossa coleção completa de relógios ${brandFromUrl}`;
     }
     return 'Descubra nossa coleção completa de relógios premium';
+  };
+
+  const getStockStatusLabel = (status: string) => {
+    switch (status) {
+      case 'in_stock': return 'Em Estoque';
+      case 'low_stock': return 'Pouco Estoque';
+      case 'out_of_stock': return 'Fora de Estoque';
+      default: return status;
+    }
   };
 
   if (loading) {
@@ -221,26 +233,21 @@ const Products = () => {
                 </select>
               </div>
 
-              {/* Price Range */}
+              {/* Stock Status Filter */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Faixa de Preço
+                  Status do Estoque
                 </label>
-                <div className="space-y-2">
-                  <input
-                    type="range"
-                    min="0"
-                    max="10000"
-                    step="100"
-                    value={priceRange[1]}
-                    onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-sm text-neutral-600">
-                    <span>R$ {priceRange[0].toLocaleString()}</span>
-                    <span>R$ {priceRange[1].toLocaleString()}</span>
-                  </div>
-                </div>
+                <select
+                  value={selectedStockStatus}
+                  onChange={(e) => setSelectedStockStatus(e.target.value)}
+                  className="w-full p-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
+                >
+                  <option value="">Todos os status</option>
+                  <option value="in_stock">Em Estoque</option>
+                  <option value="low_stock">Pouco Estoque</option>
+                  <option value="out_of_stock">Fora de Estoque</option>
+                </select>
               </div>
             </div>
           </motion.div>
@@ -315,6 +322,7 @@ const Products = () => {
                   image={product.images[0]}
                   isNew={product.is_new}
                   clone_category={product.clone_category}
+                  stock_status={product.stock_status}
                   delay={index * 0.1}
                 />
               ))}

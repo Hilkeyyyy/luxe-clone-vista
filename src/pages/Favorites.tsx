@@ -1,14 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Heart, ShoppingCart, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { Heart, ShoppingBag } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Product {
   id: string;
@@ -18,124 +16,58 @@ interface Product {
   original_price?: number;
   images: string[];
   is_new: boolean;
+  is_featured: boolean;
   clone_category?: string;
+  stock_status: string;
+  created_at: string;
 }
 
 const Favorites = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadFavorites();
+    fetchFavoriteProducts();
+    window.addEventListener('storage', fetchFavoriteProducts);
+    return () => window.removeEventListener('storage', fetchFavoriteProducts);
   }, []);
 
-  const loadFavorites = async () => {
-    const favoriteIds = JSON.parse(localStorage.getItem('favorites') || '[]');
-    setFavorites(favoriteIds);
-
-    if (favoriteIds.length === 0) {
-      setLoading(false);
-      return;
-    }
-
+  const fetchFavoriteProducts = async () => {
     try {
+      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+      
+      if (favorites.length === 0) {
+        setFavoriteProducts([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .in('id', favoriteIds)
+        .in('id', favorites)
         .eq('in_stock', true);
 
       if (error) throw error;
-      setProducts(data || []);
+      setFavoriteProducts(data || []);
     } catch (error) {
-      console.error('Erro ao carregar favoritos:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar seus favoritos.",
-        variant: "destructive",
-      });
+      console.error('Erro ao buscar produtos favoritos:', error);
+      setFavoriteProducts([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const removeFromFavorites = (productId: string) => {
-    const updatedFavorites = favorites.filter(id => id !== productId);
-    setFavorites(updatedFavorites);
-    setProducts(products.filter(p => p.id !== productId));
-    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-    window.dispatchEvent(new Event('storage'));
-    toast({
-      title: "Removido dos favoritos",
-      description: "Produto removido da sua lista de favoritos.",
-    });
-  };
-
-  const addAllToCart = () => {
-    const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
-    
-    products.forEach(product => {
-      const existingItemIndex = cartItems.findIndex((item: any) => item.product_id === product.id);
-      
-      if (existingItemIndex >= 0) {
-        cartItems[existingItemIndex].quantity += 1;
-      } else {
-        cartItems.push({
-          id: Date.now().toString() + Math.random(),
-          product_id: product.id,
-          product_name: product.name,
-          product_price: product.price,
-          product_image: product.images[0] || '',
-          selected_color: '',
-          selected_size: '',
-          quantity: 1,
-          brand: product.brand,
-          clone_category: product.clone_category
-        });
-      }
-    });
-
-    localStorage.setItem('cartItems', JSON.stringify(cartItems));
-    window.dispatchEvent(new Event('storage'));
-    toast({
-      title: "Produtos adicionados!",
-      description: `${products.length} produtos adicionados à sua lista de interesse.`,
-    });
-  };
-
-  const clearAllFavorites = () => {
-    setFavorites([]);
-    setProducts([]);
-    localStorage.setItem('favorites', JSON.stringify([]));
-    window.dispatchEvent(new Event('storage'));
-    toast({
-      title: "Favoritos limpos",
-      description: "Todos os favoritos foram removidos.",
-    });
-  };
-
-  const formatProductsForCard = (products: Product[]) => {
-    return products.map(product => ({
-      id: product.id,
-      name: product.name,
-      brand: product.brand,
-      price: `R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-      originalPrice: product.original_price 
-        ? `R$ ${product.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
-        : undefined,
-      image: product.images[0] || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=400&fit=crop`,
-      isNew: product.is_new
-    }));
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-white font-outfit">
         <Header />
-        <LoadingSpinner />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-neutral-600">Carregando seus favoritos...</p>
+          </div>
+        </div>
         <Footer />
       </div>
     );
@@ -146,79 +78,74 @@ const Favorites = () => {
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
+        {/* Page Header */}
         <motion.div 
-          className="flex items-center justify-between mb-8"
+          className="mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.6 }}
         >
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center space-x-2 text-neutral-600 hover:text-neutral-900 transition-colors"
-            >
-              <ArrowLeft size={20} />
-              <span>Voltar</span>
-            </button>
-            <h1 className="text-3xl font-bold text-neutral-900">Meus Favoritos</h1>
+          <div className="flex items-center mb-4">
+            <Heart className="w-8 h-8 text-red-600 mr-3" fill="currentColor" />
+            <h1 className="text-4xl font-bold text-neutral-900">Meus Favoritos</h1>
           </div>
-          
-          {products.length > 0 && (
-            <div className="flex space-x-3">
-              <button
-                onClick={addAllToCart}
-                className="flex items-center space-x-2 bg-neutral-900 text-white px-4 py-2 rounded-lg hover:bg-neutral-800 transition-colors"
-              >
-                <ShoppingCart size={18} />
-                <span>Adicionar Todos ao Carrinho</span>
-              </button>
-              <button
-                onClick={clearAllFavorites}
-                className="flex items-center space-x-2 text-red-600 hover:text-red-800 px-4 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
-              >
-                <Trash2 size={18} />
-                <span>Limpar Favoritos</span>
-              </button>
-            </div>
-          )}
+          <p className="text-neutral-600 text-lg">
+            {favoriteProducts.length > 0 
+              ? `Você tem ${favoriteProducts.length} produto${favoriteProducts.length !== 1 ? 's' : ''} favoritado${favoriteProducts.length !== 1 ? 's' : ''}`
+              : 'Você ainda não favoritou nenhum produto'
+            }
+          </p>
         </motion.div>
 
-        {products.length === 0 ? (
+        {favoriteProducts.length > 0 ? (
           <motion.div 
-            className="text-center py-16"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <Heart size={64} className="mx-auto text-neutral-300 mb-4" />
-            <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
-              Nenhum produto favoritado
-            </h2>
-            <p className="text-neutral-600 mb-8">
-              Adicione produtos aos favoritos para acessá-los rapidamente
-            </p>
-            <button 
-              onClick={() => navigate('/')}
-              className="px-6 py-3 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors"
-            >
-              Ver Produtos
-            </button>
-          </motion.div>
-        ) : (
-          <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            {formatProductsForCard(products).map((product, index) => (
+            {favoriteProducts.map((product, index) => (
               <ProductCard
                 key={product.id}
-                {...product}
+                id={product.id}
+                name={product.name}
+                brand={product.brand}
+                price={`R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                originalPrice={product.original_price 
+                  ? `R$ ${product.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+                  : undefined}
+                image={product.images[0]}
+                isNew={product.is_new}
+                featured={product.is_featured}
+                clone_category={product.clone_category}
+                stock_status={product.stock_status}
                 delay={index * 0.1}
               />
             ))}
+          </motion.div>
+        ) : (
+          <motion.div 
+            className="text-center py-20"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <div className="max-w-md mx-auto">
+              <Heart className="w-24 h-24 text-neutral-300 mx-auto mb-6" />
+              <h2 className="text-2xl font-bold text-neutral-900 mb-4">
+                Nenhum favorito ainda
+              </h2>
+              <p className="text-neutral-600 mb-8">
+                Explore nossa coleção e favorite os relógios que mais gostar para encontrá-los facilmente aqui.
+              </p>
+              <Link
+                to="/produtos"
+                className="inline-flex items-center px-6 py-3 bg-neutral-900 text-white rounded-xl font-semibold hover:bg-neutral-800 transition-colors"
+              >
+                <ShoppingBag className="w-5 h-5 mr-2" />
+                Explorar Produtos
+              </Link>
+            </div>
           </motion.div>
         )}
       </div>
