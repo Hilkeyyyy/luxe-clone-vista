@@ -6,7 +6,22 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useBrandCategories } from '@/hooks/useBrandCategories';
 import { Button } from '@/components/ui/button';
 
-const BrandCategoryCarousel = () => {
+interface BrandCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image_url: string;
+  order_position: number;
+  is_active: boolean;
+  products_count: number;
+}
+
+interface BrandCategoryCarouselProps {
+  category?: BrandCategory;
+}
+
+const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ category }) => {
   const { categories, loading } = useBrandCategories(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -23,7 +38,7 @@ const BrandCategoryCarousel = () => {
     }
   };
 
-  const handleCategoryClick = (category: any) => {
+  const handleCategoryClick = (category: BrandCategory) => {
     navigate(`/produtos?marca=${encodeURIComponent(category.name)}`);
   };
 
@@ -38,7 +53,7 @@ const BrandCategoryCarousel = () => {
   if (!categories.length) return null;
 
   return (
-    <div className="relative px-4 sm:px-6 lg:px-8">
+    <div className="relative px-4 sm:px-6 lg:px-8 mb-12">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-neutral-900 font-outfit">
           Marcas em Destaque
@@ -65,8 +80,11 @@ const BrandCategoryCarousel = () => {
 
       <div
         ref={scrollRef}
-        className="flex overflow-x-auto scrollbar-hide space-x-6 pb-4"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        className="flex overflow-x-auto space-x-6 pb-4"
+        style={{ 
+          scrollbarWidth: 'none', 
+          msOverflowStyle: 'none',
+        }}
       >
         {categories.map((category, index) => (
           <motion.div
@@ -137,15 +155,14 @@ const BrandCategoryCarousel = () => {
         ))}
       </div>
 
-      <style jsx>{`
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
+      {/* CSS para esconder scrollbar usando classes do Tailwind */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .flex.overflow-x-auto::-webkit-scrollbar {
+            display: none;
+          }
+        `
+      }} />
     </div>
   );
 };
