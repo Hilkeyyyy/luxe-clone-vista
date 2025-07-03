@@ -5,8 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const CLONE_CATEGORIES = ['ETA Básico', 'Clone', 'Super Clone'];
-
 interface BasicProductInfoProps {
   name: string;
   brand: string;
@@ -29,54 +27,59 @@ const BasicProductInfo: React.FC<BasicProductInfoProps> = ({
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label htmlFor="name">Nome do Produto *</Label>
+          <Label htmlFor="name" className="text-sm font-medium">
+            Nome do Produto <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="name"
             value={name}
             onChange={(e) => onUpdate('name', e.target.value)}
+            placeholder="Ex: Rolex GMT-Master II 116710LN"
+            className="mt-1"
             required
           />
         </div>
 
         <div>
-          <Label htmlFor="brand">Marca *</Label>
+          <Label htmlFor="brand" className="text-sm font-medium">
+            Marca <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="brand"
-            placeholder="Ex: Rolex, Omega, Cartier..."
             value={brand}
             onChange={(e) => onUpdate('brand', e.target.value)}
+            placeholder="Ex: Rolex"
+            className="mt-1"
             required
           />
-          <p className="text-xs text-neutral-500 mt-1">
-            Se a marca não existir, será criada automaticamente
-          </p>
         </div>
 
         <div>
-          <Label htmlFor="category">Categoria</Label>
+          <Label htmlFor="category" className="text-sm font-medium">
+            Categoria <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="category"
-            placeholder="Ex: Relógio de Pulso, Cronógrafo..."
             value={category}
             onChange={(e) => onUpdate('category', e.target.value)}
+            placeholder="Ex: Relógios"
+            className="mt-1"
+            required
           />
         </div>
 
         <div>
-          <Label htmlFor="clone_category">Tipo de Relógio *</Label>
-          <Select
-            value={clone_category}
-            onValueChange={(value) => onUpdate('clone_category', value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
+          <Label htmlFor="clone_category" className="text-sm font-medium">
+            Tipo de Clone
+          </Label>
+          <Select value={clone_category} onValueChange={(value) => onUpdate('clone_category', value)}>
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Selecione o tipo" />
             </SelectTrigger>
             <SelectContent>
-              {CLONE_CATEGORIES.map(category => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
+              <SelectItem value="Clone">Clone</SelectItem>
+              <SelectItem value="Super Clone">Super Clone</SelectItem>
+              <SelectItem value="ETA Básico">ETA Básico</SelectItem>
             </SelectContent>
           </Select>
         </div>

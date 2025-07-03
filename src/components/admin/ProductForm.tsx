@@ -1,6 +1,7 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 // Componentes refatorados
 import BasicProductInfo from './product-form/BasicProductInfo';
@@ -9,6 +10,7 @@ import ProductDescription from './product-form/ProductDescription';
 import ProductStatus from './product-form/ProductStatus';
 import ProductSpecifications from './product-form/ProductSpecifications';
 import ProductGallery from './product-form/ProductGallery';
+import ImageUpload from './product-form/ImageUpload';
 
 interface WatchSpecifications {
   modelo?: string;
@@ -110,10 +112,29 @@ const ProductForm: React.FC<ProductFormProps> = ({
     ...initialData
   });
 
+  const [errors, setErrors] = useState<string[]>([]);
+
+  const validateForm = (): boolean => {
+    const newErrors: string[] = [];
+
+    if (!formData.name.trim()) newErrors.push('Nome do produto é obrigatório');
+    if (!formData.brand.trim()) newErrors.push('Marca é obrigatória');
+    if (!formData.category.trim()) newErrors.push('Categoria é obrigatória');
+    if (!formData.price || formData.price <= 0) newErrors.push('Preço deve ser maior que zero');
+    if (!formData.images || formData.images.length === 0) newErrors.push('Pelo menos uma imagem é obrigatória');
+
+    setErrors(newErrors);
+    return newErrors.length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Garantir que arrays não sejam null
+    if (!validateForm()) {
+      return;
+    }
+    
+    // Garantir que arrays não sejam null e limpar dados
     const cleanedData = {
       ...formData,
       colors: formData.colors || [],
@@ -127,10 +148,17 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
   const handleBasicUpdate = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Limpar erros relacionados ao campo
+    if (errors.length > 0) {
+      setErrors([]);
+    }
   };
 
   const handlePricingUpdate = (field: string, value: number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors.length > 0) {
+      setErrors([]);
+    }
   };
 
   const handleStatusUpdate = (field: string, value: boolean | string) => {
@@ -145,6 +173,13 @@ const ProductForm: React.FC<ProductFormProps> = ({
         [key]: value || undefined
       }
     }));
+  };
+
+  const handleImagesChange = (images: string[]) => {
+    setFormData(prev => ({ ...prev, images }));
+    if (errors.length > 0) {
+      setErrors([]);
+    }
   };
 
   // Handlers para cores
@@ -194,6 +229,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Mostrar erros */}
+      {errors.length > 0 && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <ul className="list-disc list-inside space-y-1">
+              {errors.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Informações Básicas */}
         <BasicProductInfo
@@ -212,6 +261,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
         />
       </div>
 
+      {/* Upload de Imagens */}
+      <ImageUpload
+        images={formData.images}
+        onImagesChange={handleImagesChange}
+      />
+
       {/* Descrição */}
       <ProductDescription
         description={formData.description}
@@ -229,7 +284,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         onUpdate={handleStatusUpdate}
       />
 
-      {/* Especificações Técnicas */}
+      {/* Especificações Técnicas - Agora Opcionais */}
       <ProductSpecifications
         movement={formData.movement}
         diameter={formData.diameter}
@@ -240,17 +295,17 @@ const ProductForm: React.FC<ProductFormProps> = ({
         onSpecificationUpdate={handleSpecificationUpdate}
       />
 
-      {/* Galeria de Cores, Tamanhos e Imagens */}
+      {/* Cores e Tamanhos */}
       <ProductGallery
         colors={formData.colors}
         sizes={formData.sizes}
-        images={formData.images}
+        images={[]} // Não usado mais
         onAddColor={handleAddColor}
         onRemoveColor={handleRemoveColor}
         onAddSize={handleAddSize}
         onRemoveSize={handleRemoveSize}
-        onAddImage={handleAddImage}
-        onRemoveImage={handleRemoveImage}
+        onAddImage={() => {}} // Não usado mais
+        onRemoveImage={() => {}} // Não usado mais
       />
 
       {/* Botões de Ação */}

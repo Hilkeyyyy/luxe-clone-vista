@@ -9,29 +9,25 @@ import { Plus, X } from 'lucide-react';
 interface ProductGalleryProps {
   colors: string[];
   sizes: string[];
-  images: string[];
+  images: string[]; // Mantido para compatibilidade mas não usado
   onAddColor: (color: string) => void;
   onRemoveColor: (color: string) => void;
   onAddSize: (size: string) => void;
   onRemoveSize: (size: string) => void;
-  onAddImage: (image: string) => void;
-  onRemoveImage: (image: string) => void;
+  onAddImage: (image: string) => void; // Mantido para compatibilidade
+  onRemoveImage: (image: string) => void; // Mantido para compatibilidade
 }
 
 const ProductGallery: React.FC<ProductGalleryProps> = ({
   colors,
   sizes,
-  images,
   onAddColor,
   onRemoveColor,
   onAddSize,
   onRemoveSize,
-  onAddImage,
-  onRemoveImage
 }) => {
   const [newColor, setNewColor] = React.useState('');
   const [newSize, setNewSize] = React.useState('');
-  const [newImage, setNewImage] = React.useState('');
 
   const handleAddColor = () => {
     if (newColor.trim() && !colors.includes(newColor.trim())) {
@@ -47,51 +43,15 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
     }
   };
 
-  const handleAddImage = () => {
-    if (newImage.trim() && !images.includes(newImage.trim())) {
-      onAddImage(newImage.trim());
-      setNewImage('');
-    }
-  };
-
   return (
     <>
-      {/* Cores - Agora Opcional */}
-      {(colors && colors.length > 0) || newColor ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Cores Disponíveis</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex space-x-2">
-              <Input
-                placeholder="Digite uma cor..."
-                value={newColor}
-                onChange={(e) => setNewColor(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddColor())}
-              />
-              <Button type="button" onClick={handleAddColor} size="sm">
-                <Plus size={16} />
-              </Button>
-            </div>
-            {colors && colors.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {colors.map(color => (
-                  <Badge key={color} variant="secondary" className="flex items-center space-x-1">
-                    <span>{color}</span>
-                    <button type="button" onClick={() => onRemoveColor(color)}>
-                      <X size={12} />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="text-center p-4 border-2 border-dashed border-neutral-200 rounded-lg">
-          <p className="text-neutral-600 text-sm mb-2">Adicionar cores do produto</p>
-          <div className="flex justify-center space-x-2 max-w-sm mx-auto">
+      {/* Cores - Opcional */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cores Disponíveis (opcional)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex space-x-2">
             <Input
               placeholder="Digite uma cor..."
               value={newColor}
@@ -102,13 +62,25 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
               <Plus size={16} />
             </Button>
           </div>
-        </div>
-      )}
+          {colors && colors.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {colors.map(color => (
+                <Badge key={color} variant="secondary" className="flex items-center space-x-1">
+                  <span>{color}</span>
+                  <button type="button" onClick={() => onRemoveColor(color)}>
+                    <X size={12} />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Tamanhos */}
+      {/* Tamanhos - Opcional */}
       <Card>
         <CardHeader>
-          <CardTitle>Tamanhos Disponíveis</CardTitle>
+          <CardTitle>Tamanhos Disponíveis (opcional)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex space-x-2">
@@ -122,54 +94,18 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
               <Plus size={16} />
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {sizes.map(size => (
-              <Badge key={size} variant="secondary" className="flex items-center space-x-1">
-                <span>{size}</span>
-                <button type="button" onClick={() => onRemoveSize(size)}>
-                  <X size={12} />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Imagens */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Imagens do Produto</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex space-x-2">
-            <Input
-              placeholder="URL da imagem..."
-              value={newImage}
-              onChange={(e) => setNewImage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddImage())}
-            />
-            <Button type="button" onClick={handleAddImage} size="sm">
-              <Plus size={16} />
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {images.map((image, index) => (
-              <div key={index} className="relative">
-                <img
-                  src={image}
-                  alt={`Produto ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg border"
-                />
-                <button
-                  type="button"
-                  onClick={() => onRemoveImage(image)}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
+          {sizes && sizes.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {sizes.map(size => (
+                <Badge key={size} variant="secondary" className="flex items-center space-x-1">
+                  <span>{size}</span>
+                  <button type="button" onClick={() => onRemoveSize(size)}>
+                    <X size={12} />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </>

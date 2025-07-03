@@ -85,7 +85,7 @@ const ProductInfo = ({
       )}
 
       {/* Color Selection */}
-      {product.colors.length > 0 && (
+      {product.colors && product.colors.length > 0 && (
         <div className="space-y-3">
           <h3 className="font-outfit font-medium text-neutral-900">
             Cor: <span className="font-normal capitalize">{selectedColor}</span>
@@ -109,7 +109,7 @@ const ProductInfo = ({
       )}
 
       {/* Size Selection */}
-      {product.sizes.length > 0 && (
+      {product.sizes && product.sizes.length > 0 && (
         <div className="space-y-3">
           <h3 className="font-outfit font-medium text-neutral-900">
             Tamanho: <span className="font-normal">{selectedSize}</span>

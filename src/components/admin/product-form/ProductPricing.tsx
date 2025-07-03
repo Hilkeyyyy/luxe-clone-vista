@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CurrencyInput } from '@/components/ui/currency-input';
 
 interface ProductPricingProps {
   price: number;
@@ -22,21 +22,39 @@ const ProductPricing: React.FC<ProductPricingProps> = ({
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label htmlFor="price">Preço Atual *</Label>
-          <CurrencyInput
-            value={price}
-            onChange={(value) => onUpdate('price', value)}
-            placeholder="R$ 0,00"
+          <Label htmlFor="price" className="text-sm font-medium">
+            Preço de Venda <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="price"
+            type="number"
+            value={price || ''}
+            onChange={(e) => onUpdate('price', parseFloat(e.target.value) || 0)}
+            placeholder="0.00"
+            min="0"
+            step="0.01"
+            className="mt-1"
+            required
           />
         </div>
 
         <div>
-          <Label htmlFor="original_price">Preço Original</Label>
-          <CurrencyInput
-            value={original_price}
-            onChange={(value) => onUpdate('original_price', value)}
-            placeholder="R$ 0,00"
+          <Label htmlFor="original_price" className="text-sm font-medium">
+            Preço Original (opcional)
+          </Label>
+          <Input
+            id="original_price"
+            type="number"
+            value={original_price || ''}
+            onChange={(e) => onUpdate('original_price', parseFloat(e.target.value) || 0)}
+            placeholder="0.00"
+            min="0"
+            step="0.01"
+            className="mt-1"
           />
+          <p className="text-xs text-neutral-500 mt-1">
+            Apenas preencha se o produto estiver em promoção
+          </p>
         </div>
       </CardContent>
     </Card>
