@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { secureLog } from '@/utils/secureLogger';
 
 interface Product {
   id: string;
@@ -33,11 +34,14 @@ export const useProductsByType = () => {
         .from('products')
         .select('*')
         .eq('is_new', true)
-        .eq('in_stock', true)
+        .neq('stock_status', 'out_of_stock')
         .order('created_at', { ascending: false })
         .limit(8);
 
-      if (newError) throw newError;
+      if (newError) {
+        secureLog.error('Erro ao buscar produtos novos', newError);
+        throw newError;
+      }
       setNewProducts(newData || []);
 
       // Buscar produtos em destaque (is_featured = true)
@@ -45,10 +49,13 @@ export const useProductsByType = () => {
         .from('products')
         .select('*')
         .eq('is_featured', true)
-        .eq('in_stock', true)
+        .neq('stock_status', 'out_of_stock')
         .order('created_at', { ascending: false });
 
-      if (featuredError) throw featuredError;
+      if (featuredError) {
+        secureLog.error('Erro ao buscar produtos em destaque', featuredError);
+        throw featuredError;
+      }
       setFeaturedProducts(featuredData || []);
 
       // Buscar produtos em oferta (que têm original_price > price)
@@ -56,11 +63,14 @@ export const useProductsByType = () => {
         .from('products')
         .select('*')
         .not('original_price', 'is', null)
-        .eq('in_stock', true)
+        .neq('stock_status', 'out_of_stock')
         .order('created_at', { ascending: false })
         .limit(8);
 
-      if (offerError) throw offerError;
+      if (offerError) {
+        secureLog.error('Erro ao buscar produtos em oferta', offerError);
+        throw offerError;
+      }
       
       // Filtrar apenas produtos que realmente estão em oferta
       const filteredOffers = offerData?.filter(product => 
@@ -70,7 +80,7 @@ export const useProductsByType = () => {
       setOfferProducts(filteredOffers);
 
     } catch (error) {
-      console.error('Erro ao buscar produtos por tipo:', error);
+      secureLog.error('Erro crítico ao buscar produtos por tipo', error);
     } finally {
       setLoading(false);
     }

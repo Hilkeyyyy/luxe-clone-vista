@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { secureLog } from '@/utils/secureLogger';
+import { validateRequestOrigin } from '@/utils/securityHeaders';
 
 export const useAdminAuth = () => {
   const navigate = useNavigate();
@@ -11,6 +13,13 @@ export const useAdminAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Validar origem da requisição
+    if (!validateRequestOrigin()) {
+      secureLog.warn('Tentativa de acesso admin de origem não autorizada');
+      navigate('/');
+      return;
+    }
+
     checkAuth();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -29,8 +38,14 @@ export const useAdminAuth = () => {
 
   const checkAuth = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
       
+      if (error) {
+        secureLog.error('Erro ao verificar sessão de admin', error);
+        navigate('/admin/login');
+        return;
+      }
+
       if (!session) {
         navigate('/admin/login');
         return;
@@ -38,7 +53,7 @@ export const useAdminAuth = () => {
 
       await checkUserRole(session.user);
     } catch (error) {
-      console.error('Erro ao verificar autenticação:', error);
+      secureLog.error('Erro crítico na verificação de autenticação admin', error);
       navigate('/admin/login');
     } finally {
       setLoading(false);
@@ -55,6 +70,12 @@ export const useAdminAuth = () => {
         .single();
 
       if (error || !profile || profile.role !== 'admin') {
+        secureLog.warn('Tentativa de acesso admin sem permissão', { 
+          userId: authUser.id,
+          hasProfile: !!profile,
+          role: profile?.role 
+        });
+        
         toast({
           title: "Acesso negado",
           description: "Você não tem permissão para acessar o painel administrativo.",
@@ -64,9 +85,10 @@ export const useAdminAuth = () => {
         return;
       }
 
+      secureLog.info('Acesso admin autorizado', { userId: authUser.id });
       setUser(authUser);
     } catch (error) {
-      console.error('Erro ao verificar perfil:', error);
+      secureLog.error('Erro ao verificar perfil de admin', error);
       toast({
         title: "Erro de autenticação",
         description: "Erro ao verificar permissões de administrador.",
@@ -78,14 +100,20 @@ export const useAdminAuth = () => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        secureLog.error('Erro no logout de admin', error);
+        throw error;
+      }
+      
+      secureLog.info('Logout de admin realizado com sucesso');
       navigate('/');
       toast({
         title: "Logout realizado",
         description: "Você foi desconectado com sucesso.",
       });
     } catch (error) {
-      console.error('Erro no logout:', error);
+      secureLog.error('Erro crítico no logout de admin', error);
       toast({
         title: "Erro",
         description: "Erro ao fazer logout.",

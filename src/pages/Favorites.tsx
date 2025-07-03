@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import { supabase } from '@/integrations/supabase/client';
+import { secureLog } from '@/utils/secureLogger';
 
 interface Product {
   id: string;
@@ -42,16 +43,31 @@ const Favorites = () => {
         return;
       }
 
+      // Validar que os IDs são válidos
+      const validFavorites = favorites.filter((id: string) => 
+        typeof id === 'string' && id.length > 0
+      );
+
+      if (validFavorites.length === 0) {
+        setFavoriteProducts([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .in('id', favorites)
-        .eq('in_stock', true);
+        .in('id', validFavorites)
+        .neq('stock_status', 'out_of_stock');
 
-      if (error) throw error;
+      if (error) {
+        secureLog.error('Erro ao buscar produtos favoritos', error);
+        throw error;
+      }
+      
       setFavoriteProducts(data || []);
     } catch (error) {
-      console.error('Erro ao buscar produtos favoritos:', error);
+      secureLog.error('Erro crítico ao buscar favoritos', error);
       setFavoriteProducts([]);
     } finally {
       setLoading(false);

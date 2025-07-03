@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Mail, ArrowLeft } from 'lucide-react';
 import { rateLimiter } from '@/utils/security';
+import { secureLog } from '@/utils/secureLogger';
+import { validateRequestOrigin } from '@/utils/securityHeaders';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -17,12 +19,42 @@ const AdminLogin = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Rate limiting
-    const userKey = `login_${email}`;
+    // Validar origem da requisição
+    if (!validateRequestOrigin()) {
+      toast({
+        title: "Erro de segurança",
+        description: "Origem da requisição não autorizada.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Rate limiting baseado no email
+    const userKey = `login_${email.toLowerCase()}`;
     if (rateLimiter.isRateLimited(userKey)) {
       toast({
         title: "Muitas tentativas",
         description: "Aguarde um momento antes de tentar novamente.",
+        variant: "destructive",
+      });
+      secureLog.warn('Tentativa de login bloqueada por rate limiting', { email });
+      return;
+    }
+
+    // Validação básica de entrada
+    if (!email || !password) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Email e senha são obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (email.length > 320 || password.length > 128) {
+      toast({
+        title: "Dados inválidos",
+        description: "Email ou senha muito longos.",
         variant: "destructive",
       });
       return;
@@ -32,11 +64,14 @@ const AdminLogin = () => {
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        secureLog.error('Erro no login de administrador', error, { email });
+        throw error;
+      }
 
       if (data.user) {
         // Verificar se é admin pelo perfil no banco
@@ -48,11 +83,14 @@ const AdminLogin = () => {
 
         if (profileError || !profile || profile.role !== 'admin') {
           await supabase.auth.signOut();
+          secureLog.warn('Tentativa de acesso admin negada', { email, userId: data.user.id });
           throw new Error('Acesso negado. Apenas administradores podem acessar.');
         }
 
         // Reset rate limiting em caso de sucesso
         rateLimiter.reset(userKey);
+        
+        secureLog.info('Login de administrador realizado com sucesso', { userId: data.user.id });
 
         toast({
           title: "Login realizado com sucesso",
@@ -62,10 +100,15 @@ const AdminLogin = () => {
         navigate('/admin');
       }
     } catch (error: any) {
-      console.error('Erro no login:', error);
+      secureLog.error('Falha na autenticação de administrador', error, { email });
+      
+      const errorMessage = error.message?.includes('Invalid login credentials') 
+        ? 'Credenciais inválidas.' 
+        : error.message || 'Erro interno do servidor.';
+        
       toast({
         title: "Erro no login",
-        description: error.message || "Credenciais inválidas.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -120,6 +163,7 @@ const AdminLogin = () => {
                   placeholder="admin@example.com"
                   required
                   maxLength={320}
+                  autoComplete="email"
                 />
               </div>
             </div>
@@ -139,6 +183,7 @@ const AdminLogin = () => {
                   placeholder="••••••••"
                   required
                   maxLength={128}
+                  autoComplete="current-password"
                 />
               </div>
             </div>
