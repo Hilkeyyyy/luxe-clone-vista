@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Filter, Grid, List } from 'lucide-react';
 import Header from '@/components/Header';
@@ -22,6 +23,7 @@ interface Product {
 }
 
 const Products = () => {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,9 +35,24 @@ const Products = () => {
 
   const { categories } = useBrandCategories();
 
+  // Ler parâmetro de marca da URL
+  const brandFromUrl = searchParams.get('marca');
+
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    // Se há uma marca na URL, filtrar automaticamente por ela
+    if (brandFromUrl && categories.length > 0) {
+      const brandCategory = categories.find(cat => 
+        cat.name.toLowerCase() === brandFromUrl.toLowerCase()
+      );
+      if (brandCategory) {
+        setSelectedBrandCategory(brandCategory.id);
+      }
+    }
+  }, [brandFromUrl, categories]);
 
   useEffect(() => {
     filterProducts();
@@ -99,6 +116,20 @@ const Products = () => {
     setSortBy('newest');
   };
 
+  const getPageTitle = () => {
+    if (brandFromUrl) {
+      return `Relógios ${brandFromUrl}`;
+    }
+    return 'Todos os Produtos';
+  };
+
+  const getPageDescription = () => {
+    if (brandFromUrl) {
+      return `Explore nossa coleção completa de relógios ${brandFromUrl}`;
+    }
+    return 'Descubra nossa coleção completa de relógios premium';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white font-outfit">
@@ -126,9 +157,9 @@ const Products = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-4xl font-bold text-neutral-900 mb-4">Todos os Produtos</h1>
+          <h1 className="text-4xl font-bold text-neutral-900 mb-4">{getPageTitle()}</h1>
           <p className="text-neutral-600 text-lg">
-            Descubra nossa coleção completa de relógios premium
+            {getPageDescription()}
           </p>
         </motion.div>
 
@@ -176,14 +207,14 @@ const Products = () => {
               {/* Clone Category Filter */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Categoria Clone
+                  Tipo de Relógio
                 </label>
                 <select
                   value={selectedCloneCategory}
                   onChange={(e) => setSelectedCloneCategory(e.target.value)}
                   className="w-full p-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
                 >
-                  <option value="">Todas as categorias</option>
+                  <option value="">Todos os tipos</option>
                   <option value="ETA Base">ETA Base</option>
                   <option value="Clone">Clone</option>
                   <option value="Super Clone">Super Clone</option>
