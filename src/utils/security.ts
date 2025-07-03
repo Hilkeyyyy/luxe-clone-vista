@@ -89,6 +89,10 @@ class RateLimiter {
     this.requests.set(key, validRequests);
     return false;
   }
+
+  reset(key: string): void {
+    this.requests.delete(key);
+  }
 }
 
 export const rateLimiter = new RateLimiter();

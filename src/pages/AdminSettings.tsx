@@ -7,9 +7,7 @@ import { ArrowLeft, Settings, MessageSquare, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import GeneralSettings from '@/components/admin/settings/GeneralSettings';
-import WhatsAppSettings from '@/components/admin/settings/WhatsAppSettings';
-import CompanySettings from '@/components/admin/settings/CompanySettings';
+import SystemSettings from '@/components/admin/SystemSettings';
 
 const AdminSettings = () => {
   const navigate = useNavigate();
@@ -43,55 +41,7 @@ const AdminSettings = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Tabs defaultValue="general" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="general" className="flex items-center space-x-2">
-                  <Settings size={16} />
-                  <span>Geral</span>
-                </TabsTrigger>
-                <TabsTrigger value="whatsapp" className="flex items-center space-x-2">
-                  <MessageSquare size={16} />
-                  <span>WhatsApp</span>
-                </TabsTrigger>
-                <TabsTrigger value="company" className="flex items-center space-x-2">
-                  <Building size={16} />
-                  <span>Empresa</span>
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="general">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configurações Gerais</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <GeneralSettings />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="whatsapp">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configurações do WhatsApp</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <WhatsAppSettings />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="company">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Informações da Empresa</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CompanySettings />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+            <SystemSettings />
           </motion.div>
         </div>
       </div>
