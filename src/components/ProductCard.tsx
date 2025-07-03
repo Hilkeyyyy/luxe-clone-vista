@@ -107,7 +107,6 @@ const ProductCard = ({
 
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
     
-    // Animação do botão
     setIsAddedToCart(true);
     setTimeout(() => setIsAddedToCart(false), 2000);
     
@@ -150,53 +149,46 @@ const ProductCard = ({
 
   return (
     <motion.div
-      className={`bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer ${
-        featured ? 'ring-2 ring-neutral-200' : ''
+      className={`bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer border border-neutral-100 ${
+        featured ? 'ring-2 ring-amber-400' : ''
       }`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay }}
-      whileHover={{ y: -5 }}
+      whileHover={{ y: -8, scale: 1.02 }}
       onClick={handleClick}
     >
       <div className="aspect-square bg-gradient-to-br from-neutral-50 to-neutral-100 flex items-center justify-center relative overflow-hidden">
         {/* Badges */}
-        <div className="absolute top-4 left-4 z-10 flex flex-col space-y-2">
+        <div className="absolute top-3 left-3 z-10 flex flex-col space-y-2">
           {featured && (
-            <div className="bg-neutral-800 text-white px-3 py-1 rounded-full text-xs font-outfit font-medium">
+            <div className="bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-outfit font-semibold shadow-lg">
               Destaque
             </div>
           )}
           {isNew && (
-            <div className="bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-outfit font-medium">
+            <div className="bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-outfit font-semibold shadow-lg">
               Novo
             </div>
           )}
           {discountPercentage > 0 && (
-            <div className="bg-emerald-700 text-white px-3 py-1 rounded-full text-xs font-outfit font-medium">
+            <div className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-outfit font-semibold shadow-lg">
               -{discountPercentage}%
-            </div>
-          )}
-          {clone_category && (
-            <div className={`px-3 py-1 rounded-full text-xs font-outfit font-medium ${getCategoryBadgeColor(clone_category)}`}>
-              {clone_category}
             </div>
           )}
         </div>
 
         {/* Action Buttons */}
-        <div className="absolute top-4 right-4 z-10 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-3 right-3 z-10 flex flex-col space-y-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
           <motion.button
             onClick={toggleFavorite}
-            className={`p-2 rounded-full backdrop-blur-sm transition-colors ${
+            className={`p-3 rounded-full backdrop-blur-md shadow-lg transition-all duration-300 ${
               isFavorite 
-                ? 'bg-red-100 text-red-600' 
-                : 'bg-white/80 text-neutral-600 hover:bg-white'
+                ? 'bg-red-100 text-red-600 scale-110' 
+                : 'bg-white/90 text-neutral-600 hover:bg-white hover:scale-110'
             }`}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            animate={isFavorite ? { scale: [1, 1.2, 1] } : {}}
-            transition={{ duration: 0.3 }}
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.95 }}
           >
             <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} />
           </motion.button>
@@ -204,13 +196,13 @@ const ProductCard = ({
           <AnimatePresence mode="wait">
             <motion.button
               onClick={addToCart}
-              className={`p-2 backdrop-blur-sm rounded-full transition-colors ${
+              className={`p-3 backdrop-blur-md rounded-full shadow-lg transition-all duration-300 ${
                 isAddedToCart 
-                  ? 'bg-green-600 text-white' 
-                  : 'bg-white/80 text-neutral-600 hover:bg-white'
+                  ? 'bg-green-600 text-white scale-110' 
+                  : 'bg-white/90 text-neutral-600 hover:bg-white hover:scale-110'
               }`}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.95 }}
               key={isAddedToCart ? 'added' : 'add'}
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
@@ -222,9 +214,9 @@ const ProductCard = ({
 
           <motion.button
             onClick={buyViaWhatsApp}
-            className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            className="p-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition-all duration-300 shadow-lg"
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.95 }}
           >
             <MessageCircle size={18} />
           </motion.button>
@@ -235,22 +227,32 @@ const ProductCard = ({
           <img 
             src={image} 
             alt={name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
         ) : (
-          <div className="w-32 h-32 bg-neutral-200 rounded-full flex items-center justify-center">
-            <span className="text-neutral-500 font-outfit font-medium text-lg">IMG</span>
+          <div className="w-24 h-24 bg-neutral-200 rounded-full flex items-center justify-center">
+            <span className="text-neutral-500 font-outfit font-medium text-sm">IMG</span>
           </div>
         )}
       </div>
       
       <div className="p-6">
-        <h3 className="font-outfit font-semibold text-xl text-neutral-900 mb-2 group-hover:text-neutral-700 transition-colors">
+        {/* Clone Category Badge */}
+        {clone_category && (
+          <div className="mb-3">
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getCategoryBadgeColor(clone_category)}`}>
+              {clone_category}
+            </span>
+          </div>
+        )}
+
+        <h3 className="font-outfit font-bold text-lg text-neutral-900 mb-2 group-hover:text-neutral-700 transition-colors line-clamp-2">
           {name}
         </h3>
-        <p className="text-neutral-600 font-outfit mb-4">
+        <p className="text-neutral-600 font-outfit mb-4 font-medium">
           {brand}
         </p>
+        
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-2xl font-outfit font-bold text-neutral-900">
@@ -262,11 +264,12 @@ const ProductCard = ({
               </span>
             )}
           </div>
+          
           <motion.button
-            className={`px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg font-outfit font-medium transition-all text-sm ${
+            className={`px-4 py-2 rounded-xl font-outfit font-semibold transition-all text-sm border-2 ${
               isAddedToCart 
                 ? 'bg-green-50 border-green-300 text-green-700' 
-                : 'hover:bg-neutral-50'
+                : 'bg-neutral-900 border-neutral-900 text-white hover:bg-neutral-800'
             }`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -285,7 +288,7 @@ const ProductCard = ({
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
               >
-                {isAddedToCart ? 'Produto Adicionado' : 'Adicionar ao Carrinho'}
+                {isAddedToCart ? 'Adicionado' : 'Adicionar'}
               </motion.span>
             </AnimatePresence>
           </motion.button>

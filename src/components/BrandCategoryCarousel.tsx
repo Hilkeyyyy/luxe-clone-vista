@@ -1,173 +1,152 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import ProductCard from './ProductCard';
+import { useBrandCategories } from '@/hooks/useBrandCategories';
+import { Button } from '@/components/ui/button';
 
-interface BrandCategory {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  image_url: string;
-  order_position: number;
-}
+const BrandCategoryCarousel = () => {
+  const { categories, loading } = useBrandCategories(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
-interface Product {
-  id: string;
-  name: string;
-  brand: string;
-  price: number;
-  original_price?: number;
-  images: string[];
-  is_new: boolean;
-  clone_category?: string;
-}
-
-interface BrandCategoryCarouselProps {
-  category: BrandCategory;
-}
-
-const BrandCategoryCarousel = ({ category }: BrandCategoryCarouselProps) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  useEffect(() => {
-    fetchCategoryProducts();
-  }, [category.id]);
-
-  const fetchCategoryProducts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('brand_category_id', category.id)
-        .eq('in_stock', true)
-        .order('created_at', { ascending: false })
-        .limit(8);
-
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      console.error('Erro ao buscar produtos da categoria:', error);
-    } finally {
-      setLoading(false);
+  const scrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -320, behavior: 'smooth' });
     }
   };
 
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % Math.max(1, products.length - 3));
+  const scrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+    }
   };
 
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 + Math.max(1, products.length - 3)) % Math.max(1, products.length - 3));
+  const handleCategoryClick = (category: any) => {
+    navigate(`/produtos?marca=${encodeURIComponent(category.name)}`);
   };
 
   if (loading) {
     return (
-      <div className="w-full h-96 bg-gradient-to-r from-neutral-100 to-neutral-200 rounded-2xl animate-pulse" />
+      <div className="flex justify-center py-8">
+        <div className="w-8 h-8 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin"></div>
+      </div>
     );
   }
 
-  if (products.length === 0) {
-    return null;
-  }
+  if (!categories.length) return null;
 
   return (
-    <section className="mb-16">
-      {/* Category Header with Background Image */}
-      <div 
-        className="relative h-64 rounded-2xl overflow-hidden mb-8"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url(${category.image_url})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      >
-        <div className="absolute inset-0 flex items-center justify-between p-8">
-          <div className="text-white max-w-md">
-            <motion.h2 
-              className="text-4xl font-bold mb-4"
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              {category.name}
-            </motion.h2>
-            <motion.p 
-              className="text-lg opacity-90 mb-6"
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              {category.description}
-            </motion.p>
-            <motion.button
-              className="bg-white text-neutral-900 px-6 py-3 rounded-xl font-semibold hover:bg-neutral-100 transition-colors"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              CONFIRA
-            </motion.button>
-          </div>
-        </div>
-      </div>
-
-      {/* Products Carousel */}
-      <div className="relative">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-bold text-neutral-900">
-            Produtos {category.name}
-          </h3>
-          <div className="flex space-x-2">
-            <button
-              onClick={prevSlide}
-              className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
-              disabled={products.length <= 4}
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
-              disabled={products.length <= 4}
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
-
-        <div className="overflow-hidden">
-          <motion.div 
-            className="flex gap-6"
-            animate={{ x: `-${currentIndex * 25}%` }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
+    <div className="relative px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-neutral-900 font-outfit">
+          Marcas em Destaque
+        </h2>
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={scrollLeft}
+            className="p-2 rounded-full"
           >
-            {products.map((product) => (
-              <div key={product.id} className="min-w-[calc(25%-18px)]">
-                <ProductCard
-                  id={product.id}
-                  name={product.name}
-                  brand={product.brand}
-                  price={`R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                  originalPrice={product.original_price 
-                    ? `R$ ${product.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
-                    : undefined}
-                  image={product.images[0]}
-                  isNew={product.is_new}
-                  clone_category={product.clone_category}
-                />
-              </div>
-            ))}
-          </motion.div>
+            <ChevronLeft size={20} />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={scrollRight}
+            className="p-2 rounded-full"
+          >
+            <ChevronRight size={20} />
+          </Button>
         </div>
       </div>
-    </section>
+
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto scrollbar-hide space-x-6 pb-4"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {categories.map((category, index) => (
+          <motion.div
+            key={category.id}
+            className="flex-shrink-0 w-80 h-96 group cursor-pointer"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+            whileHover={{ y: -8 }}
+            onClick={() => handleCategoryClick(category)}
+          >
+            <div className="relative w-full h-full bg-gradient-to-br from-neutral-100 to-neutral-200 rounded-3xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-300">
+              {/* Background Image */}
+              {category.image_url ? (
+                <img
+                  src={category.image_url}
+                  alt={category.name}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-neutral-200 to-neutral-300 flex items-center justify-center">
+                  <span className="text-6xl font-bold text-neutral-400 font-outfit">
+                    {category.name.charAt(0)}
+                  </span>
+                </div>
+              )}
+
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+              {/* Content */}
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold text-white mb-2 font-outfit">
+                    {category.name}
+                  </h3>
+                  
+                  {category.products_count > 0 && (
+                    <p className="text-white/80 mb-4 font-outfit">
+                      {category.products_count} produtos disponíveis
+                    </p>
+                  )}
+
+                  <motion.button
+                    className="bg-white text-neutral-900 px-8 py-3 rounded-full font-semibold font-outfit hover:bg-neutral-100 transition-colors shadow-lg"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCategoryClick(category);
+                    }}
+                  >
+                    CONFIRA
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Badge */}
+              {category.products_count > 0 && (
+                <div className="absolute top-4 right-4">
+                  <span className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-semibold">
+                    {category.products_count}
+                  </span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      <style jsx>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+    </div>
   );
 };
 
