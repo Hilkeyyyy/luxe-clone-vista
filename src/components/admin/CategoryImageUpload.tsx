@@ -4,6 +4,7 @@ import { Upload, X, Loader, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthCheck } from '@/hooks/useAuthCheck';
 
 interface CategoryImageUploadProps {
   imageUrl?: string;
@@ -19,12 +20,30 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const { toast } = useToast();
+  const { user, isAdmin } = useAuthCheck();
 
   const uploadImage = async (file: File) => {
-    if (!file) return;
+    console.log('🔄 Iniciando upload da categoria...', { fileName: file.name, fileSize: file.size });
+    
+    if (!file) {
+      console.error('❌ Nenhum arquivo fornecido');
+      return;
+    }
+
+    // CORREÇÃO CRÍTICA: Verificar se usuário está autenticado e é admin
+    if (!user || !isAdmin) {
+      console.error('❌ Usuário não autenticado ou não é admin:', { user: !!user, isAdmin });
+      toast({
+        title: "Erro de Autenticação",
+        description: "Você precisa estar logado como administrador para fazer upload de imagens.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Validar tipo de arquivo
     if (!file.type.startsWith('image/')) {
+      console.error('❌ Tipo de arquivo inválido:', file.type);
       toast({
         title: "Erro",
         description: "Por favor, selecione apenas imagens.",
@@ -35,6 +54,7 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
 
     // Validar tamanho (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
+      console.error('❌ Arquivo muito grande:', file.size);
       toast({
         title: "Erro",
         description: "A imagem deve ter no máximo 5MB.",
@@ -46,31 +66,58 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
     setUploading(true);
 
     try {
+      console.log('📤 Fazendo upload para Supabase storage...');
+      
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `categories/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      console.log('📁 Caminho do arquivo:', filePath);
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('brand-category-images')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('❌ Erro no upload:', uploadError);
+        throw uploadError;
+      }
 
-      const { data } = supabase.storage
+      console.log('✅ Upload concluído:', uploadData);
+
+      // Obter URL pública
+      const { data: urlData } = supabase.storage
         .from('brand-category-images')
         .getPublicUrl(filePath);
 
-      onImageUploaded(data.publicUrl);
+      console.log('🔗 URL pública gerada:', urlData.publicUrl);
+
+      onImageUploaded(urlData.publicUrl);
       
       toast({
         title: "Sucesso",
         description: "Imagem enviada com sucesso!",
       });
     } catch (error: any) {
-      console.error('Erro no upload:', error);
+      console.error('❌ Erro completo no upload:', error);
+      
+      // Mensagens de erro mais específicas
+      let errorMessage = "Erro ao enviar imagem. Tente novamente.";
+      
+      if (error.message?.includes('Permission')) {
+        errorMessage = "Sem permissão para fazer upload. Verifique se você é administrador.";
+      } else if (error.message?.includes('Network')) {
+        errorMessage = "Erro de conexão. Verifique sua internet.";
+      } else if (error.message?.includes('Storage')) {
+        errorMessage = "Erro no armazenamento. Tente novamente em alguns instantes.";
+      }
+      
       toast({
-        title: "Erro",
-        description: "Erro ao enviar imagem. Tente novamente.",
+        title: "Erro no Upload",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -107,18 +154,26 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
   const removeImage = async () => {
     if (!imageUrl) return;
 
+    console.log('🗑️ Removendo imagem:', imageUrl);
+
     try {
       // Extrair o caminho do arquivo da URL
       const urlParts = imageUrl.split('/');
       const fileName = urlParts[urlParts.length - 1];
       const filePath = `categories/${fileName}`;
 
+      console.log('📁 Removendo arquivo:', filePath);
+
       const { error } = await supabase.storage
         .from('brand-category-images')
         .remove([filePath]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao remover:', error);
+        throw error;
+      }
 
+      console.log('✅ Imagem removida com sucesso');
       onImageRemoved();
       
       toast({
@@ -126,7 +181,7 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
         description: "Imagem removida com sucesso!",
       });
     } catch (error: any) {
-      console.error('Erro ao remover imagem:', error);
+      console.error('❌ Erro ao remover imagem:', error);
       toast({
         title: "Erro",
         description: "Erro ao remover imagem.",
@@ -134,6 +189,19 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
       });
     }
   };
+
+  // CORREÇÃO: Mostrar aviso se usuário não for admin
+  if (!user || !isAdmin) {
+    return (
+      <div className="border-2 border-dashed border-neutral-300 rounded-lg p-8 text-center">
+        <div className="text-red-500 space-y-2">
+          <Image className="w-12 h-12 mx-auto" />
+          <p className="font-medium">Acesso Restrito</p>
+          <p className="text-sm">Apenas administradores podem fazer upload de imagens.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -143,6 +211,10 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
             src={imageUrl}
             alt="Preview"
             className="w-full h-48 object-cover rounded-lg border"
+            onError={(e) => {
+              console.error('❌ Erro ao carregar imagem:', imageUrl);
+              e.currentTarget.style.display = 'none';
+            }}
           />
           <Button
             type="button"

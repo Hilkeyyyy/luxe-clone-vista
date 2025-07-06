@@ -10,88 +10,111 @@ import NavigationMenu from './NavigationMenu';
 const Header = () => {
   const navigate = useNavigate();
   const { user, isAdmin } = useAuthCheck();
-  const { cleanupInvalidData } = useLocalStorageCleanup();
+  const { cleanupInvalidData, resetLocalStorage } = useLocalStorageCleanup();
   const [searchQuery, setSearchQuery] = useState('');
   const [cartItemsCount, setCartItemsCount] = useState(0);
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [showNavigationMenu, setShowNavigationMenu] = useState(false);
 
   useEffect(() => {
+    console.log('🔧 Header: Inicializando contadores...');
+    
     // Limpar dados inválidos primeiro
     cleanupInvalidData();
     updateCounts();
     
     // Listener para mudanças no localStorage
     const handleStorageChange = () => {
+      console.log('📦 Storage mudou, atualizando contadores...');
       updateCounts();
     };
 
     // Listener customizado para mudanças imediatas
     const handleCartUpdate = () => {
+      console.log('🛒 Carrinho atualizado, atualizando contadores...');
+      setTimeout(updateCounts, 100);
+    };
+
+    const handleFavoritesUpdate = () => {
+      console.log('❤️ Favoritos atualizados, atualizando contadores...');
       setTimeout(updateCounts, 100);
     };
 
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('cartUpdated', handleCartUpdate);
-    window.addEventListener('favoritesUpdated', handleCartUpdate);
+    window.addEventListener('favoritesUpdated', handleFavoritesUpdate);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('cartUpdated', handleCartUpdate);
-      window.removeEventListener('favoritesUpdated', handleCartUpdate);
+      window.removeEventListener('favoritesUpdated', handleFavoritesUpdate);
     };
   }, []);
 
   const updateCounts = () => {
+    console.log('🔄 Atualizando contadores...');
+    
     try {
       const cart = localStorage.getItem('cart');
       const favorites = localStorage.getItem('favorites');
       
-      console.log('Raw cart data:', cart);
-      console.log('Raw favorites data:', favorites);
+      console.log('📊 Dados brutos:', { cart, favorites });
       
-      // Parsing seguro dos dados
-      let validCart = [];
-      let validFavorites = [];
+      // CORREÇÃO CRÍTICA: Inicializar com 0 e só contar se houver dados válidos
+      let totalCartItems = 0;
+      let totalFavorites = 0;
       
-      if (cart) {
+      // Processar carrinho apenas se existir
+      if (cart && cart !== 'null' && cart !== '[]') {
         try {
           const parsedCart = JSON.parse(cart);
-          validCart = Array.isArray(parsedCart) ? parsedCart : [];
+          if (Array.isArray(parsedCart) && parsedCart.length > 0) {
+            // Para o carrinho, somar as quantidades de todos os itens
+            totalCartItems = parsedCart.reduce((total: number, item: any) => {
+              if (item && typeof item.quantity === 'number' && item.quantity > 0) {
+                return total + item.quantity;
+              }
+              return total;
+            }, 0);
+            console.log('🛒 Carrinho processado:', parsedCart.length, 'produtos,', totalCartItems, 'itens totais');
+          }
         } catch (error) {
-          console.error('Erro ao fazer parse do carrinho:', error);
+          console.error('❌ Erro ao processar carrinho:', error);
           localStorage.removeItem('cart');
         }
       }
       
-      if (favorites) {
+      // Processar favoritos apenas se existir
+      if (favorites && favorites !== 'null' && favorites !== '[]') {
         try {
           const parsedFavorites = JSON.parse(favorites);
-          validFavorites = Array.isArray(parsedFavorites) ? parsedFavorites : [];
+          if (Array.isArray(parsedFavorites) && parsedFavorites.length > 0) {
+            // Para favoritos, contar apenas IDs válidos e únicos
+            const validFavorites = parsedFavorites.filter((id: any) => 
+              typeof id === 'string' && id.trim().length > 0
+            );
+            
+            // Remover duplicatas
+            const uniqueFavorites = [...new Set(validFavorites)];
+            totalFavorites = uniqueFavorites.length;
+            console.log('❤️ Favoritos processados:', parsedFavorites.length, 'raw,', totalFavorites, 'válidos únicos');
+          }
         } catch (error) {
-          console.error('Erro ao fazer parse dos favoritos:', error);
+          console.error('❌ Erro ao processar favoritos:', error);
           localStorage.removeItem('favorites');
         }
       }
       
-      // Para o carrinho, somar as quantidades de todos os itens
-      const totalItems = validCart.reduce((total: number, item: any) => {
-        const quantity = typeof item.quantity === 'number' && item.quantity > 0 ? item.quantity : 0;
-        return total + quantity;
-      }, 0);
+      console.log('📈 Contadores finais:', {
+        carrinho: totalCartItems,
+        favoritos: totalFavorites
+      });
       
-      // Para favoritos, contar apenas IDs válidos
-      const favoritesWithValidIds = validFavorites.filter((id: any) => 
-        typeof id === 'string' && id.trim().length > 0
-      );
+      setCartItemsCount(totalCartItems);
+      setFavoritesCount(totalFavorites);
       
-      console.log('Total items no carrinho:', totalItems);
-      console.log('Total favoritos válidos:', favoritesWithValidIds.length);
-      
-      setCartItemsCount(totalItems);
-      setFavoritesCount(favoritesWithValidIds.length);
     } catch (error) {
-      console.error('Erro ao atualizar contadores:', error);
+      console.error('❌ Erro geral ao atualizar contadores:', error);
       setCartItemsCount(0);
       setFavoritesCount(0);
     }
@@ -102,6 +125,14 @@ const Header = () => {
     if (searchQuery.trim()) {
       navigate(`/busca?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
+    }
+  };
+
+  // Função de debug para casos extremos
+  const handleResetStorage = () => {
+    if (window.confirm('⚠️ ATENÇÃO: Isso vai limpar TODOS os dados do carrinho e favoritos. Confirmar?')) {
+      resetLocalStorage();
+      console.log('🔄 Storage resetado pelo usuário');
     }
   };
 
@@ -220,6 +251,17 @@ const Header = () => {
                 isAdmin={isAdmin}
               />
             </div>
+
+            {/* DEBUG: Botão para reset em desenvolvimento */}
+            {process.env.NODE_ENV === 'development' && (
+              <button
+                onClick={handleResetStorage}
+                className="hidden text-xs bg-red-100 text-red-600 px-2 py-1 rounded"
+                title="DEBUG: Reset Storage"
+              >
+                🔄
+              </button>
+            )}
           </div>
         </div>
 
