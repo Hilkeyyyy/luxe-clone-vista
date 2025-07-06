@@ -10,6 +10,7 @@ interface ProductActionsProps {
   onAddToCart: (e: React.MouseEvent) => void;
   onBuyNow: (e: React.MouseEvent) => void;
   customBadge?: string;
+  showBuyButton?: boolean; // Nova prop para controlar se mostra o botão COMPRAR
 }
 
 const ProductActions: React.FC<ProductActionsProps> = ({
@@ -19,11 +20,12 @@ const ProductActions: React.FC<ProductActionsProps> = ({
   onAddToCart,
   onBuyNow,
   customBadge,
+  showBuyButton = false, // Por padrão não mostra o botão COMPRAR
 }) => {
   return (
     <div className="flex flex-col space-y-2">
-      {/* Botão Comprar - Principal */}
-      {!isSoldOut && (
+      {/* Botão Comprar - Apenas na página de produto */}
+      {showBuyButton && !isSoldOut && (
         <motion.button
           onClick={onBuyNow}
           className="flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-sm font-medium text-sm"

@@ -122,7 +122,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         </Link>
 
-        {/* Botões de ação sempre visíveis no mobile e no hover no desktop */}
+        {/* Botões de ação sempre visíveis no mobile e no hover no desktop - SEM botão COMPRAR */}
         <div className="absolute bottom-4 right-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300">
           <ProductActions
             isFavorite={isFavorite(id)}
@@ -131,6 +131,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             onAddToCart={handleAddToCart}
             onBuyNow={handleBuyNow}
             customBadge={custom_badge}
+            showBuyButton={false} // Na landing page, não mostra o botão COMPRAR
           />
         </div>
       </motion.div>

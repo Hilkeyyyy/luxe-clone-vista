@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -269,9 +268,9 @@ const ProductDetail = () => {
             Home
           </button>
           <span>/</span>
-          <span className="capitalize">{product.category}</span>
+          <span className="capitalize">{product?.category}</span>
           <span>/</span>
-          <span className="text-neutral-900 font-medium">{product.name}</span>
+          <span className="text-neutral-900 font-medium">{product?.name}</span>
         </motion.div>
 
         {/* Back Button */}
@@ -288,7 +287,7 @@ const ProductDetail = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Image Gallery */}
-          <ImageGallery images={product.images} productName={product.name} />
+          <ImageGallery images={product?.images || []} productName={product?.name || ''} />
 
           {/* Product Info */}
           <div className="space-y-8">
@@ -329,33 +328,16 @@ const ProductDetail = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex space-x-4">
-                <motion.button
-                  onClick={addToCart}
-                  disabled={isAddingToCart || (product.stock_status === 'out_of_stock' || !product.in_stock)}
-                  className="flex-1 flex items-center justify-center space-x-2 bg-neutral-900 text-white py-4 px-6 rounded-xl hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <ShoppingCart size={20} />
-                  <span>{isAddingToCart ? 'Adicionando...' : 'Adicionar ao Carrinho'}</span>
-                </motion.button>
+              <ProductActions
+                isFavorite={isFavorite}
+                isSoldOut={!!(product?.stock_status === 'out_of_stock' || !product?.in_stock)}
+                onToggleFavorite={toggleFavorite}
+                onAddToCart={addToCart}
+                onBuyNow={addToCart}
+                showBuyButton={true}
+              />
 
-                <motion.button
-                  onClick={toggleFavorite}
-                  className={`p-4 border-2 rounded-xl transition-colors ${
-                    isFavorite 
-                      ? 'border-red-200 bg-red-50 text-red-600' 
-                      : 'border-neutral-200 hover:border-neutral-300 text-neutral-600'
-                  }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} />
-                </motion.button>
-              </div>
-
-              {(product.stock_status === 'out_of_stock' || !product.in_stock) && (
+              {(product?.stock_status === 'out_of_stock' || !product?.in_stock) && (
                 <div className="text-center py-3 px-4 bg-red-50 border border-red-200 rounded-xl">
                   <span className="text-red-600 font-medium">Produto fora de estoque</span>
                 </div>
@@ -407,7 +389,7 @@ const ProductDetail = () => {
         </div>
 
         {/* Product Specifications */}
-        {product.specifications && (
+        {product?.specifications && (
           <ProductSpecs specifications={product.specifications} />
         )}
       </div>

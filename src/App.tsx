@@ -12,7 +12,9 @@ import Cart from '@/pages/Cart';
 import Login from '@/pages/Login';
 import Admin from '@/pages/Admin';
 import AdminSettings from '@/pages/AdminSettings';
+import AdminProducts from '@/pages/AdminProducts';
 import AdminLanding from '@/pages/AdminLanding';
+import Categories from '@/pages/Categories';
 import Favorites from '@/pages/Favorites';
 import NotFound from '@/pages/NotFound';
 
@@ -36,11 +38,13 @@ function App() {
                 <Route path="/" element={<Index />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
+                <Route path="/categories" element={<Categories />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/favorites" element={<Favorites />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/settings" element={<AdminSettings />} />
+                <Route path="/admin/products" element={<AdminProducts />} />
                 <Route path="/admin/landing" element={<AdminLanding />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

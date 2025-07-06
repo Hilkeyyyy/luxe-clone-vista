@@ -77,20 +77,20 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({ isOpen, onClose, user, 
   };
 
   const menuItems = [
-    { icon: ShoppingBag, label: 'Produtos', path: '/produtos', public: true },
-    { icon: Grid3X3, label: 'Categorias', path: '/categorias', public: true },
+    { icon: ShoppingBag, label: 'Produtos', path: '/products', public: true },
+    { icon: Grid3X3, label: 'Categorias', path: '/categories', public: true },
     { icon: Phone, label: 'Contato', path: '#contato', public: true },
   ];
 
   const userItems = user ? [
-    { icon: Heart, label: 'Meus Favoritos', path: '/favoritos' },
-    { icon: ShoppingBag, label: 'Meu Carrinho', path: '/carrinho' },
+    { icon: Heart, label: 'Meus Favoritos', path: '/favorites' },
+    { icon: ShoppingBag, label: 'Meu Carrinho', path: '/cart' },
   ] : [];
 
   const adminItems = [
     { icon: BarChart3, label: 'Dashboard', path: '/admin' },
-    { icon: Package, label: 'Gerenciar Produtos', path: '/admin/produtos' },
-    { icon: Settings, label: 'Configurações', path: '/admin/configuracoes' },
+    { icon: Package, label: 'Gerenciar Categorias', path: '/admin/landing' },
+    { icon: Settings, label: 'Configurações', path: '/admin/settings' },
   ];
 
   return (
