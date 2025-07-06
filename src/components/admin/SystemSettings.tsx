@@ -1,11 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Save, Phone, Building, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { secureApiClient } from '@/utils/secureApiClient';
+import { sanitizeInput } from '@/utils/securityEnhancements';
+import { supabase } from '@/integrations/supabase/client';
 
 // Componentes das seções
 import WhatsAppSettings from './settings/WhatsAppSettings';
@@ -57,21 +58,22 @@ const SystemSettings = () => {
 
       const loadedSettings = { ...settings };
       
-        data?.forEach(item => {
-          const key = item.setting_key as keyof SystemSettings;
-          if (key in loadedSettings) {
-            const value = item.setting_value;
-            
-            // Para campos booleanos
-            if (key === 'whatsapp_enabled') {
-              loadedSettings[key] = Boolean(value);
-            }
-            // Para campos string
-            else {
-              loadedSettings[key] = String(value || '').replace(/"/g, '');
-            }
+      data?.forEach(item => {
+        const key = item.setting_key as keyof SystemSettings;
+        if (key in loadedSettings) {
+          const value = item.setting_value;
+          
+          // For boolean fields
+          if (key === 'whatsapp_enabled') {
+            loadedSettings[key] = Boolean(value);
           }
-        });
+          // For string fields - sanitize on load
+          else {
+            const stringValue = String(value || '').replace(/"/g, '');
+            loadedSettings[key] = sanitizeInput(stringValue, { maxLength: 500 });
+          }
+        }
+      });
 
       setSettings(loadedSettings);
     } catch (error) {
@@ -89,23 +91,7 @@ const SystemSettings = () => {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      // Preparar dados para salvar
-      const settingsToSave = Object.entries(settings).map(([key, value]) => ({
-        setting_key: key,
-        setting_value: value
-      }));
-
-      // Usar upsert para inserir ou atualizar
-      for (const setting of settingsToSave) {
-        const { error } = await supabase
-          .from('admin_settings')
-          .upsert(setting, { 
-            onConflict: 'setting_key',
-            ignoreDuplicates: false 
-          });
-
-        if (error) throw error;
-      }
+      await secureApiClient.secureAdminSettingsUpdate(settings);
 
       toast({
         title: "Sucesso",
@@ -127,7 +113,11 @@ const SystemSettings = () => {
     key: K, 
     value: SystemSettings[K]
   ) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    // Sanitize string inputs
+    const sanitizedValue = typeof value === 'string' ? 
+      sanitizeInput(value, { maxLength: 500 }) : value;
+    
+    setSettings(prev => ({ ...prev, [key]: sanitizedValue }));
   };
 
   if (loading) {
