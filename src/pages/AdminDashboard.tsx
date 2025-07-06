@@ -16,6 +16,7 @@ import AdminGuard from '@/components/admin/AdminGuard';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardStats {
   totalProducts: number;
@@ -30,6 +31,7 @@ interface DashboardStats {
 
 const AdminDashboard = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
     inStockProducts: 0,
@@ -90,6 +92,24 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/admin/login');
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao fazer logout.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const StatCard = ({ 
     title, 
     value, 
@@ -132,7 +152,7 @@ const AdminDashboard = () => {
   return (
     <AdminGuard>
       <div className="min-h-screen bg-neutral-50">
-        <AdminHeader title="Dashboard" />
+        <AdminHeader onLogout={handleLogout} />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Stats Overview */}
@@ -296,7 +316,7 @@ const AdminDashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <button
-                    onClick={() => window.location.href = '/admin/produtos/novo'}
+                    onClick={() => navigate('/admin/produtos/novo')}
                     className="flex items-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Package size={20} />
@@ -304,7 +324,7 @@ const AdminDashboard = () => {
                   </button>
                   
                   <button
-                    onClick={() => window.location.href = '/admin/produtos'}
+                    onClick={() => navigate('/admin/produtos')}
                     className="flex items-center space-x-2 px-4 py-3 bg-neutral-600 text-white rounded-lg hover:bg-neutral-700 transition-colors"
                   >
                     <Eye size={20} />
@@ -312,7 +332,7 @@ const AdminDashboard = () => {
                   </button>
                   
                   <button
-                    onClick={() => window.location.href = '/admin/configuracoes'}
+                    onClick={() => navigate('/admin/configuracoes')}
                     className="flex items-center space-x-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <TrendingUp size={20} />
