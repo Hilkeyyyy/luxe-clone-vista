@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Save, Phone, Building } from 'lucide-react';
+import { Save, Phone, Building, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 // Componentes das seções
 import WhatsAppSettings from './settings/WhatsAppSettings';
 import CompanySettings from './settings/CompanySettings';
+import ProductOptionsSettings from './settings/ProductOptionsSettings';
 
 interface SystemSettings {
   // WhatsApp
@@ -155,7 +156,7 @@ const SystemSettings = () => {
       </div>
 
       <Tabs defaultValue="whatsapp" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="whatsapp" className="flex items-center space-x-2">
             <Phone size={16} />
             <span>WhatsApp</span>
@@ -163,6 +164,10 @@ const SystemSettings = () => {
           <TabsTrigger value="company" className="flex items-center space-x-2">
             <Building size={16} />
             <span>Empresa</span>
+          </TabsTrigger>
+          <TabsTrigger value="product-options" className="flex items-center space-x-2">
+            <Settings size={16} />
+            <span>Opções do Produto</span>
           </TabsTrigger>
         </TabsList>
 
@@ -185,6 +190,17 @@ const SystemSettings = () => {
             transition={{ duration: 0.4 }}
           >
             <CompanySettings settings={settings} updateSetting={updateSetting} />
+          </motion.div>
+        </TabsContent>
+
+        {/* Opções do Produto */}
+        <TabsContent value="product-options">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <ProductOptionsSettings />
           </motion.div>
         </TabsContent>
       </Tabs>
