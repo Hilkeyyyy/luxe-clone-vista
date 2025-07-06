@@ -8,6 +8,8 @@ import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import AuthModal from '@/components/auth/AuthModal';
 
 interface CartItem {
   id: string;
@@ -22,12 +24,19 @@ interface CartItem {
 
 const Cart = () => {
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      setLoading(false);
+      return;
+    }
     loadCartItems();
-  }, []);
+  }, [isAuthenticated]);
 
   const loadCartItems = async () => {
     try {
@@ -138,6 +147,35 @@ const Cart = () => {
     const whatsappUrl = `https://wa.me/5519999413755?text=${encodeURIComponent(whatsappMessage)}`;
     window.open(whatsappUrl, '_blank');
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-white font-outfit">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center max-w-md">
+            <ShoppingBag className="w-24 h-24 text-neutral-300 mx-auto mb-6" />
+            <h2 className="text-2xl font-bold text-neutral-900 mb-4">
+              Faça login para ver seu carrinho
+            </h2>
+            <p className="text-neutral-600 mb-8">
+              Entre na sua conta para acessar seus produtos salvos no carrinho.
+            </p>
+          </div>
+        </div>
+        <Footer />
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          mode="login"
+          onSuccess={() => {
+            setShowAuthModal(false);
+            loadCartItems();
+          }}
+        />
+      </div>
+    );
+  }
 
   if (loading) {
     return (

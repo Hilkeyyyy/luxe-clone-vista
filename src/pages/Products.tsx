@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Star, Award, Zap } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
@@ -35,6 +35,7 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCloneCategory, setSelectedCloneCategory] = useState('all');
   const [priceRange, setPriceRange] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
     fetchProducts();
@@ -42,7 +43,7 @@ const Products = () => {
 
   useEffect(() => {
     filterProducts();
-  }, [products, searchTerm, selectedCategory, selectedCloneCategory, priceRange]);
+  }, [products, searchTerm, selectedCategory, selectedCloneCategory, priceRange, sortBy]);
 
   const fetchProducts = async () => {
     try {
@@ -105,11 +106,55 @@ const Products = () => {
       });
     }
 
+    // Ordenação
+    switch (sortBy) {
+      case 'price-asc':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-desc':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'name':
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'featured':
+        filtered.sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0));
+        break;
+      default: // newest
+        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+
     setFilteredProducts(filtered);
   };
 
   const categories = [...new Set(products.map(p => p.category))];
   const cloneCategories = [...new Set(products.map(p => p.clone_category))];
+
+  const getCloneCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'ETA Base':
+        return <Star className="w-4 h-4" />;
+      case 'Super Clone':
+        return <Award className="w-4 h-4" />;
+      case 'Clone':
+        return <Zap className="w-4 h-4" />;
+      default:
+        return null;
+    }
+  };
+
+  const getCloneCategoryColor = (category: string) => {
+    switch (category) {
+      case 'ETA Base':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'Super Clone':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'Clone':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      default:
+        return 'bg-neutral-100 text-neutral-800 border-neutral-200';
+    }
+  };
 
   if (loading) {
     return (
@@ -139,6 +184,41 @@ const Products = () => {
           </p>
         </motion.div>
 
+        {/* Clone Categories Highlight */}
+        <motion.div 
+          className="mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <div className="bg-gradient-to-r from-neutral-50 to-neutral-100 rounded-2xl p-6">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Categorias de Qualidade</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {cloneCategories.map((category, index) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCloneCategory(category)}
+                  className={`flex items-center space-x-3 p-4 rounded-xl border-2 transition-all duration-300 ${
+                    selectedCloneCategory === category
+                      ? getCloneCategoryColor(category) + ' border-current shadow-md scale-105'
+                      : 'bg-white hover:bg-neutral-50 border-neutral-200'
+                  }`}
+                >
+                  {getCloneCategoryIcon(category)}
+                  <div className="text-left">
+                    <h3 className="font-semibold">{category}</h3>
+                    <p className="text-sm opacity-70">
+                      {category === 'ETA Base' && 'Movimento ETA suíço'}
+                      {category === 'Super Clone' && 'Máxima qualidade'}
+                      {category === 'Clone' && 'Ótimo custo-benefício'}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
         {/* Filters */}
         <motion.div 
           className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6 mb-8"
@@ -151,7 +231,7 @@ const Products = () => {
             <h2 className="text-lg font-semibold text-neutral-900">Filtros</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={16} />
@@ -199,6 +279,19 @@ const Products = () => {
               <option value="500-1000">R$ 500 - R$ 1.000</option>
               <option value="1000-2000">R$ 1.000 - R$ 2.000</option>
               <option value="over-2000">Acima de R$ 2.000</option>
+            </select>
+
+            {/* Sort */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
+            >
+              <option value="newest">Mais Recentes</option>
+              <option value="featured">Destaques Primeiro</option>
+              <option value="price-asc">Menor Preço</option>
+              <option value="price-desc">Maior Preço</option>
+              <option value="name">Nome A-Z</option>
             </select>
           </div>
         </motion.div>
@@ -257,6 +350,7 @@ const Products = () => {
                 setSelectedCategory('all');
                 setSelectedCloneCategory('all');
                 setPriceRange('all');
+                setSortBy('newest');
               }}
               className="px-6 py-3 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors"
             >

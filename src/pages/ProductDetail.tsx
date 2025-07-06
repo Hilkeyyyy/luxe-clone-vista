@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Heart, ShoppingCart, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, Heart, ShoppingCart, Plus, Minus, Shield, Truck, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
@@ -11,6 +11,8 @@ import ImageGallery from '@/components/product/ImageGallery';
 import ProductInfo from '@/components/product/ProductInfo';
 import ProductSpecs from '@/components/product/ProductSpecs';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useAuth } from '@/hooks/useAuth';
+import AuthModal from '@/components/auth/AuthModal';
 
 interface Product {
   id: string;
@@ -33,25 +35,39 @@ interface Product {
   water_resistance?: string;
 }
 
+interface ProductOptions {
+  warranty_enabled: boolean;
+  warranty_info: string;
+  delivery_enabled: boolean;
+  delivery_info: string;
+  quality_enabled: boolean;
+  quality_info: string;
+}
+
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   
   const [product, setProduct] = useState<Product | null>(null);
+  const [productOptions, setProductOptions] = useState<ProductOptions | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
   useEffect(() => {
     if (id) {
       fetchProduct();
+      fetchProductOptions();
       checkIfFavorite();
     }
-  }, [id]);
+  }, [id, isAuthenticated]);
 
   const fetchProduct = async () => {
     try {
@@ -79,12 +95,57 @@ const ProductDetail = () => {
     }
   };
 
+  const fetchProductOptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', [
+          'warranty_enabled', 'warranty_info',
+          'delivery_enabled', 'delivery_info',
+          'quality_enabled', 'quality_info'
+        ]);
+
+      if (error) throw error;
+
+      const options: ProductOptions = {
+        warranty_enabled: false,
+        warranty_info: '',
+        delivery_enabled: false,
+        delivery_info: '',
+        quality_enabled: false,
+        quality_info: ''
+      };
+
+      data?.forEach(item => {
+        const key = item.setting_key as keyof ProductOptions;
+        if (key.includes('_enabled')) {
+          (options as any)[key] = Boolean(item.setting_value);
+        } else {
+          (options as any)[key] = String(item.setting_value || '').replace(/"/g, '');
+        }
+      });
+
+      setProductOptions(options);
+    } catch (error) {
+      console.error('Erro ao buscar opções do produto:', error);
+    }
+  };
+
   const checkIfFavorite = () => {
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    setIsFavorite(favorites.includes(id));
+    if (isAuthenticated) {
+      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+      setIsFavorite(favorites.includes(id));
+    }
   };
 
   const toggleFavorite = () => {
+    if (!isAuthenticated) {
+      setAuthMode('login');
+      setShowAuthModal(true);
+      return;
+    }
+
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
     let newFavorites;
     
@@ -108,34 +169,36 @@ const ProductDetail = () => {
 
   const addToCart = async () => {
     if (!product) return;
+
+    if (!isAuthenticated) {
+      setAuthMode('login');
+      setShowAuthModal(true);
+      return;
+    }
     
     setIsAddingToCart(true);
     
     try {
-      const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+      const cartItems = JSON.parse(localStorage.getItem('cart') || '[]');
       const existingItemIndex = cartItems.findIndex(
         (item: any) => 
-          item.product_id === product.id && 
-          item.selected_color === selectedColor && 
-          item.selected_size === selectedSize
+          item.productId === product.id && 
+          item.selectedColor === selectedColor && 
+          item.selectedSize === selectedSize
       );
 
       if (existingItemIndex >= 0) {
         cartItems[existingItemIndex].quantity += quantity;
       } else {
         cartItems.push({
-          id: Date.now().toString(),
-          product_id: product.id,
-          product_name: product.name,
-          product_price: product.price,
-          product_image: product.images[0] || '',
-          selected_color: selectedColor,
-          selected_size: selectedSize,
+          productId: product.id,
+          selectedColor: selectedColor,
+          selectedSize: selectedSize,
           quantity: quantity,
         });
       }
 
-      localStorage.setItem('cartItems', JSON.stringify(cartItems));
+      localStorage.setItem('cart', JSON.stringify(cartItems));
       
       toast({
         title: "Produto adicionado ao carrinho!",
@@ -298,6 +361,48 @@ const ProductDetail = () => {
                 </div>
               )}
             </motion.div>
+
+            {/* Product Options */}
+            {productOptions && (
+              <motion.div 
+                className="space-y-4 border-t border-neutral-200 pt-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+              >
+                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Informações Adicionais</h3>
+                
+                {productOptions.warranty_enabled && (
+                  <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-xl">
+                    <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-blue-900">Garantia</h4>
+                      <p className="text-sm text-blue-700">{productOptions.warranty_info}</p>
+                    </div>
+                  </div>
+                )}
+
+                {productOptions.delivery_enabled && (
+                  <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-xl">
+                    <Truck className="w-5 h-5 text-green-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-green-900">Entrega</h4>
+                      <p className="text-sm text-green-700">{productOptions.delivery_info}</p>
+                    </div>
+                  </div>
+                )}
+
+                {productOptions.quality_enabled && (
+                  <div className="flex items-start space-x-3 p-4 bg-purple-50 rounded-xl">
+                    <Award className="w-5 h-5 text-purple-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-purple-900">Qualidade</h4>
+                      <p className="text-sm text-purple-700">{productOptions.quality_info}</p>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
           </div>
         </div>
 
@@ -308,6 +413,16 @@ const ProductDetail = () => {
       </div>
 
       <Footer />
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        mode={authMode}
+        onSuccess={() => {
+          setShowAuthModal(false);
+          checkIfFavorite();
+        }}
+      />
     </div>
   );
 };
