@@ -48,11 +48,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const numericPrice = parseFloat(price.replace(/[^\d,]/g, '').replace(',', '.'));
   const numericOriginalPrice = originalPrice ? parseFloat(originalPrice.replace(/[^\d,]/g, '').replace(',', '.')) : undefined;
 
-  const handleToggleFavorite = () => {
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     toggleFavorite(id, name);
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     addToCart(id, name);
   };
 
@@ -65,7 +69,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         transition={{ duration: 0.6, delay }}
         whileHover={{ y: -4 }}
       >
-        <Link to={`/produto/${id}`}>
+        <Link to={`/products/${id}`}>
           <ProductImage
             image={image}
             name={name}
@@ -94,14 +98,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 price={numericPrice}
                 originalPrice={numericOriginalPrice}
               />
-              
-              <ProductActions
-                isFavorite={isFavorite(id)}
-                isSoldOut={!!is_sold_out}
-                onToggleFavorite={handleToggleFavorite}
-                onAddToCart={handleAddToCart}
-                customBadge={custom_badge}
-              />
             </div>
 
             {stock_status && stock_status !== 'in_stock' && (
@@ -119,6 +115,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
             )}
           </div>
         </Link>
+
+        {/* Botões de ação sempre visíveis no mobile e no hover no desktop */}
+        <div className="absolute bottom-4 right-4 flex space-x-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+          <ProductActions
+            isFavorite={isFavorite(id)}
+            isSoldOut={!!is_sold_out}
+            onToggleFavorite={handleToggleFavorite}
+            onAddToCart={handleAddToCart}
+            customBadge={custom_badge}
+          />
+        </div>
       </motion.div>
 
       <AuthModal

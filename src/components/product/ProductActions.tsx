@@ -6,8 +6,8 @@ import { motion } from 'framer-motion';
 interface ProductActionsProps {
   isFavorite: boolean;
   isSoldOut: boolean;
-  onToggleFavorite: () => void;
-  onAddToCart: () => void;
+  onToggleFavorite: (e: React.MouseEvent) => void;
+  onAddToCart: (e: React.MouseEvent) => void;
   customBadge?: string;
 }
 
@@ -21,10 +21,11 @@ const ProductActions: React.FC<ProductActionsProps> = ({
   return (
     <>
       {/* Favorite Button */}
-      <button
+      <motion.button
         onClick={onToggleFavorite}
-        className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors opacity-0 group-hover:opacity-100"
-        style={{ top: customBadge ? '60px' : '12px' }}
+        className="p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors border border-neutral-200"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
         <Heart
           size={16}
@@ -32,13 +33,13 @@ const ProductActions: React.FC<ProductActionsProps> = ({
             isFavorite ? 'text-red-600 fill-red-600' : 'text-neutral-600 hover:text-red-600'
           }`}
         />
-      </button>
+      </motion.button>
 
       {/* Add to Cart Button */}
       {!isSoldOut && (
         <motion.button 
           onClick={onAddToCart}
-          className="p-2 bg-neutral-900 text-white rounded-full hover:bg-neutral-800 transition-colors opacity-0 group-hover:opacity-100"
+          className="p-2 bg-neutral-900 text-white rounded-full hover:bg-neutral-800 transition-colors shadow-sm"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >

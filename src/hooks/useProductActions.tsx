@@ -26,6 +26,9 @@ export const useProductActions = () => {
           description: `${productName} foi adicionado aos seus favoritos.`,
         });
       }
+      
+      // Disparar evento customizado para atualizar contadores
+      window.dispatchEvent(new Event('favoritesUpdated'));
     });
   };
 
@@ -38,23 +41,28 @@ export const useProductActions = () => {
           item.selectedSize === selectedSize
       );
 
+      let newCart;
       if (existingItemIndex >= 0) {
-        const newCart = [...cart];
+        newCart = [...cart];
         newCart[existingItemIndex].quantity += quantity;
         setCart(newCart);
       } else {
-        setCart([...cart, {
+        newCart = [...cart, {
           productId,
           quantity,
           selectedColor: selectedColor || '',
           selectedSize: selectedSize || '',
-        }]);
+        }];
+        setCart(newCart);
       }
 
       toast({
         title: "Produto adicionado!",
         description: `${quantity}x ${productName} foi adicionado ao seu carrinho.`,
       });
+      
+      // Disparar evento customizado para atualizar contadores
+      window.dispatchEvent(new Event('cartUpdated'));
     });
   };
 

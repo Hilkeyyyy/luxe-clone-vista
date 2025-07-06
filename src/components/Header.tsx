@@ -16,24 +16,44 @@ const Header = () => {
 
   useEffect(() => {
     updateCounts();
-    window.addEventListener('storage', updateCounts);
-    return () => window.removeEventListener('storage', updateCounts);
+    
+    // Listener para mudanças no localStorage
+    const handleStorageChange = () => {
+      updateCounts();
+    };
+
+    // Listener customizado para mudanças imediatas
+    const handleCartUpdate = () => {
+      setTimeout(updateCounts, 100); // Pequeno delay para garantir que o localStorage foi atualizado
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    window.addEventListener('favoritesUpdated', handleCartUpdate);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('favoritesUpdated', handleCartUpdate);
+    };
   }, []);
 
   const updateCounts = () => {
     try {
-      const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
-      const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
       
       // Validar se os dados estão no formato correto
       const validCart = Array.isArray(cart) ? cart : [];
-      const validFavs = Array.isArray(favs) ? favs : [];
+      const validFavorites = Array.isArray(favorites) ? favorites : [];
       
-      setCartItemsCount(validCart.reduce((total: number, item: any) => {
-        return total + (typeof item.quantity === 'number' ? item.quantity : 0);
-      }, 0));
+      // Para o carrinho, somar as quantidades de todos os itens
+      const totalItems = validCart.reduce((total: number, item: any) => {
+        return total + (typeof item.quantity === 'number' ? item.quantity : 1);
+      }, 0);
       
-      setFavoritesCount(validFavs.length);
+      setCartItemsCount(totalItems);
+      setFavoritesCount(validFavorites.length);
     } catch (error) {
       console.error('Erro ao atualizar contadores:', error);
       setCartItemsCount(0);
@@ -105,7 +125,7 @@ const Header = () => {
 
             {/* Favorites */}
             <motion.button 
-              onClick={() => navigate('/favoritos')}
+              onClick={() => navigate('/favorites')}
               className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors relative"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
@@ -120,7 +140,7 @@ const Header = () => {
 
             {/* Cart */}
             <motion.button 
-              onClick={() => navigate('/carrinho')}
+              onClick={() => navigate('/cart')}
               className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors relative"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
