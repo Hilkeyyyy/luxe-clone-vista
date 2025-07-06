@@ -72,21 +72,32 @@ export class SecureApiClient {
 
   async secureAdminSettingsUpdate(settings: any): Promise<any> {
     return this.secureRequest(async () => {
-      // Sanitize settings data
-      const sanitizedSettings = Object.entries(settings).map(([key, value]) => ({
-        setting_key: sanitizeInput(key, { maxLength: 100 }),
-        setting_value: typeof value === 'string' ? 
-          sanitizeInput(value as string, { maxLength: 1000 }) : value
-      }));
+      // Update settings one by one for better security and type safety
+      for (const [key, value] of Object.entries(settings)) {
+        const sanitizedKey = sanitizeInput(key, { maxLength: 100 });
+        
+        // Convert value to proper Json type
+        let sanitizedValue: string | number | boolean | null;
+        if (typeof value === 'string') {
+          sanitizedValue = sanitizeInput(value as string, { maxLength: 1000 });
+        } else if (typeof value === 'number' || typeof value === 'boolean') {
+          sanitizedValue = value as number | boolean;
+        } else {
+          sanitizedValue = value ? String(value) : null;
+        }
 
-      // Update settings one by one for better security
-      for (const setting of sanitizedSettings) {
         const { error } = await supabase
           .from('admin_settings')
-          .upsert(setting, { 
-            onConflict: 'setting_key',
-            ignoreDuplicates: false 
-          });
+          .upsert(
+            { 
+              setting_key: sanitizedKey,
+              setting_value: sanitizedValue
+            }, 
+            { 
+              onConflict: 'setting_key',
+              ignoreDuplicates: false 
+            }
+          );
 
         if (error) throw error;
       }
