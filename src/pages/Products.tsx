@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, Star, Award, Zap } from 'lucide-react';
@@ -24,6 +23,7 @@ interface Product {
   is_featured: boolean;
   is_new: boolean;
   category: string;
+  created_at: string;
 }
 
 const Products = () => {
