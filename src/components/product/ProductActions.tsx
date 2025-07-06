@@ -26,7 +26,7 @@ const ProductActions: React.FC<ProductActionsProps> = ({
       {!isSoldOut && (
         <motion.button
           onClick={onBuyNow}
-          className="flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-sm font-medium"
+          className="flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-sm font-medium text-sm"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -35,12 +35,13 @@ const ProductActions: React.FC<ProductActionsProps> = ({
         </motion.button>
       )}
 
+      {/* Linha com Carrinho e Favoritos */}
       <div className="flex space-x-2">
         {/* Botão Adicionar ao Carrinho */}
         {!isSoldOut && (
           <motion.button 
             onClick={onAddToCart}
-            className="flex-1 flex items-center justify-center space-x-1 bg-neutral-900 text-white px-3 py-2 rounded-lg hover:bg-neutral-800 transition-colors shadow-sm text-sm"
+            className="flex-1 flex items-center justify-center space-x-1 bg-neutral-900 text-white px-3 py-2 rounded-lg hover:bg-neutral-800 transition-colors shadow-sm text-xs"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
