@@ -16,14 +16,16 @@ export const useProductActions = () => {
       if (isFavorite) {
         setFavorites(favorites.filter(id => id !== productId));
         toast({
-          title: "Removido dos favoritos",
+          title: "❤️ Removido dos favoritos",
           description: `${productName} foi removido dos seus favoritos.`,
+          duration: 3000,
         });
       } else {
         setFavorites([...favorites, productId]);
         toast({
-          title: "Adicionado aos favoritos",
+          title: "❤️ Adicionado aos favoritos",
           description: `${productName} foi adicionado aos seus favoritos.`,
+          duration: 3000,
         });
       }
       
@@ -57,12 +59,31 @@ export const useProductActions = () => {
       }
 
       toast({
-        title: "Produto adicionado!",
+        title: "🛒 Produto adicionado ao carrinho!",
         description: `${quantity}x ${productName} foi adicionado ao seu carrinho.`,
+        duration: 3000,
       });
       
       // Disparar evento customizado para atualizar contadores
       window.dispatchEvent(new Event('cartUpdated'));
+    });
+  };
+
+  const buyNow = (productId: string, productName: string, selectedColor?: string, selectedSize?: string) => {
+    return requireAuth(() => {
+      // Primeiro adiciona ao carrinho
+      addToCart(productId, productName, 1, selectedColor, selectedSize);
+      
+      // Depois redireciona para o carrinho
+      setTimeout(() => {
+        window.location.href = '/cart';
+      }, 500);
+      
+      toast({
+        title: "🚀 Redirecionando para finalizar compra",
+        description: `${productName} foi adicionado ao carrinho. Redirecionando...`,
+        duration: 2000,
+      });
     });
   };
 
@@ -71,6 +92,7 @@ export const useProductActions = () => {
   return {
     toggleFavorite,
     addToCart,
+    buyNow,
     isFavorite,
     favorites,
     cart,

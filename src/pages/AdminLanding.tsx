@@ -21,10 +21,10 @@ const AdminLanding = () => {
                   className="flex items-center space-x-2 text-neutral-600 hover:text-neutral-900 transition-colors"
                 >
                   <ArrowLeft size={20} />
-                  <span>Voltar</span>
+                  <span>Voltar ao Admin</span>
                 </button>
                 <span className="text-neutral-500">|</span>
-                <h1 className="text-2xl font-bold text-neutral-900">Configurar Landing Page</h1>
+                <h1 className="text-2xl font-bold text-neutral-900">Gerenciar Categorias</h1>
               </div>
             </div>
           </div>

@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useBrandCategories } from '@/hooks/useBrandCategories';
 import CategoryImageUpload from './CategoryImageUpload';
+import { useToast } from '@/hooks/use-toast';
 
 interface BrandCategory {
   id: string;
@@ -43,6 +44,7 @@ interface CategoryFormData {
 
 const CategoryManager = () => {
   const { categories, loading, refetch } = useBrandCategories();
+  const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<BrandCategory | null>(null);
   const [deleteCategory, setDeleteCategory] = useState<BrandCategory | null>(null);
@@ -97,6 +99,11 @@ const CategoryManager = () => {
           .eq('id', editingCategory.id);
 
         if (error) throw error;
+        
+        toast({
+          title: "Sucesso",
+          description: "Categoria atualizada com sucesso!",
+        });
       } else {
         // Criar nova categoria
         const { error } = await supabase
@@ -111,13 +118,23 @@ const CategoryManager = () => {
           });
 
         if (error) throw error;
+        
+        toast({
+          title: "Sucesso",
+          description: "Categoria criada com sucesso!",
+        });
       }
 
       await refetch();
       setShowForm(false);
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar categoria:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar categoria. Tente novamente.",
+        variant: "destructive",
+      });
     } finally {
       setFormLoading(false);
     }
@@ -138,8 +155,18 @@ const CategoryManager = () => {
 
       await refetch();
       setDeleteCategory(null);
-    } catch (error) {
+      
+      toast({
+        title: "Sucesso",
+        description: "Categoria excluída com sucesso!",
+      });
+    } catch (error: any) {
       console.error('Erro ao excluir categoria:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir categoria.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -154,8 +181,18 @@ const CategoryManager = () => {
 
       if (error) throw error;
       await refetch();
-    } catch (error) {
+      
+      toast({
+        title: "Sucesso",
+        description: `Categoria ${!category.is_active ? 'ativada' : 'desativada'} com sucesso!`,
+      });
+    } catch (error: any) {
       console.error('Erro ao alterar status:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao alterar status da categoria.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -193,7 +230,7 @@ const CategoryManager = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.1 }}
           >
-            <Card className={`hover:shadow-lg transition-shadow ${!category.is_active ? 'opacity-60' : ''}`}>
+            <Card className={`hover:shadow-lg transition-all duration-300 ${!category.is_active ? 'opacity-60' : ''}`}>
               <CardContent className="p-6">
                 {/* Imagem da Categoria */}
                 <div className="aspect-video bg-neutral-100 rounded-lg mb-4 overflow-hidden">
@@ -202,10 +239,18 @@ const CategoryManager = () => {
                       src={category.image_url}
                       alt={category.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement!.innerHTML = 
+                          '<div class="w-full h-full flex items-center justify-center text-neutral-400"><div class="text-center"><svg class="w-12 h-12 mx-auto mb-2" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg><p class="text-sm">Imagem não encontrada</p></div></div>';
+                      }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-neutral-400">
-                      <Image size={48} />
+                      <div className="text-center">
+                        <Image size={48} className="mx-auto mb-2" />
+                        <p className="text-sm">Sem imagem</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -213,7 +258,7 @@ const CategoryManager = () => {
                 {/* Informações da Categoria */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-lg">{category.name}</h3>
+                    <h3 className="font-semibold text-lg truncate">{category.name}</h3>
                     <div className="flex items-center space-x-2">
                       <GripVertical size={16} className="text-neutral-400" />
                       {category.is_active ? (
@@ -245,25 +290,28 @@ const CategoryManager = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => toggleActive(category)}
-                      className="flex-1"
+                      className="flex-1 text-xs"
                     >
-                      {category.is_active ? <EyeOff size={16} /> : <Eye size={16} />}
+                      {category.is_active ? <EyeOff size={14} /> : <Eye size={14} />}
+                      <span className="ml-1">{category.is_active ? 'Desativar' : 'Ativar'}</span>
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => handleEdit(category)}
-                      className="flex-1"
+                      className="flex-1 text-xs"
                     >
-                      <Edit size={16} />
+                      <Edit size={14} />
+                      <span className="ml-1">Editar</span>
                     </Button>
                     <Button
                       size="sm"
                       variant="destructive"
                       onClick={() => setDeleteCategory(category)}
                       disabled={category.products_count > 0}
+                      title={category.products_count > 0 ? 'Não é possível excluir categoria com produtos' : 'Excluir categoria'}
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={14} />
                     </Button>
                   </div>
                 </div>
@@ -275,13 +323,21 @@ const CategoryManager = () => {
 
       {categories.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-neutral-600">Nenhuma categoria encontrada.</p>
+          <div className="text-neutral-400 mb-4">
+            <Image size={64} className="mx-auto mb-4" />
+          </div>
+          <h3 className="text-lg font-semibold text-neutral-900 mb-2">Nenhuma categoria encontrada</h3>
+          <p className="text-neutral-600 mb-4">Comece criando sua primeira categoria de produtos.</p>
+          <Button onClick={() => setShowForm(true)}>
+            <Plus size={16} className="mr-2" />
+            Criar Primeira Categoria
+          </Button>
         </div>
       )}
 
       {/* Dialog do Formulário */}
       <Dialog open={showForm} onOpenChange={(open) => !open && (setShowForm(false), resetForm())}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
@@ -297,10 +353,11 @@ const CategoryManager = () => {
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   required
+                  placeholder="Ex: Rolex, Cartier, Omega..."
                 />
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 pt-6">
                 <Switch
                   id="is_active"
                   checked={formData.is_active}
@@ -317,6 +374,7 @@ const CategoryManager = () => {
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
+                placeholder="Descreva a categoria..."
               />
             </div>
 
@@ -329,14 +387,23 @@ const CategoryManager = () => {
               />
             </div>
 
-            <div className="flex space-x-4">
-              <Button type="submit" disabled={formLoading}>
-                {formLoading ? 'Salvando...' : 'Salvar'}
+            <div className="flex space-x-4 pt-2">
+              <Button type="submit" disabled={formLoading} className="flex-1">
+                {formLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Salvando...
+                  </>
+                ) : (
+                  editingCategory ? 'Atualizar Categoria' : 'Criar Categoria'
+                )}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => (setShowForm(false), resetForm())}
+                disabled={formLoading}
+                className="flex-1"
               >
                 Cancelar
               </Button>
@@ -351,11 +418,16 @@ const CategoryManager = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir a categoria "{deleteCategory?.name}"?
+              Tem certeza que deseja excluir a categoria <strong>"{deleteCategory?.name}"</strong>?
               {deleteCategory?.products_count && deleteCategory.products_count > 0 && (
                 <span className="block mt-2 text-red-600 font-medium">
-                  Esta categoria possui {deleteCategory.products_count} produto(s) vinculado(s).
+                  ⚠️ Esta categoria possui {deleteCategory.products_count} produto(s) vinculado(s).
                   Você deve remover todos os produtos antes de excluir a categoria.
+                </span>
+              )}
+              {(!deleteCategory?.products_count || deleteCategory.products_count === 0) && (
+                <span className="block mt-2 text-neutral-600">
+                  Esta ação não pode ser desfeita.
                 </span>
               )}
             </AlertDialogDescription>
@@ -367,7 +439,10 @@ const CategoryManager = () => {
               disabled={deleteCategory?.products_count && deleteCategory.products_count > 0}
               className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
             >
-              Excluir
+              {deleteCategory?.products_count && deleteCategory.products_count > 0 
+                ? 'Não é possível excluir' 
+                : 'Confirmar Exclusão'
+              }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

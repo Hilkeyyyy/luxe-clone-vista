@@ -42,7 +42,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   isNew,
   delay = 0,
 }) => {
-  const { toggleFavorite, addToCart, isFavorite } = useProductActions();
+  const { toggleFavorite, addToCart, buyNow, isFavorite } = useProductActions();
   const { showAuthModal, authMode, closeAuthModal } = useAuthActions();
 
   const numericPrice = parseFloat(price.replace(/[^\d,]/g, '').replace(',', '.'));
@@ -58,6 +58,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     addToCart(id, name);
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    buyNow(id, name);
   };
 
   return (
@@ -117,12 +123,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </Link>
 
         {/* Botões de ação sempre visíveis no mobile e no hover no desktop */}
-        <div className="absolute bottom-4 right-4 flex space-x-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+        <div className="absolute bottom-4 right-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300">
           <ProductActions
             isFavorite={isFavorite(id)}
             isSoldOut={!!is_sold_out}
             onToggleFavorite={handleToggleFavorite}
             onAddToCart={handleAddToCart}
+            onBuyNow={handleBuyNow}
             customBadge={custom_badge}
           />
         </div>
