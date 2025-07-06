@@ -4,17 +4,21 @@ import { motion } from 'framer-motion';
 import { Search, ShoppingBag, Heart, User, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthCheck } from '@/hooks/useAuthCheck';
+import { useLocalStorageCleanup } from '@/hooks/useLocalStorageCleanup';
 import NavigationMenu from './NavigationMenu';
 
 const Header = () => {
   const navigate = useNavigate();
   const { user, isAdmin } = useAuthCheck();
+  const { cleanupInvalidData } = useLocalStorageCleanup();
   const [searchQuery, setSearchQuery] = useState('');
   const [cartItemsCount, setCartItemsCount] = useState(0);
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [showNavigationMenu, setShowNavigationMenu] = useState(false);
 
   useEffect(() => {
+    // Limpar dados inválidos primeiro
+    cleanupInvalidData();
     updateCounts();
     
     // Listener para mudanças no localStorage
@@ -24,7 +28,7 @@ const Header = () => {
 
     // Listener customizado para mudanças imediatas
     const handleCartUpdate = () => {
-      setTimeout(updateCounts, 100); // Pequeno delay para garantir que o localStorage foi atualizado
+      setTimeout(updateCounts, 100);
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -40,20 +44,52 @@ const Header = () => {
 
   const updateCounts = () => {
     try {
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+      const cart = localStorage.getItem('cart');
+      const favorites = localStorage.getItem('favorites');
       
-      // Validar se os dados estão no formato correto
-      const validCart = Array.isArray(cart) ? cart : [];
-      const validFavorites = Array.isArray(favorites) ? favorites : [];
+      console.log('Raw cart data:', cart);
+      console.log('Raw favorites data:', favorites);
+      
+      // Parsing seguro dos dados
+      let validCart = [];
+      let validFavorites = [];
+      
+      if (cart) {
+        try {
+          const parsedCart = JSON.parse(cart);
+          validCart = Array.isArray(parsedCart) ? parsedCart : [];
+        } catch (error) {
+          console.error('Erro ao fazer parse do carrinho:', error);
+          localStorage.removeItem('cart');
+        }
+      }
+      
+      if (favorites) {
+        try {
+          const parsedFavorites = JSON.parse(favorites);
+          validFavorites = Array.isArray(parsedFavorites) ? parsedFavorites : [];
+        } catch (error) {
+          console.error('Erro ao fazer parse dos favoritos:', error);
+          localStorage.removeItem('favorites');
+        }
+      }
       
       // Para o carrinho, somar as quantidades de todos os itens
       const totalItems = validCart.reduce((total: number, item: any) => {
-        return total + (typeof item.quantity === 'number' ? item.quantity : 1);
+        const quantity = typeof item.quantity === 'number' && item.quantity > 0 ? item.quantity : 0;
+        return total + quantity;
       }, 0);
       
+      // Para favoritos, contar apenas IDs válidos
+      const favoritesWithValidIds = validFavorites.filter((id: any) => 
+        typeof id === 'string' && id.trim().length > 0
+      );
+      
+      console.log('Total items no carrinho:', totalItems);
+      console.log('Total favoritos válidos:', favoritesWithValidIds.length);
+      
       setCartItemsCount(totalItems);
-      setFavoritesCount(validFavorites.length);
+      setFavoritesCount(favoritesWithValidIds.length);
     } catch (error) {
       console.error('Erro ao atualizar contadores:', error);
       setCartItemsCount(0);

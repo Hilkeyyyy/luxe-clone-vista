@@ -15,7 +15,7 @@ const AdminNavigation = () => {
       transition={{ duration: 0.6, delay: 0.4 }}
     >
       <button
-        onClick={() => navigate('/admin/produtos')}
+        onClick={() => navigate('/admin/products')}
         className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200 hover:shadow-md transition-all text-left group"
       >
         <Package className="text-neutral-600 group-hover:text-neutral-900 mb-4" size={40} />
@@ -33,7 +33,7 @@ const AdminNavigation = () => {
       </button>
 
       <button
-        onClick={() => navigate('/admin/configuracoes')}
+        onClick={() => navigate('/admin/settings')}
         className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200 hover:shadow-md transition-all text-left group"
       >
         <Settings className="text-neutral-600 group-hover:text-neutral-900 mb-4" size={40} />
