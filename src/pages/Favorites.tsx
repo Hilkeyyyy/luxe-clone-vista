@@ -6,8 +6,9 @@ import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { supabase } from '@/integrations/supabase/client';
-import { secureLog } from '@/utils/secureLogger';
+import { useToast } from '@/hooks/use-toast';
 
 interface Product {
   id: string;
@@ -16,24 +17,27 @@ interface Product {
   price: number;
   original_price?: number;
   images: string[];
-  is_new: boolean;
-  is_featured: boolean;
-  clone_category?: string;
+  clone_category: string;
   stock_status: string;
-  created_at: string;
+  is_sold_out: boolean;
+  custom_badge?: string;
+  is_bestseller: boolean;
+  is_featured: boolean;
+  is_new: boolean;
 }
 
 const Favorites = () => {
+  const { toast } = useToast();
   const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchFavoriteProducts();
-    window.addEventListener('storage', fetchFavoriteProducts);
-    return () => window.removeEventListener('storage', fetchFavoriteProducts);
+    loadFavorites();
+    window.addEventListener('storage', loadFavorites);
+    return () => window.removeEventListener('storage', loadFavorites);
   }, []);
 
-  const fetchFavoriteProducts = async () => {
+  const loadFavorites = async () => {
     try {
       const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
       
@@ -43,32 +47,20 @@ const Favorites = () => {
         return;
       }
 
-      // Validar que os IDs são válidos
-      const validFavorites = favorites.filter((id: string) => 
-        typeof id === 'string' && id.length > 0
-      );
-
-      if (validFavorites.length === 0) {
-        setFavoriteProducts([]);
-        setLoading(false);
-        return;
-      }
-
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .in('id', validFavorites)
-        .neq('stock_status', 'out_of_stock');
+        .in('id', favorites);
 
-      if (error) {
-        secureLog.error('Erro ao buscar produtos favoritos', error);
-        throw error;
-      }
-      
+      if (error) throw error;
       setFavoriteProducts(data || []);
     } catch (error) {
-      secureLog.error('Erro crítico ao buscar favoritos', error);
-      setFavoriteProducts([]);
+      console.error('Erro ao carregar favoritos:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar seus produtos favoritos.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -78,12 +70,7 @@ const Favorites = () => {
     return (
       <div className="min-h-screen bg-white font-outfit">
         <Header />
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="w-8 h-8 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-neutral-600">Carregando seus favoritos...</p>
-          </div>
-        </div>
+        <LoadingSpinner />
         <Footer />
       </div>
     );
@@ -107,8 +94,8 @@ const Favorites = () => {
           </div>
           <p className="text-neutral-600 text-lg">
             {favoriteProducts.length > 0 
-              ? `Você tem ${favoriteProducts.length} produto${favoriteProducts.length !== 1 ? 's' : ''} favoritado${favoriteProducts.length !== 1 ? 's' : ''}`
-              : 'Você ainda não favoritou nenhum produto'
+              ? `${favoriteProducts.length} produto${favoriteProducts.length !== 1 ? 's' : ''} favorito${favoriteProducts.length !== 1 ? 's' : ''}`
+              : 'Você ainda não tem produtos favoritos'
             }
           </p>
         </motion.div>
@@ -116,8 +103,8 @@ const Favorites = () => {
         {favoriteProducts.length > 0 ? (
           <motion.div 
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             {favoriteProducts.map((product, index) => (
@@ -127,14 +114,15 @@ const Favorites = () => {
                 name={product.name}
                 brand={product.brand}
                 price={`R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                originalPrice={product.original_price 
-                  ? `R$ ${product.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
-                  : undefined}
+                originalPrice={product.original_price ? `R$ ${product.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : undefined}
                 image={product.images[0]}
-                isNew={product.is_new}
-                featured={product.is_featured}
                 clone_category={product.clone_category}
                 stock_status={product.stock_status}
+                is_sold_out={product.is_sold_out}
+                custom_badge={product.custom_badge}
+                is_bestseller={product.is_bestseller}
+                is_featured={product.is_featured}
+                isNew={product.is_new}
                 delay={index * 0.1}
               />
             ))}
@@ -149,10 +137,10 @@ const Favorites = () => {
             <div className="max-w-md mx-auto">
               <Heart className="w-24 h-24 text-neutral-300 mx-auto mb-6" />
               <h2 className="text-2xl font-bold text-neutral-900 mb-4">
-                Nenhum favorito ainda
+                Nenhum produto favorito
               </h2>
               <p className="text-neutral-600 mb-8">
-                Explore nossa coleção e favorite os relógios que mais gostar para encontrá-los facilmente aqui.
+                Explore nossa coleção e adicione produtos aos seus favoritos clicando no ícone de coração.
               </p>
               <Link
                 to="/produtos"

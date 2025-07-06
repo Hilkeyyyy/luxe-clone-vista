@@ -17,6 +17,10 @@ interface ProductCardProps {
   image?: string;
   clone_category?: string;
   stock_status?: string;
+  is_sold_out?: boolean;
+  custom_badge?: string;
+  is_bestseller?: boolean;
+  is_featured?: boolean;
 }
 
 const ProductCard = ({ 
@@ -30,7 +34,11 @@ const ProductCard = ({
   isNew = false,
   image,
   clone_category,
-  stock_status = 'in_stock'
+  stock_status = 'in_stock',
+  is_sold_out = false,
+  custom_badge,
+  is_bestseller = false,
+  is_featured = false
 }: ProductCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -48,6 +56,10 @@ const ProductCard = ({
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
     setIsFavorite(favorites.includes(id));
   };
+
+  // Determinar se produto está disponível para compra
+  const isOutOfStock = is_sold_out || stock_status === 'out_of_stock';
+  const isAvailable = !isOutOfStock;
 
   const handleClick = () => {
     if (id) {
@@ -85,7 +97,7 @@ const ProductCard = ({
 
   const addToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!id) return;
+    if (!id || isOutOfStock) return;
 
     const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
     const existingItemIndex = cartItems.findIndex((item: any) => item.product_id === id);
@@ -150,23 +162,21 @@ const ProductCard = ({
     }
   };
 
-  const getStockBadge = (status: string) => {
-    switch (status) {
-      case 'in_stock':
-        return {
-          label: 'Em Estoque',
-          color: 'bg-green-500 text-white'
-        };
+  const getStockBadge = () => {
+    if (is_sold_out || stock_status === 'out_of_stock') {
+      return {
+        label: 'Esgotado',
+        color: 'bg-red-500 text-white'
+      };
+    }
+    
+    switch (stock_status) {
       case 'low_stock':
         return {
           label: 'Pouco Estoque',
           color: 'bg-yellow-500 text-white'
         };
-      case 'out_of_stock':
-        return {
-          label: 'Fora de Estoque',
-          color: 'bg-red-500 text-white'
-        };
+      case 'in_stock':
       default:
         return {
           label: 'Em Estoque',
@@ -175,12 +185,12 @@ const ProductCard = ({
     }
   };
 
-  const stockBadge = getStockBadge(stock_status);
+  const stockBadge = getStockBadge();
 
   return (
     <motion.div
       className={`bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer border border-neutral-100 ${
-        featured ? 'ring-2 ring-amber-400' : ''
+        (featured || is_featured) ? 'ring-2 ring-amber-400' : ''
       }`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -191,7 +201,7 @@ const ProductCard = ({
       <div className="aspect-square bg-gradient-to-br from-neutral-50 to-neutral-100 flex items-center justify-center relative overflow-hidden">
         {/* Badges - Reorganizado */}
         <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
-          {featured && (
+          {(featured || is_featured) && (
             <div className="bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-outfit font-semibold shadow-lg">
               Destaque
             </div>
@@ -199,6 +209,16 @@ const ProductCard = ({
           {isNew && (
             <div className="bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-outfit font-semibold shadow-lg">
               Novo
+            </div>
+          )}
+          {is_bestseller && (
+            <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-outfit font-semibold shadow-lg">
+              Mais Vendido
+            </div>
+          )}
+          {custom_badge && (
+            <div className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-outfit font-semibold shadow-lg">
+              {custom_badge}
             </div>
           )}
           {discountPercentage > 0 && (
@@ -236,15 +256,17 @@ const ProductCard = ({
               className={`p-3 backdrop-blur-md rounded-full shadow-lg transition-all duration-300 ${
                 isAddedToCart 
                   ? 'bg-green-600 text-white scale-110' 
-                  : 'bg-white/90 text-neutral-600 hover:bg-white hover:scale-110'
+                  : isOutOfStock
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : 'bg-white/90 text-neutral-600 hover:bg-white hover:scale-110'
               }`}
-              whileHover={{ scale: 1.15 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={isAvailable ? { scale: 1.15 } : {}}
+              whileTap={isAvailable ? { scale: 0.95 } : {}}
               key={isAddedToCart ? 'added' : 'add'}
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.8 }}
-              disabled={stock_status === 'out_of_stock'}
+              disabled={isOutOfStock}
             >
               {isAddedToCart ? <Check size={18} /> : <ShoppingCart size={18} />}
             </motion.button>
@@ -305,32 +327,32 @@ const ProductCard = ({
           
           <motion.button
             className={`px-4 py-2 rounded-xl font-outfit font-semibold transition-all text-sm border-2 ${
-              stock_status === 'out_of_stock'
+              isOutOfStock
                 ? 'bg-neutral-100 border-neutral-300 text-neutral-500 cursor-not-allowed'
                 : isAddedToCart 
                   ? 'bg-green-50 border-green-300 text-green-700' 
                   : 'bg-neutral-900 border-neutral-900 text-white hover:bg-neutral-800'
             }`}
-            whileHover={stock_status !== 'out_of_stock' ? { scale: 1.05 } : {}}
-            whileTap={stock_status !== 'out_of_stock' ? { scale: 0.95 } : {}}
+            whileHover={isAvailable ? { scale: 1.05 } : {}}
+            whileTap={isAvailable ? { scale: 0.95 } : {}}
             onClick={(e) => {
               e.stopPropagation();
-              if (!isAddedToCart && stock_status !== 'out_of_stock') {
+              if (!isAddedToCart && isAvailable) {
                 addToCart(e);
               }
             }}
-            disabled={stock_status === 'out_of_stock'}
+            disabled={isOutOfStock}
           >
             <AnimatePresence mode="wait">
               <motion.span
-                key={stock_status === 'out_of_stock' ? 'unavailable' : isAddedToCart ? 'added' : 'add'}
+                key={isOutOfStock ? 'unavailable' : isAddedToCart ? 'added' : 'add'}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
               >
-                {stock_status === 'out_of_stock' 
-                  ? 'Indisponível' 
+                {isOutOfStock 
+                  ? 'Esgotado' 
                   : isAddedToCart 
                     ? 'Adicionado' 
                     : 'Adicionar'}

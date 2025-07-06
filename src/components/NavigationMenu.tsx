@@ -13,7 +13,8 @@ import {
   Package, 
   Grid3X3, 
   Phone,
-  ShoppingBag
+  ShoppingBag,
+  Heart
 } from 'lucide-react';
 
 interface NavigationMenuProps {
@@ -63,15 +64,28 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({ isOpen, onClose, user, 
   };
 
   const handleNavigation = (path: string) => {
-    navigate(path);
+    if (path === '#contato') {
+      // Scroll para seção de contato
+      const footer = document.querySelector('footer');
+      if (footer) {
+        footer.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      navigate(path);
+    }
     onClose();
   };
 
   const menuItems = [
     { icon: ShoppingBag, label: 'Produtos', path: '/produtos', public: true },
-    { icon: Grid3X3, label: 'Categorias', path: '/produtos', public: true },
+    { icon: Grid3X3, label: 'Categorias', path: '/categorias', public: true },
     { icon: Phone, label: 'Contato', path: '#contato', public: true },
   ];
+
+  const userItems = user ? [
+    { icon: Heart, label: 'Meus Favoritos', path: '/favoritos' },
+    { icon: ShoppingBag, label: 'Meu Carrinho', path: '/carrinho' },
+  ] : [];
 
   const adminItems = [
     { icon: BarChart3, label: 'Dashboard', path: '/admin' },
@@ -121,6 +135,30 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({ isOpen, onClose, user, 
             ))}
           </div>
 
+          {/* User Menu Items */}
+          {user && userItems.length > 0 && (
+            <>
+              <div className="border-t border-neutral-100 my-2"></div>
+              <div className="py-2">
+                <div className="px-4 py-1">
+                  <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Minha Conta
+                  </p>
+                </div>
+                {userItems.map((item) => (
+                  <button
+                    key={item.path}
+                    onClick={() => handleNavigation(item.path)}
+                    className="w-full flex items-center space-x-3 px-4 py-2 text-neutral-700 hover:bg-neutral-50 transition-colors"
+                  >
+                    <item.icon size={18} />
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
           {/* Admin Menu Items */}
           {isAdmin && (
             <>
@@ -158,11 +196,11 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({ isOpen, onClose, user, 
               </button>
             ) : (
               <button
-                onClick={() => handleNavigation('/admin/login')}
+                onClick={() => handleNavigation('/login')}
                 className="w-full flex items-center space-x-3 px-4 py-2 text-neutral-700 hover:bg-neutral-50 transition-colors"
               >
                 <LogIn size={18} />
-                <span>Fazer Login</span>
+                <span>Entrar / Cadastrar</span>
               </button>
             )}
           </div>
