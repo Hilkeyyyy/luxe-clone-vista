@@ -48,13 +48,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const numericPrice = parseFloat(price.replace(/[^\d,]/g, '').replace(',', '.'));
   const numericOriginalPrice = originalPrice ? parseFloat(originalPrice.replace(/[^\d,]/g, '').replace(',', '.')) : undefined;
 
-  const handleToggleFavorite = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleToggleFavorite = () => {
     toggleFavorite(id, name);
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleAddToCart = () => {
     addToCart(id, name);
   };
 
