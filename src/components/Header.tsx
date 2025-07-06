@@ -21,10 +21,24 @@ const Header = () => {
   }, []);
 
   const updateCounts = () => {
-    const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
-    const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-    setCartItemsCount(cart.reduce((total: number, item: any) => total + item.quantity, 0));
-    setFavoritesCount(favs.length);
+    try {
+      const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+      const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+      
+      // Validar se os dados estão no formato correto
+      const validCart = Array.isArray(cart) ? cart : [];
+      const validFavs = Array.isArray(favs) ? favs : [];
+      
+      setCartItemsCount(validCart.reduce((total: number, item: any) => {
+        return total + (typeof item.quantity === 'number' ? item.quantity : 0);
+      }, 0));
+      
+      setFavoritesCount(validFavs.length);
+    } catch (error) {
+      console.error('Erro ao atualizar contadores:', error);
+      setCartItemsCount(0);
+      setFavoritesCount(0);
+    }
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -52,7 +66,7 @@ const Header = () => {
             transition={{ duration: 0.2 }}
           >
             <h1 className="text-2xl sm:text-3xl font-outfit font-bold text-neutral-900">
-              Mega Clones
+              VELAR WATCHES
             </h1>
           </motion.button>
 

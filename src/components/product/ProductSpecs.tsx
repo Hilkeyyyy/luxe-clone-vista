@@ -29,11 +29,34 @@ const ProductSpecs = ({ specifications }: ProductSpecsProps) => {
 
   const formatSpecKey = (key: string): string => {
     // Convert camelCase or snake_case to readable format
-    return key
+    const keyMappings: { [key: string]: string } = {
+      movement: 'Movimento',
+      diameter: 'Diâmetro',
+      material: 'Material',
+      water_resistance: 'Resistência à Água',
+      case_material: 'Material da Caixa',
+      band_material: 'Material da Pulseira',
+      crystal: 'Cristal',
+      functions: 'Funções',
+      power_reserve: 'Reserva de Energia',
+      weight: 'Peso',
+      thickness: 'Espessura'
+    };
+    
+    return keyMappings[key] || key
       .replace(/([A-Z])/g, ' $1')
       .replace(/_/g, ' ')
       .toLowerCase()
       .replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  // Consolidar especificações básicas com avançadas
+  const allSpecs = {
+    ...specifications,
+    ...(specifications.movement && { movement: specifications.movement }),
+    ...(specifications.diameter && { diameter: specifications.diameter }),
+    ...(specifications.material && { material: specifications.material }),
+    ...(specifications.water_resistance && { water_resistance: specifications.water_resistance })
   };
 
   return (
@@ -48,7 +71,7 @@ const ProductSpecs = ({ specifications }: ProductSpecsProps) => {
       </h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {Object.entries(specifications).map(([key, value], index) => (
+        {Object.entries(allSpecs).map(([key, value], index) => (
           <motion.div
             key={key}
             className="flex justify-between items-center p-4 bg-white rounded-xl"

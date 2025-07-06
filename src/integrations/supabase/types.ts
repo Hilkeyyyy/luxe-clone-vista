@@ -72,38 +72,6 @@ export type Database = {
         }
         Relationships: []
       }
-      carousel_config: {
-        Row: {
-          carousel_type: string
-          created_at: string
-          id: string
-          position: number
-          product_id: string
-        }
-        Insert: {
-          carousel_type: string
-          created_at?: string
-          id?: string
-          position?: number
-          product_id: string
-        }
-        Update: {
-          carousel_type?: string
-          created_at?: string
-          id?: string
-          position?: number
-          product_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "carousel_config_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       cart_items: {
         Row: {
           created_at: string

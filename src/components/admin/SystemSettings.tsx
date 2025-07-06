@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Save, Phone, Building, Settings, Mail } from 'lucide-react';
+import { Save, Phone, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,42 +10,18 @@ import { useToast } from '@/hooks/use-toast';
 // Componentes das seções
 import WhatsAppSettings from './settings/WhatsAppSettings';
 import CompanySettings from './settings/CompanySettings';
-import GeneralSettings from './settings/GeneralSettings';
-import EmailSettings from './settings/EmailSettings';
 
 interface SystemSettings {
   // WhatsApp
   whatsapp_number: string;
   whatsapp_message_template: string;
-  whatsapp_business_hours: string;
   whatsapp_enabled: boolean;
   
   // Empresa
   company_name: string;
-  company_logo_url: string;
-  company_address: string;
   company_phone: string;
   company_email: string;
-  company_instagram: string;
-  company_facebook: string;
-  company_website: string;
-  
-  // Configurações Gerais
-  currency: string;
-  free_shipping_minimum: number;
-  shipping_cost: number;
-  return_policy: string;
-  terms_of_service: string;
-  privacy_policy: string;
-  
-  // E-mail
-  smtp_host: string;
-  smtp_port: number;
-  smtp_user: string;
-  smtp_password: string;
-  smtp_from_email: string;
-  smtp_from_name: string;
-  email_notifications_enabled: boolean;
+  instagram_url: string;
 }
 
 const SystemSettings = () => {
@@ -55,37 +31,15 @@ const SystemSettings = () => {
   
   const [settings, setSettings] = useState<SystemSettings>({
     // WhatsApp
-    whatsapp_number: '',
-    whatsapp_message_template: 'Olá! Tenho interesse neste produto: {product_name} - {product_url}',
-    whatsapp_business_hours: '08:00 - 18:00',
+    whatsapp_number: '19999413755',
+    whatsapp_message_template: '⏱️ Pedido de Produto\n\n• Nome do Produto: {product_name}\n• Quantidade: {quantity}\n• Preço Unitário: R$ {unit_price}\n• Total a Pagar: R$ {total_price}\n• Imagem do Produto: {product_image}\n\n🕒 Gerado em: {timestamp}\n\n📩 Mensagem:\nOlá! Gostei muito deste(s) produto(s) e tenho interesse em comprá-lo(s). Poderia me passar mais informações sobre pagamento, envio e disponibilidade?\n\nAguardo seu retorno. Obrigado(a)!',
     whatsapp_enabled: true,
     
     // Empresa
-    company_name: '',
-    company_logo_url: '',
-    company_address: '',
-    company_phone: '',
-    company_email: '',
-    company_instagram: '',
-    company_facebook: '',
-    company_website: '',
-    
-    // Configurações Gerais
-    currency: 'BRL',
-    free_shipping_minimum: 200,
-    shipping_cost: 15,
-    return_policy: '',
-    terms_of_service: '',
-    privacy_policy: '',
-    
-    // E-mail
-    smtp_host: '',
-    smtp_port: 587,
-    smtp_user: '',
-    smtp_password: '',
-    smtp_from_email: '',
-    smtp_from_name: '',
-    email_notifications_enabled: false,
+    company_name: 'VELAR WATCHES',
+    company_phone: '(19) 99941-3755',
+    company_email: 'contato@velarwatches.com',
+    instagram_url: 'https://www.instagram.com/velar.watches/',
   });
 
   useEffect(() => {
@@ -102,26 +56,21 @@ const SystemSettings = () => {
 
       const loadedSettings = { ...settings };
       
-      data?.forEach(item => {
-        const key = item.setting_key as keyof SystemSettings;
-        if (key in loadedSettings) {
-          // Converter o valor Json para o tipo correto
-          const value = item.setting_value;
-          
-          // Para campos booleanos
-          if (key === 'whatsapp_enabled' || key === 'email_notifications_enabled') {
-            loadedSettings[key] = Boolean(value);
+        data?.forEach(item => {
+          const key = item.setting_key as keyof SystemSettings;
+          if (key in loadedSettings) {
+            const value = item.setting_value;
+            
+            // Para campos booleanos
+            if (key === 'whatsapp_enabled') {
+              loadedSettings[key] = Boolean(value);
+            }
+            // Para campos string
+            else {
+              loadedSettings[key] = String(value || '').replace(/"/g, '');
+            }
           }
-          // Para campos numéricos
-          else if (key === 'free_shipping_minimum' || key === 'shipping_cost' || key === 'smtp_port') {
-            loadedSettings[key] = Number(value) || 0;
-          }
-          // Para campos string
-          else {
-            loadedSettings[key] = String(value || '');
-          }
-        }
-      });
+        });
 
       setSettings(loadedSettings);
     } catch (error) {
@@ -206,7 +155,7 @@ const SystemSettings = () => {
       </div>
 
       <Tabs defaultValue="whatsapp" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="whatsapp" className="flex items-center space-x-2">
             <Phone size={16} />
             <span>WhatsApp</span>
@@ -214,14 +163,6 @@ const SystemSettings = () => {
           <TabsTrigger value="company" className="flex items-center space-x-2">
             <Building size={16} />
             <span>Empresa</span>
-          </TabsTrigger>
-          <TabsTrigger value="general" className="flex items-center space-x-2">
-            <Settings size={16} />
-            <span>Geral</span>
-          </TabsTrigger>
-          <TabsTrigger value="email" className="flex items-center space-x-2">
-            <Mail size={16} />
-            <span>E-mail</span>
           </TabsTrigger>
         </TabsList>
 
@@ -244,28 +185,6 @@ const SystemSettings = () => {
             transition={{ duration: 0.4 }}
           >
             <CompanySettings settings={settings} updateSetting={updateSetting} />
-          </motion.div>
-        </TabsContent>
-
-        {/* Configurações Gerais */}
-        <TabsContent value="general">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <GeneralSettings settings={settings} updateSetting={updateSetting} />
-          </motion.div>
-        </TabsContent>
-
-        {/* E-mail */}
-        <TabsContent value="email">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <EmailSettings settings={settings} updateSetting={updateSetting} />
           </motion.div>
         </TabsContent>
       </Tabs>

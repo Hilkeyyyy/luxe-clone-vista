@@ -127,7 +127,7 @@ const ProductCard = ({
 
     const message = `Olá! Tenho interesse neste produto:\n\n${name} - ${brand}\nPreço: ${price}\n\nPoderia me enviar mais informações?`;
     
-    const whatsappUrl = `https://wa.me/5586988388124?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/19999413755?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 
@@ -140,11 +140,11 @@ const ProductCard = ({
   const getCategoryBadgeColor = (category: string) => {
     switch (category) {
       case 'ETA Base':
-        return 'bg-blue-600 text-white';
+        return 'bg-blue-500 text-white';
       case 'Clone':
-        return 'bg-amber-600 text-white';
+        return 'bg-purple-500 text-white';
       case 'Super Clone':
-        return 'bg-emerald-600 text-white';
+        return 'bg-emerald-500 text-white';
       default:
         return 'bg-neutral-600 text-white';
     }
@@ -155,22 +155,22 @@ const ProductCard = ({
       case 'in_stock':
         return {
           label: 'Em Estoque',
-          color: 'bg-green-600 text-white'
+          color: 'bg-green-500 text-white'
         };
       case 'low_stock':
         return {
           label: 'Pouco Estoque',
-          color: 'bg-yellow-600 text-white'
+          color: 'bg-yellow-500 text-white'
         };
       case 'out_of_stock':
         return {
           label: 'Fora de Estoque',
-          color: 'bg-red-600 text-white'
+          color: 'bg-red-500 text-white'
         };
       default:
         return {
           label: 'Em Estoque',
-          color: 'bg-green-600 text-white'
+          color: 'bg-green-500 text-white'
         };
     }
   };
@@ -189,8 +189,8 @@ const ProductCard = ({
       onClick={handleClick}
     >
       <div className="aspect-square bg-gradient-to-br from-neutral-50 to-neutral-100 flex items-center justify-center relative overflow-hidden">
-        {/* Badges */}
-        <div className="absolute top-3 left-3 z-10 flex flex-col space-y-2">
+        {/* Badges - Reorganizado */}
+        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
           {featured && (
             <div className="bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-outfit font-semibold shadow-lg">
               Destaque
@@ -206,7 +206,10 @@ const ProductCard = ({
               -{discountPercentage}%
             </div>
           )}
-          {/* Stock Status Badge */}
+        </div>
+
+        {/* Stock Status Badge - Canto inferior esquerdo */}
+        <div className="absolute bottom-3 left-3 z-10">
           <div className={`px-3 py-1 rounded-full text-xs font-outfit font-semibold shadow-lg ${stockBadge.color}`}>
             {stockBadge.label}
           </div>

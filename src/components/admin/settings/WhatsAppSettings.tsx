@@ -10,7 +10,6 @@ import { Switch } from '@/components/ui/switch';
 interface SystemSettings {
   whatsapp_number: string;
   whatsapp_message_template: string;
-  whatsapp_business_hours: string;
   whatsapp_enabled: boolean;
 }
 
@@ -59,21 +58,11 @@ const WhatsAppSettings = ({ settings, updateSetting }: WhatsAppSettingsProps) =>
             id="whatsapp_message_template"
             value={settings.whatsapp_message_template}
             onChange={(e) => updateSetting('whatsapp_message_template', e.target.value)}
-            rows={3}
+            rows={8}
           />
           <p className="text-xs text-neutral-500 mt-1">
-            Use {'{product_name}'} e {'{product_url}'} para inserir dados do produto automaticamente
+            Use {'{product_name}'}, {'{quantity}'}, {'{unit_price}'}, {'{total_price}'}, {'{product_image}'} e {'{timestamp}'} para inserir dados automaticamente
           </p>
-        </div>
-
-        <div>
-          <Label htmlFor="whatsapp_business_hours">Horário de Funcionamento</Label>
-          <Input
-            id="whatsapp_business_hours"
-            placeholder="Ex: 08:00 - 18:00"
-            value={settings.whatsapp_business_hours}
-            onChange={(e) => updateSetting('whatsapp_business_hours', e.target.value)}
-          />
         </div>
       </CardContent>
     </Card>

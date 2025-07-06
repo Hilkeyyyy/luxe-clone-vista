@@ -19,12 +19,22 @@ const Footer = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <h3 className="text-2xl font-outfit font-bold mb-4">Mega Clones</h3>
+            <h3 className="text-2xl font-outfit font-bold mb-4">VELAR WATCHES</h3>
             <p className="text-neutral-300 font-outfit mb-6 leading-relaxed">
-              Produtos premium com qualidade excepcional. Sua satisfação é nossa prioridade.
+              Relógios premium com qualidade excepcional. Sua satisfação é nossa prioridade.
             </p>
             <div className="flex space-x-4">
-              {[Instagram, Facebook, Twitter].map((Icon, index) => (
+              <motion.a
+                href="https://www.instagram.com/velar.watches/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-neutral-800 rounded-full hover:bg-neutral-700 transition-colors"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Instagram size={18} />
+              </motion.a>
+              {[Facebook, Twitter].map((Icon, index) => (
                 <motion.a
                   key={index}
                   href="#"
@@ -90,11 +100,15 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center text-neutral-300">
                 <Mail size={16} className="mr-3" />
-                <span className="font-outfit">contato@megaclones.com</span>
+                <span className="font-outfit">contato@velarwatches.com</span>
               </div>
               <div className="flex items-center text-neutral-300">
                 <Phone size={16} className="mr-3" />
-                <span className="font-outfit">(11) 9999-9999</span>
+                <span className="font-outfit">(19) 99941-3755</span>
+              </div>
+              <div className="flex items-center text-neutral-300">
+                <Instagram size={16} className="mr-3" />
+                <span className="font-outfit">@velar.watches</span>
               </div>
               <div className="flex items-center text-neutral-300">
                 <MapPin size={16} className="mr-3" />
@@ -112,7 +126,7 @@ const Footer = () => {
           transition={{ duration: 0.6, delay: 0.5 }}
         >
           <p className="text-neutral-400 font-outfit">
-            © 2024 Mega Clones. Todos os direitos reservados.
+            © 2024 VELAR WATCHES. Todos os direitos reservados.
           </p>
         </motion.div>
       </div>

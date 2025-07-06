@@ -26,6 +26,11 @@ interface Product {
   in_stock: boolean;
   is_new: boolean;
   category: string;
+  stock_status?: string;
+  movement?: string;
+  diameter?: string;
+  material?: string;
+  water_resistance?: string;
 }
 
 const ProductDetail = () => {
@@ -208,7 +213,7 @@ const ProductDetail = () => {
 
         {/* Back Button */}
         <motion.button
-          onClick={() => navigate('/')}
+          onClick={() => navigate(-1)}
           className="flex items-center space-x-2 text-neutral-600 hover:text-neutral-900 transition-colors mb-8"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -264,7 +269,7 @@ const ProductDetail = () => {
               <div className="flex space-x-4">
                 <motion.button
                   onClick={addToCart}
-                  disabled={isAddingToCart || !product.in_stock}
+                  disabled={isAddingToCart || (product.stock_status === 'out_of_stock' || !product.in_stock)}
                   className="flex-1 flex items-center justify-center space-x-2 bg-neutral-900 text-white py-4 px-6 rounded-xl hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -287,7 +292,7 @@ const ProductDetail = () => {
                 </motion.button>
               </div>
 
-              {!product.in_stock && (
+              {(product.stock_status === 'out_of_stock' || !product.in_stock) && (
                 <div className="text-center py-3 px-4 bg-red-50 border border-red-200 rounded-xl">
                   <span className="text-red-600 font-medium">Produto fora de estoque</span>
                 </div>

@@ -93,14 +93,22 @@ const Cart = () => {
   };
 
   const sendWhatsAppOrder = () => {
-    const orderDetails = cartItems.map(item => 
-      `• ${item.product_name} (${item.brand})\n  Quantidade: ${item.quantity}\n  Preço: R$ ${item.product_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-    ).join('\n\n');
+    const timestamp = new Date().toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).replace(',', ' –');
 
-    const total = getTotalPrice();
-    const message = `Olá! Gostaria de fazer um pedido:\n\n${orderDetails}\n\n*Total: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}*\n\nPoderia me ajudar com o pedido?`;
+    const orderItems = cartItems.map(item => {
+      const totalPrice = item.product_price * item.quantity;
+      return `• Nome do Produto: ${item.product_name}\n• Quantidade: ${item.quantity}\n• Preço Unitário: R$ ${item.product_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n• Total a Pagar: R$ ${totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n• Imagem do Produto: ${item.product_image}`;
+    }).join('\n\n');
+
+    const message = `⏱️ Pedido de Produto\n\n${orderItems}\n\n🕒 Gerado em: ${timestamp}\n\n📩 Mensagem:\nOlá! Gostei muito deste(s) produto(s) e tenho interesse em comprá-lo(s). Poderia me passar mais informações sobre pagamento, envio e disponibilidade?\n\nAguardo seu retorno. Obrigado(a)!`;
     
-    const whatsappUrl = `https://wa.me/5586988388124?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/19999413755?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 

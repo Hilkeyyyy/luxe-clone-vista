@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Header from '../components/Header';
 import HeroSection from '../components/HeroSection';
 import ProductCarousel from '../components/ProductCarousel';
@@ -10,6 +10,14 @@ import { useProductsByType } from '../hooks/useProductsByType';
 
 const Index = () => {
   const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
+
+  useEffect(() => {
+    // Scroll automático para hero section ao carregar página
+    const heroSection = document.querySelector('section');
+    if (heroSection) {
+      heroSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-white font-outfit">

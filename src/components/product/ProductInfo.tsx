@@ -15,6 +15,7 @@ interface Product {
   in_stock: boolean;
   is_new: boolean;
   category: string;
+  stock_status?: string;
 }
 
 interface ProductInfoProps {
@@ -166,10 +167,20 @@ const ProductInfo = ({
       </div>
 
       {/* Stock Status */}
-      <div className={`flex items-center space-x-2 ${product.in_stock ? 'text-green-600' : 'text-red-600'}`}>
-        <div className={`w-2 h-2 rounded-full ${product.in_stock ? 'bg-green-500' : 'bg-red-500'}`}></div>
+      <div className={`flex items-center space-x-2 ${
+        (product.stock_status || (product.in_stock ? 'in_stock' : 'out_of_stock')) === 'in_stock' ? 'text-green-600' : 
+        (product.stock_status || (product.in_stock ? 'in_stock' : 'out_of_stock')) === 'low_stock' ? 'text-yellow-600' : 
+        'text-red-600'
+      }`}>
+        <div className={`w-2 h-2 rounded-full ${
+          (product.stock_status || (product.in_stock ? 'in_stock' : 'out_of_stock')) === 'in_stock' ? 'bg-green-500' : 
+          (product.stock_status || (product.in_stock ? 'in_stock' : 'out_of_stock')) === 'low_stock' ? 'bg-yellow-500' : 
+          'bg-red-500'
+        }`}></div>
         <span className="text-sm font-medium">
-          {product.in_stock ? 'Em estoque' : 'Fora de estoque'}
+          {(product.stock_status || (product.in_stock ? 'in_stock' : 'out_of_stock')) === 'in_stock' ? 'Em estoque' : 
+           (product.stock_status || (product.in_stock ? 'in_stock' : 'out_of_stock')) === 'low_stock' ? 'Pouco estoque' : 
+           'Fora de estoque'}
         </span>
       </div>
     </motion.div>
