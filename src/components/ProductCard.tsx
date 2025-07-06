@@ -86,7 +86,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             originalPrice={numericOriginalPrice}
             price={numericPrice}
             cloneCategory={clone_category}
-            customBadge={custom_badge}
+            customBadge={custom_badge} // CORREÇÃO: Garantir que customBadge seja passado
           />
 
           <div className="p-4">
@@ -132,6 +132,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             onBuyNow={handleBuyNow}
             customBadge={custom_badge}
             showBuyButton={false} // Na landing page, não mostra o botão COMPRAR
+            showCartText={true} // No card, mostra texto do carrinho
           />
         </div>
       </motion.div>

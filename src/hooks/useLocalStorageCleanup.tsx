@@ -32,18 +32,22 @@ export const useLocalStorageCleanup = () => {
   };
 
   const initializeLocalStorage = () => {
-    // Garantir que os arrays existam e estejam corretos
-    if (!localStorage.getItem('cart')) {
+    // CORREÇÃO: NÃO inicializar arrays vazios desnecessariamente
+    // Apenas limpar dados inválidos, mas não criar dados falsos
+    if (localStorage.getItem('cart') === null) {
+      // Só criar se realmente não existir
       localStorage.setItem('cart', JSON.stringify([]));
     }
-    if (!localStorage.getItem('favorites')) {
+    if (localStorage.getItem('favorites') === null) {
+      // Só criar se realmente não existir
       localStorage.setItem('favorites', JSON.stringify([]));
     }
   };
 
   useEffect(() => {
     cleanupInvalidData();
-    initializeLocalStorage();
+    // CORREÇÃO: Não inicializar automaticamente para evitar contadores falsos
+    // initializeLocalStorage();  <- Removido
   }, []);
 
   return { cleanupInvalidData, initializeLocalStorage };

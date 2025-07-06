@@ -10,7 +10,8 @@ interface ProductActionsProps {
   onAddToCart: (e: React.MouseEvent) => void;
   onBuyNow: (e: React.MouseEvent) => void;
   customBadge?: string;
-  showBuyButton?: boolean; // Nova prop para controlar se mostra o botão COMPRAR
+  showBuyButton?: boolean;
+  showCartText?: boolean; // NOVA PROP: controlar se mostra texto do carrinho
 }
 
 const ProductActions: React.FC<ProductActionsProps> = ({
@@ -20,7 +21,8 @@ const ProductActions: React.FC<ProductActionsProps> = ({
   onAddToCart,
   onBuyNow,
   customBadge,
-  showBuyButton = false, // Por padrão não mostra o botão COMPRAR
+  showBuyButton = false,
+  showCartText = true, // CORREÇÃO: Por padrão mostra texto, mas pode ser desabilitado
 }) => {
   return (
     <div className="flex flex-col space-y-2">
@@ -48,7 +50,8 @@ const ProductActions: React.FC<ProductActionsProps> = ({
             whileTap={{ scale: 0.98 }}
           >
             <ShoppingCart size={14} />
-            <span>Carrinho</span>
+            {/* CORREÇÃO: Mostrar texto apenas quando showCartText for true */}
+            {showCartText && <span>Carrinho</span>}
           </motion.button>
         )}
 

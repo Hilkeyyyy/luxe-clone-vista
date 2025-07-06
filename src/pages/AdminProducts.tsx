@@ -78,7 +78,8 @@ const AdminProducts = () => {
   };
 
   const handleViewProduct = (product: Product) => {
-    navigate(`/produto/${product.id}`);
+    // CORREÇÃO: Usar rota correta /products/ em vez de /produto/
+    navigate(`/products/${product.id}`);
   };
 
   const handleDeleteProduct = async (id: string) => {

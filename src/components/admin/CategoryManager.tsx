@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Edit, Trash2, Plus, Image, Eye, EyeOff, GripVertical } from 'lucide-react';
@@ -71,11 +70,19 @@ const CategoryManager = () => {
     setEditingCategory(category);
     setFormData({
       name: category.name,
-      description: category.description || '',
+      description: category.description || category.name,
       image_url: category.image_url || '',
       is_active: category.is_active
     });
     setShowForm(true);
+  };
+
+  const handleNameChange = (name: string) => {
+    setFormData(prev => ({
+      ...prev,
+      name,
+      description: prev.description === prev.name || prev.description === '' ? name : prev.description
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,13 +92,14 @@ const CategoryManager = () => {
     try {
       const { supabase } = await import('@/integrations/supabase/client');
       
+      const finalDescription = formData.description.trim() || formData.name;
+      
       if (editingCategory) {
-        // Atualizar categoria existente
         const { error } = await supabase
           .from('brand_categories')
           .update({
             name: formData.name,
-            description: formData.description,
+            description: finalDescription,
             image_url: formData.image_url,
             is_active: formData.is_active,
             slug: formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -105,12 +113,11 @@ const CategoryManager = () => {
           description: "Categoria atualizada com sucesso!",
         });
       } else {
-        // Criar nova categoria
         const { error } = await supabase
           .from('brand_categories')
           .insert({
             name: formData.name,
-            description: formData.description,
+            description: finalDescription,
             image_url: formData.image_url,
             is_active: formData.is_active,
             slug: formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
@@ -351,7 +358,7 @@ const CategoryManager = () => {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => handleNameChange(e.target.value)}
                   required
                   placeholder="Ex: Rolex, Cartier, Omega..."
                 />
@@ -374,7 +381,7 @@ const CategoryManager = () => {
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                placeholder="Descreva a categoria..."
+                placeholder="Descreva a categoria... (será preenchida automaticamente com o nome se deixada em branco)"
               />
             </div>
 
