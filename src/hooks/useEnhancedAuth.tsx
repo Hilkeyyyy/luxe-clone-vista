@@ -1,33 +1,38 @@
 
-import { useSecureSession } from './useSecureSession';
+import { useRobustAuth } from './useRobustAuth';
 import { validatePasswordStrength } from '@/utils/securityEnhancements';
+import { secureSignIn, secureSignOut } from '@/utils/authStateCleanup';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { secureLog } from '@/utils/secureLogger';
+import { validateUserInput } from '@/utils/enhancedSecurityValidation';
 
 export const useEnhancedAuth = () => {
-  const session = useSecureSession();
+  const authState = useRobustAuth();
   const { toast } = useToast();
 
-  const secureSignIn = async (email: string, password: string) => {
+  const enhancedSignIn = async (email: string, password: string) => {
     try {
-      // Input validation
-      if (!email || !password) {
-        throw new Error('Email e senha são obrigatórios');
-      }
-
-      if (email.length > 320 || password.length > 128) {
-        throw new Error('Dados inválidos');
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
+      // Validar entrada
+      const emailErrors = validateUserInput(email, 'Email', {
+        required: true,
+        type: 'email',
+        maxLength: 320
       });
 
-      if (error) throw error;
+      const passwordErrors = validateUserInput(password, 'Senha', {
+        required: true,
+        minLength: 1,
+        maxLength: 128
+      });
 
-      secureLog.info('Login realizado com sucesso');
+      const allErrors = [...emailErrors, ...passwordErrors];
+      if (allErrors.length > 0) {
+        throw new Error(allErrors[0]);
+      }
+
+      const data = await secureSignIn(email, password);
+
       toast({
         title: "Login realizado",
         description: "Bem-vindo de volta!",
@@ -35,7 +40,6 @@ export const useEnhancedAuth = () => {
 
       return data;
     } catch (error: any) {
-      secureLog.error('Erro no login', error);
       toast({
         title: "Erro no login",
         description: error.message || "Erro interno",
@@ -45,8 +49,19 @@ export const useEnhancedAuth = () => {
     }
   };
 
-  const secureSignUp = async (email: string, password: string, fullName?: string) => {
+  const enhancedSignUp = async (email: string, password: string, fullName?: string) => {
     try {
+      // Validar entrada
+      const emailErrors = validateUserInput(email, 'Email', {
+        required: true,
+        type: 'email',
+        maxLength: 320
+      });
+
+      if (emailErrors.length > 0) {
+        throw new Error(emailErrors[0]);
+      }
+
       // Validate password strength
       const passwordValidation = validatePasswordStrength(password);
       if (!passwordValidation.isValid) {
@@ -83,18 +98,14 @@ export const useEnhancedAuth = () => {
     }
   };
 
-  const secureSignOut = async () => {
+  const enhancedSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
-      secureLog.info('Logout realizado com sucesso');
+      await secureSignOut();
       toast({
         title: "Logout realizado",
         description: "Até logo!",
       });
     } catch (error: any) {
-      secureLog.error('Erro no logout', error);
       toast({
         title: "Erro",
         description: "Erro ao fazer logout",
@@ -104,9 +115,9 @@ export const useEnhancedAuth = () => {
   };
 
   return {
-    ...session,
-    secureSignIn,
-    secureSignUp,
-    secureSignOut
+    ...authState,
+    signIn: enhancedSignIn,
+    signUp: enhancedSignUp,
+    signOut: enhancedSignOut
   };
 };

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { csrfManager, sanitizeInput } from './securityEnhancements';
 import { rateLimiter } from './security';
 import { secureLog } from './secureLogger';
+import { validateProductData, validateAdminSettings } from './enhancedSecurityValidation';
 
 export class SecureApiClient {
   private static instance: SecureApiClient;
@@ -47,6 +48,12 @@ export class SecureApiClient {
 
   async secureProductCreate(productData: any): Promise<any> {
     return this.secureRequest(async () => {
+      // Validar dados do produto
+      const validationErrors = validateProductData(productData);
+      if (validationErrors.length > 0) {
+        throw new Error(`Dados inválidos: ${validationErrors.join(', ')}`);
+      }
+
       // Sanitize all string inputs
       const sanitizedData = {
         ...productData,
@@ -72,6 +79,12 @@ export class SecureApiClient {
 
   async secureAdminSettingsUpdate(settings: any): Promise<any> {
     return this.secureRequest(async () => {
+      // Validar configurações
+      const validationErrors = validateAdminSettings(settings);
+      if (validationErrors.length > 0) {
+        throw new Error(`Configurações inválidas: ${validationErrors.join(', ')}`);
+      }
+
       // Update settings one by one for better security and type safety
       for (const [key, value] of Object.entries(settings)) {
         const sanitizedKey = sanitizeInput(key, { maxLength: 100 });
@@ -104,6 +117,27 @@ export class SecureApiClient {
 
       return { success: true };
     }, 'UPDATE_ADMIN_SETTINGS');
+  }
+
+  async secureProfileCreate(profileData: any): Promise<any> {
+    return this.secureRequest(async () => {
+      // Sanitizar dados do perfil
+      const sanitizedData = {
+        id: profileData.id, // UUID não precisa sanitizar
+        email: sanitizeInput(profileData.email || '', { maxLength: 320 }),
+        full_name: sanitizeInput(profileData.full_name || '', { maxLength: 200 }),
+        role: sanitizeInput(profileData.role || 'user', { maxLength: 50 })
+      };
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert([sanitizedData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    }, 'CREATE_PROFILE');
   }
 }
 
