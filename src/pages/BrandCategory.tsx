@@ -224,7 +224,7 @@ const BrandCategory = () => {
                 : undefined}
               image={product.images[0]}
               isNew={product.is_new}
-              featured={product.is_featured}
+              is_featured={product.is_featured}
               clone_category={product.clone_category}
               stock_status={product.stock_status}
               delay={index * 0.1}

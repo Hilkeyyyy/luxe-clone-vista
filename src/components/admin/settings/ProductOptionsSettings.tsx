@@ -54,9 +54,9 @@ const ProductOptionsSettings = () => {
         const key = item.setting_key as keyof ProductOptions;
         if (key in loadedOptions) {
           if (key.includes('_enabled')) {
-            loadedOptions[key] = Boolean(item.setting_value);
+            (loadedOptions as any)[key] = Boolean(item.setting_value);
           } else {
-            loadedOptions[key] = String(item.setting_value || '').replace(/"/g, '');
+            (loadedOptions as any)[key] = String(item.setting_value || '').replace(/"/g, '');
           }
         }
       });
