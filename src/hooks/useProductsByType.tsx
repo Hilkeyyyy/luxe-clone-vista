@@ -54,12 +54,12 @@ export const useProductsByType = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [offerProducts, setOfferProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [debugInfo, setDebugInfo] = useState<string>('🔄 Iniciando...');
+  const [debugInfo, setDebugInfo] = useState<string>('');
   const [retryCount, setRetryCount] = useState(0);
 
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY = 2000;
-  const QUERY_TIMEOUT = 15000; // Aumentar timeout
+  const MAX_RETRIES = 2;
+  const RETRY_DELAY = 1000; // Reduzido para 1s
+  const QUERY_TIMEOUT = 30000; // Aumentado para 30s
 
   useEffect(() => {
     fetchProductsByType();
@@ -71,19 +71,11 @@ export const useProductsByType = () => {
     try {
       setLoading(true);
       
-      const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('preview');
-      
-      setDebugInfo(`🌍 Buscando produtos...`);
-      
-      console.log('🚀 INICIANDO BUSCA:', {
-        ambiente: isProduction ? 'PRODUÇÃO' : 'DESENVOLVIMENTO',
-        tentativa: retryCount + 1,
-        isRetry
-      });
+      console.log('🚀 Iniciando busca de produtos...');
 
-      // Query com timeout
+      // Query SIMPLIFICADA - apenas campos essenciais
       const queryTimeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout na consulta')), QUERY_TIMEOUT)
+        setTimeout(() => reject(new Error('Query timeout após 30s')), QUERY_TIMEOUT)
       );
 
       const queryPromise = supabase
@@ -92,24 +84,14 @@ export const useProductsByType = () => {
           id,
           name,
           brand,
-          category,
-          clone_category,
           price,
           original_price,
           images,
-          colors,
-          sizes,
           is_new,
           is_featured,
-          is_bestseller,
-          is_sold_out,
-          is_coming_soon,
-          custom_badge,
-          in_stock,
-          stock_status,
-          created_at
+          clone_category
         `)
-        .order('created_at', { ascending: false });
+        .limit(50); // Limitar resultados para acelerar
 
       const { data: allProducts, error } = await Promise.race([
         queryPromise,
@@ -117,27 +99,15 @@ export const useProductsByType = () => {
       ]) as any;
 
       if (error) {
-        console.error('❌ ERRO NA QUERY:', error);
+        console.error('❌ Erro na query:', error);
         throw error;
       }
 
-      console.log('📊 DADOS BRUTOS DO BANCO:', {
-        totalProdutos: allProducts?.length || 0,
-        primeiros3: allProducts?.slice(0, 3).map(p => ({
-          id: p.id,
-          name: p.name,
-          is_new: p.is_new,
-          is_featured: p.is_featured,
-          price: p.price,
-          original_price: p.original_price,
-          tipos: typeof p.is_new + '/' + typeof p.is_featured + '/' + typeof p.price
-        })) || []
-      });
+      console.log('✅ Produtos carregados:', allProducts?.length || 0);
 
       // Se não há produtos, usar fallback
       if (!allProducts || allProducts.length === 0) {
-        console.warn('⚠️ NENHUM PRODUTO ENCONTRADO - USANDO FALLBACK');
-        setDebugInfo('⚠️ Banco vazio - usando produtos demo');
+        console.warn('⚠️ Nenhum produto encontrado - usando fallback');
         
         const novos = FALLBACK_PRODUCTS.filter(p => p.is_new);
         const destaques = FALLBACK_PRODUCTS.filter(p => p.is_featured);
@@ -150,7 +120,7 @@ export const useProductsByType = () => {
         return;
       }
 
-      // FILTROS CORRIGIDOS - Tratar valores do Supabase
+      // Filtros simples e diretos
       const novos = allProducts.filter(p => p.is_new === true);
       const destaques = allProducts.filter(p => p.is_featured === true);
       const ofertas = allProducts.filter(p => {
@@ -159,15 +129,11 @@ export const useProductsByType = () => {
         return originalPrice > 0 && originalPrice > price;
       });
 
-      console.log('✨ FILTROS APLICADOS:', {
+      console.log('✨ Resultados:', {
+        total: allProducts.length,
         novos: novos.length,
         destaques: destaques.length,
-        ofertas: ofertas.length,
-        detalhes: {
-          novos: novos.map(p => p.name),
-          destaques: destaques.map(p => p.name),
-          ofertas: ofertas.map(p => `${p.name} (${p.price} < ${p.original_price})`)
-        }
+        ofertas: ofertas.length
       });
 
       // Definir produtos (limitando quantidade)
@@ -175,36 +141,22 @@ export const useProductsByType = () => {
       setFeaturedProducts(destaques.slice(0, 8));
       setOfferProducts(ofertas.slice(0, 8));
 
-      setDebugInfo(`✅ ${allProducts.length} produtos • N:${novos.length} D:${destaques.length} O:${ofertas.length}`);
       setRetryCount(0);
 
-      console.log('✅ SUCESSO FINAL:', {
-        totalProdutos: allProducts.length,
-        novos: novos.length,
-        destaques: destaques.length,
-        ofertas: ofertas.length,
-        ambiente: isProduction ? 'PRODUÇÃO' : 'DEV'
-      });
-
     } catch (error: any) {
-      console.error('💥 ERRO CRÍTICO:', {
-        message: error?.message,
-        tentativa: retryCount + 1,
-        maxTentativas: MAX_RETRIES
-      });
+      console.error('💥 Erro:', error?.message);
 
-      // Retry automático
+      // Retry automático apenas se necessário
       if (retryCount < MAX_RETRIES && !isRetry) {
         setRetryCount(prev => prev + 1);
-        setDebugInfo(`🔄 Tentativa ${retryCount + 2}/${MAX_RETRIES + 1}...`);
+        console.log(`🔄 Tentativa ${retryCount + 2}/${MAX_RETRIES + 1}...`);
         
         await sleep(RETRY_DELAY);
         return fetchProductsByType(true);
       }
 
-      // Fallback apenas após esgotar tentativas
-      console.warn('🆘 FALLBACK APÓS TODAS AS TENTATIVAS FALHAREM');
-      setDebugInfo('🆘 Erro na conexão - produtos demo');
+      // Fallback após esgotar tentativas
+      console.warn('🆘 Usando produtos demo após falha');
       
       const novos = FALLBACK_PRODUCTS.filter(p => p.is_new);
       const destaques = FALLBACK_PRODUCTS.filter(p => p.is_featured);
@@ -214,14 +166,14 @@ export const useProductsByType = () => {
       setFeaturedProducts(destaques);
       setOfferProducts(ofertas);
 
-      secureLog.error('Erro crítico ao buscar produtos por tipo', error);
+      secureLog.error('Erro ao buscar produtos por tipo', error);
     } finally {
       setLoading(false);
     }
   };
 
   const refetch = () => {
-    console.log('🔄 REFETCH MANUAL');
+    console.log('🔄 Refetch manual');
     setRetryCount(0);
     fetchProductsByType();
   };
