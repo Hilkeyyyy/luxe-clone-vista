@@ -58,10 +58,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
     addToCart(id, name);
   };
 
+  // CORREÇÃO: Botão comprar agora envia todo o carrinho
   const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    buyNow(id, name);
+    buyNow(); // Sem parâmetros - usa todo o carrinho
   };
 
   return (

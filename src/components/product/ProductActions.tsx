@@ -32,11 +32,11 @@ const ProductActions: React.FC<ProductActionsProps> = ({
 }) => {
   return (
     <div className="flex flex-col space-y-2">
-      {/* Botão Comprar - Apenas na página de produto */}
+      {/* Botão Comprar - CORREÇÃO: Agora envia todo o carrinho via WhatsApp */}
       {showBuyButton && !isSoldOut && (
         <motion.button
           onClick={onBuyNow}
-          className="flex items-center justify-center space-x-2 bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors shadow-sm font-medium text-sm"
+          className="flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-sm font-medium text-sm"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >

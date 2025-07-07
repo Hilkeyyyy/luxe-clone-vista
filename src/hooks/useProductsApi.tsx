@@ -9,17 +9,10 @@ export const useProductsApi = () => {
 
   const fetchProducts = async () => {
     return secureApiClient.secureRequest(async () => {
-      // CORREÇÃO: Usar LEFT JOIN correto em vez da sintaxe incorreta
+      // CORREÇÃO: Query simples sem JOIN problemático
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          brand_categories (
-            id,
-            name,
-            slug
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -61,26 +54,11 @@ export const useProductsApi = () => {
           sanitizeInput(productData.custom_badge, { maxLength: 50 }) : null
       };
 
-      // Get or create brand category
-      let brandCategoryId = null;
-      if (sanitizedData.brand) {
-        const { data: categoryData, error: categoryError } = await supabase
-          .rpc('get_or_create_brand_category', { 
-            category_name: sanitizedData.brand 
-          });
-
-        if (categoryError) {
-          console.error('Erro ao obter categoria:', categoryError);
-        } else {
-          brandCategoryId = categoryData;
-        }
-      }
-
+      // CORREÇÃO: Remover lógica de brand_category até ser configurada corretamente
       const { data, error } = await supabase
         .from('products')
         .update({
           ...sanitizedData,
-          brand_category_id: brandCategoryId,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)

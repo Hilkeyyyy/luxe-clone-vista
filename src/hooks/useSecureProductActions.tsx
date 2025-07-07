@@ -10,7 +10,7 @@ export const useSecureProductActions = () => {
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   const { toggleFavorite, isFavorite } = useSecureFavorites();
-  const { addToCart } = useSecureCart();
+  const { addToCart, cartItems, getTotalPrice } = useSecureCart();
   const { triggerFeedback, setLoading, getButtonState } = useButtonFeedback();
 
   const requireAuth = (action: () => void, actionName: string = 'esta ação') => {
@@ -61,7 +61,8 @@ export const useSecureProductActions = () => {
     return settingValue?.number || '';
   };
 
-  const handleBuyNow = async (productId: string, productName: string, selectedColor?: string, selectedSize?: string) => {
+  // CORREÇÃO: Nova função para enviar todo o carrinho via WhatsApp
+  const handleBuyNow = async () => {
     if (!isAuthenticated) {
       toast({
         title: "Login necessário",
@@ -71,23 +72,16 @@ export const useSecureProductActions = () => {
       return;
     }
 
+    if (!cartItems || cartItems.length === 0) {
+      toast({
+        title: "Carrinho vazio",
+        description: "Adicione produtos ao carrinho para finalizar a compra.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Buscar dados do produto
-      const { data: productData } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', productId)
-        .single();
-
-      if (!productData) {
-        toast({
-          title: "Erro",
-          description: "Produto não encontrado.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       // Buscar configurações do WhatsApp
       const whatsappNumber = await getWhatsAppSettings();
       
@@ -100,15 +94,38 @@ export const useSecureProductActions = () => {
         return;
       }
 
-      // Montar mensagem do WhatsApp
-      const message = `Olá! Tenho interesse no produto:
+      // Montar mensagem completa do carrinho
+      const storeUrl = window.location.origin;
+      let message = `🛒 *PEDIDO - RELÓGIOS*\n\n📋 *PRODUTOS:*\n\n`;
 
-📱 *${productData.name}*
-🏷️ Marca: ${productData.brand}
-💰 Preço: R$ ${productData.price.toFixed(2)}${selectedColor ? `\n🎨 Cor: ${selectedColor}` : ''}${selectedSize ? `\n📏 Tamanho: ${selectedSize}` : ''}
-🖼️ Imagem: ${productData.images?.[0] || 'Sem imagem'}
+      // Adicionar cada produto do carrinho
+      cartItems.forEach((item, index) => {
+        const productUrl = `${storeUrl}/products/${item.productId}`;
+        const subtotal = item.price * item.quantity;
+        
+        message += `${index + 1}️⃣ *${item.name}*\n`;
+        message += `   🏷️ Marca: ${item.brand}\n`;
+        message += `   💰 Preço unitário: R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+        message += `   📦 Quantidade: ${item.quantity}\n`;
+        message += `   💵 Subtotal: R$ ${subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+        
+        if (item.selectedColor) {
+          message += `   🎨 Cor: ${item.selectedColor}\n`;
+        }
+        if (item.selectedSize) {
+          message += `   📏 Tamanho: ${item.selectedSize}\n`;
+        }
+        
+        message += `   🔗 Link: ${productUrl}\n\n`;
+      });
 
-Gostaria de mais informações!`;
+      // Adicionar resumo financeiro
+      const totalPrice = getTotalPrice;
+      message += `💰 *RESUMO FINANCEIRO:*\n`;
+      message += `   • Total de itens: ${cartItems.reduce((sum, item) => sum + item.quantity, 0)}\n`;
+      message += `   • Valor total: R$ ${totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n`;
+      message += `📞 Gostaria de finalizar este pedido!\n`;
+      message += `Poderia me informar sobre formas de pagamento e entrega?`;
 
       // Gerar URL do WhatsApp
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
@@ -118,7 +135,7 @@ Gostaria de mais informações!`;
       
       toast({
         title: "📱 Redirecionando para WhatsApp",
-        description: "Você será redirecionado para finalizar a compra no WhatsApp.",
+        description: `Enviando ${cartItems.length} produto(s) para finalizar compra.`,
         duration: 3000,
       });
     } catch (error) {
@@ -134,7 +151,7 @@ Gostaria de mais informações!`;
   return {
     toggleFavorite: handleToggleFavorite,
     addToCart: handleAddToCart,
-    buyNow: handleBuyNow,
+    buyNow: handleBuyNow, // CORREÇÃO: Agora envia todo o carrinho
     isFavorite,
     getButtonState,
   };
