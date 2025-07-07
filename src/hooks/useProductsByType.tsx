@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { secureLog } from '@/utils/secureLogger';
 import { Product } from '@/types/product';
 
-// Produtos de fallback para emergência
+// Produtos de fallback apenas para emergência real
 const FALLBACK_PRODUCTS: Product[] = [
   {
     id: 'fallback-1',
@@ -47,26 +47,6 @@ const FALLBACK_PRODUCTS: Product[] = [
     stock_status: 'in_stock',
     created_at: new Date().toISOString(),
   },
-  {
-    id: 'fallback-3',
-    name: 'TAG Heuer Formula 1 Clone',
-    brand: 'TAG Heuer',
-    category: 'Sport',
-    clone_category: 'TAG Heuer',
-    price: 199.99,
-    original_price: 299.99,
-    images: ['/placeholder.svg'],
-    colors: ['Azul', 'Preto'],
-    sizes: ['41mm'],
-    is_new: true,
-    is_featured: false,
-    is_bestseller: false,
-    is_sold_out: false,
-    is_coming_soon: false,
-    in_stock: true,
-    stock_status: 'in_stock',
-    created_at: new Date().toISOString(),
-  },
 ];
 
 export const useProductsByType = () => {
@@ -79,7 +59,7 @@ export const useProductsByType = () => {
 
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 2000;
-  const QUERY_TIMEOUT = 10000;
+  const QUERY_TIMEOUT = 15000; // Aumentar timeout
 
   useEffect(() => {
     fetchProductsByType();
@@ -91,21 +71,17 @@ export const useProductsByType = () => {
     try {
       setLoading(true);
       
-      // Diagnóstico de ambiente
       const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('preview');
-      const currentUrl = window.location.href;
       
-      setDebugInfo(`🌍 Ambiente: ${isProduction ? 'PRODUÇÃO' : 'DESENVOLVIMENTO'}`);
+      setDebugInfo(`🌍 Buscando produtos...`);
       
-      console.log('🚀 DIAGNÓSTICO COMPLETO:', {
+      console.log('🚀 INICIANDO BUSCA:', {
         ambiente: isProduction ? 'PRODUÇÃO' : 'DESENVOLVIMENTO',
-        url: currentUrl,
-        hostname: window.location.hostname,
         tentativa: retryCount + 1,
         isRetry
       });
 
-      // Timeout para a query
+      // Query com timeout
       const queryTimeout = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Timeout na consulta')), QUERY_TIMEOUT)
       );
@@ -135,27 +111,34 @@ export const useProductsByType = () => {
         `)
         .order('created_at', { ascending: false });
 
-      // Race entre query e timeout
       const { data: allProducts, error } = await Promise.race([
         queryPromise,
         queryTimeout
       ]) as any;
 
       if (error) {
+        console.error('❌ ERRO NA QUERY:', error);
         throw error;
       }
 
-      console.log('📊 RESULTADO DA QUERY:', {
+      console.log('📊 DADOS BRUTOS DO BANCO:', {
         totalProdutos: allProducts?.length || 0,
-        primeiroProduto: allProducts?.[0]?.name || 'Nenhum',
-        ambiente: isProduction ? 'PRODUÇÃO' : 'DEV'
+        primeiros3: allProducts?.slice(0, 3).map(p => ({
+          id: p.id,
+          name: p.name,
+          is_new: p.is_new,
+          is_featured: p.is_featured,
+          price: p.price,
+          original_price: p.original_price,
+          tipos: typeof p.is_new + '/' + typeof p.is_featured + '/' + typeof p.price
+        })) || []
       });
 
+      // Se não há produtos, usar fallback
       if (!allProducts || allProducts.length === 0) {
         console.warn('⚠️ NENHUM PRODUTO ENCONTRADO - USANDO FALLBACK');
-        setDebugInfo('⚠️ Usando produtos de demonstração');
+        setDebugInfo('⚠️ Banco vazio - usando produtos demo');
         
-        // Usar produtos de fallback
         const novos = FALLBACK_PRODUCTS.filter(p => p.is_new);
         const destaques = FALLBACK_PRODUCTS.filter(p => p.is_featured);
         const ofertas = FALLBACK_PRODUCTS.filter(p => p.original_price && p.original_price > p.price);
@@ -167,23 +150,49 @@ export const useProductsByType = () => {
         return;
       }
 
-      // Processar produtos normalmente
-      const novos = allProducts.filter(p => p.is_new === true);
-      const destaques = allProducts.filter(p => p.is_featured === true);
-      const ofertas = allProducts.filter(p => 
-        p.original_price && 
-        p.original_price > 0 && 
-        p.original_price > p.price
-      );
+      // FILTROS CORRIGIDOS - Tratar valores nullable/undefined
+      const novos = allProducts.filter(p => {
+        const isNew = p.is_new === true; // Explicitamente true
+        console.log(`Produto ${p.name}: is_new=${p.is_new} (${typeof p.is_new}) -> ${isNew}`);
+        return isNew;
+      });
 
+      const destaques = allProducts.filter(p => {
+        const isFeatured = p.is_featured === true; // Explicitamente true
+        console.log(`Produto ${p.name}: is_featured=${p.is_featured} (${typeof p.is_featured}) -> ${isFeatured}`);
+        return isFeatured;
+      });
+
+      const ofertas = allProducts.filter(p => {
+        // Converter para números e verificar se original > atual
+        const price = Number(p.price) || 0;
+        const originalPrice = Number(p.original_price) || 0;
+        const hasOffer = originalPrice > 0 && originalPrice > price;
+        console.log(`Produto ${p.name}: price=${p.price} (${typeof p.price}), original=${p.original_price} (${typeof p.original_price}) -> ${hasOffer}`);
+        return hasOffer;
+      });
+
+      console.log('✨ FILTROS APLICADOS:', {
+        novos: novos.length,
+        destaques: destaques.length,
+        ofertas: ofertas.length,
+        detalhes: {
+          novos: novos.map(p => p.name),
+          destaques: destaques.map(p => p.name),
+          ofertas: ofertas.map(p => `${p.name} (${p.price} < ${p.original_price})`)
+        }
+      });
+
+      // Definir produtos (limitando quantidade)
       setNewProducts(novos.slice(0, 8));
-      setFeaturedProducts(destaques);
+      setFeaturedProducts(destaques.slice(0, 8));
       setOfferProducts(ofertas.slice(0, 8));
 
-      setDebugInfo(`✅ ${allProducts.length} produtos carregados com sucesso`);
+      setDebugInfo(`✅ ${allProducts.length} produtos • N:${novos.length} D:${destaques.length} O:${ofertas.length}`);
       setRetryCount(0);
 
-      console.log('✅ SUCESSO COMPLETO:', {
+      console.log('✅ SUCESSO FINAL:', {
+        totalProdutos: allProducts.length,
         novos: novos.length,
         destaques: destaques.length,
         ofertas: ofertas.length,
@@ -191,29 +200,24 @@ export const useProductsByType = () => {
       });
 
     } catch (error: any) {
-      const errorMsg = `💥 Erro: ${error?.message || 'Desconhecido'}`;
       console.error('💥 ERRO CRÍTICO:', {
         message: error?.message,
-        name: error?.name,
         tentativa: retryCount + 1,
-        maxTentativas: MAX_RETRIES,
-        stack: error?.stack?.substring(0, 200)
+        maxTentativas: MAX_RETRIES
       });
 
-      // Implementar retry automático
+      // Retry automático
       if (retryCount < MAX_RETRIES && !isRetry) {
         setRetryCount(prev => prev + 1);
         setDebugInfo(`🔄 Tentativa ${retryCount + 2}/${MAX_RETRIES + 1}...`);
-        
-        console.log(`🔄 RETRY ${retryCount + 1}/${MAX_RETRIES} em ${RETRY_DELAY}ms`);
         
         await sleep(RETRY_DELAY);
         return fetchProductsByType(true);
       }
 
-      // Se todas as tentativas falharam, usar fallback
-      console.warn('🆘 TODAS AS TENTATIVAS FALHARAM - USANDO FALLBACK DE EMERGÊNCIA');
-      setDebugInfo('🆘 Erro na conexão - usando produtos de demonstração');
+      // Fallback apenas após esgotar tentativas
+      console.warn('🆘 FALLBACK APÓS TODAS AS TENTATIVAS FALHAREM');
+      setDebugInfo('🆘 Erro na conexão - produtos demo');
       
       const novos = FALLBACK_PRODUCTS.filter(p => p.is_new);
       const destaques = FALLBACK_PRODUCTS.filter(p => p.is_featured);
@@ -230,7 +234,7 @@ export const useProductsByType = () => {
   };
 
   const refetch = () => {
-    console.log('🔄 REFETCH MANUAL solicitado');
+    console.log('🔄 REFETCH MANUAL');
     setRetryCount(0);
     fetchProductsByType();
   };
