@@ -47,6 +47,26 @@ const FALLBACK_PRODUCTS: Product[] = [
     stock_status: 'in_stock',
     created_at: new Date().toISOString(),
   },
+  {
+    id: 'fallback-3',
+    name: 'TAG Heuer Formula 1 Clone',
+    brand: 'TAG Heuer',
+    category: 'Sport',
+    clone_category: 'TAG Heuer',
+    price: 199.99,
+    original_price: 299.99,
+    images: ['/placeholder.svg'],
+    colors: ['Azul', 'Preto'],
+    sizes: ['41mm'],
+    is_new: true,
+    is_featured: false,
+    is_bestseller: false,
+    is_sold_out: false,
+    is_coming_soon: false,
+    in_stock: true,
+    stock_status: 'in_stock',
+    created_at: new Date().toISOString(),
+  },
 ];
 
 export const useProductsByType = () => {
@@ -58,7 +78,8 @@ export const useProductsByType = () => {
   const [retryCount, setRetryCount] = useState(0);
 
   const MAX_RETRIES = 3;
-  const RETRY_DELAY = 2000; // 2 segundos
+  const RETRY_DELAY = 2000;
+  const QUERY_TIMEOUT = 10000;
 
   useEffect(() => {
     fetchProductsByType();
@@ -86,7 +107,7 @@ export const useProductsByType = () => {
 
       // Timeout para a query
       const queryTimeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout na consulta')), 10000)
+        setTimeout(() => reject(new Error('Timeout na consulta')), QUERY_TIMEOUT)
       );
 
       const queryPromise = supabase
@@ -160,7 +181,7 @@ export const useProductsByType = () => {
       setOfferProducts(ofertas.slice(0, 8));
 
       setDebugInfo(`✅ ${allProducts.length} produtos carregados com sucesso`);
-      setRetryCount(0); // Reset retry count on success
+      setRetryCount(0);
 
       console.log('✅ SUCESSO COMPLETO:', {
         novos: novos.length,
