@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { secureLog } from '@/utils/secureLogger';
@@ -30,58 +30,8 @@ export const useAuth = () => {
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    console.log('🔐 AUTH: Inicializando sistema de autenticação seguro...');
-    
-    // Configurar listener de mudanças de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log(`🔄 Auth Event: ${event}`, { 
-          hasSession: !!session, 
-          hasUser: !!session?.user 
-        });
-        
-        if (event === 'SIGNED_IN' && session?.user) {
-          await setUserData(session.user);
-        } else if (event === 'SIGNED_OUT') {
-          handleSignOut();
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log('🔄 Token refreshed successfully');
-        }
-      }
-    );
-
-    // Verificar sessão existente
-    checkSession();
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const checkSession = async () => {
+  const setUserData = useCallback(async (authUser: any) => {
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('❌ Erro ao verificar sessão:', error);
-        setAuthState(prev => ({ ...prev, loading: false, sessionValid: false }));
-        return;
-      }
-
-      if (session?.user) {
-        await setUserData(session.user);
-      } else {
-        setAuthState(prev => ({ ...prev, loading: false, sessionValid: true }));
-      }
-    } catch (error) {
-      console.error('❌ Erro crítico na verificação de sessão:', error);
-      setAuthState(prev => ({ ...prev, loading: false, sessionValid: false }));
-    }
-  };
-
-  const setUserData = async (authUser: any) => {
-    try {
-      console.log('👤 Configurando dados do usuário:', authUser.id.substring(0, 8));
-      
       // Buscar perfil do usuário
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -91,7 +41,7 @@ export const useAuth = () => {
 
       if (error) {
         console.error('❌ Erro ao buscar perfil:', error);
-        // Se perfil não existe, será criado automaticamente pelo trigger
+        // Perfil será criado automaticamente pelo trigger
         setAuthState({
           user: {
             id: authUser.id,
@@ -120,14 +70,13 @@ export const useAuth = () => {
       });
 
       console.log(`✅ Usuário autenticado: ${authUser.email} (${isAdmin ? 'ADMIN' : 'USER'})`);
-      secureLog.info('User authenticated successfully', { userId: authUser.id.substring(0, 8), isAdmin });
     } catch (error) {
       console.error('❌ Erro ao configurar dados do usuário:', error);
       setAuthState(prev => ({ ...prev, loading: false, sessionValid: false }));
     }
-  };
+  }, []);
 
-  const handleSignOut = () => {
+  const handleSignOut = useCallback(() => {
     console.log('🚪 Processando logout...');
     setAuthState({
       user: null,
@@ -135,12 +84,56 @@ export const useAuth = () => {
       isAuthenticated: false,
       sessionValid: true
     });
-    secureLog.info('User signed out');
-  };
+  }, []);
+
+  const checkSession = useCallback(async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('❌ Erro ao verificar sessão:', error);
+        setAuthState(prev => ({ ...prev, loading: false, sessionValid: false }));
+        return;
+      }
+
+      if (session?.user) {
+        await setUserData(session.user);
+      } else {
+        setAuthState(prev => ({ ...prev, loading: false, sessionValid: true }));
+      }
+    } catch (error) {
+      console.error('❌ Erro crítico na verificação de sessão:', error);
+      setAuthState(prev => ({ ...prev, loading: false, sessionValid: false }));
+    }
+  }, [setUserData]);
+
+  useEffect(() => {
+    console.log('🔐 AUTH: Inicializando sistema de autenticação...');
+    
+    // Configurar listener OTIMIZADO
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log(`🔄 Auth Event: ${event}`);
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Defer para evitar deadlock
+          setTimeout(() => {
+            setUserData(session.user);
+          }, 0);
+        } else if (event === 'SIGNED_OUT') {
+          handleSignOut();
+        }
+      }
+    );
+
+    // Verificar sessão existente
+    checkSession();
+
+    return () => subscription.unsubscribe();
+  }, [setUserData, handleSignOut, checkSession]);
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Validação de entrada
       if (!email || !password) {
         throw new Error('Email e senha são obrigatórios');
       }
@@ -175,14 +168,12 @@ export const useAuth = () => {
         variant: "destructive",
       });
       
-      secureLog.error('Sign in failed', error);
       throw error;
     }
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
-      // Validações de segurança
       if (!email || !password) {
         throw new Error('Email e senha são obrigatórios');
       }
@@ -191,7 +182,6 @@ export const useAuth = () => {
         throw new Error('A senha deve ter pelo menos 6 caracteres');
       }
 
-      // Sanitizar entrada
       const sanitizedEmail = email.trim().toLowerCase();
       const sanitizedFullName = fullName?.trim();
 
@@ -211,7 +201,6 @@ export const useAuth = () => {
         description: "Bem-vindo! Você já está logado.",
       });
 
-      secureLog.info('User signed up successfully');
       return data;
     } catch (error: any) {
       let message = "Erro no cadastro";
@@ -230,7 +219,6 @@ export const useAuth = () => {
         variant: "destructive",
       });
       
-      secureLog.error('Sign up failed', error);
       throw error;
     }
   };
@@ -243,8 +231,6 @@ export const useAuth = () => {
         title: "Logout realizado",
         description: "Até logo!",
       });
-      
-      secureLog.info('User signed out successfully');
     } catch (error: any) {
       console.error('Erro no logout:', error);
       toast({
@@ -252,7 +238,6 @@ export const useAuth = () => {
         description: "Erro ao fazer logout",
         variant: "destructive",
       });
-      secureLog.error('Sign out failed', error);
     }
   };
 

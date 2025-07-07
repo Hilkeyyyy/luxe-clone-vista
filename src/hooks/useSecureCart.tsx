@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,14 +23,12 @@ export const useSecureCart = () => {
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
 
-  const loadCartItems = async () => {
+  const loadCartItems = useCallback(async () => {
     if (authLoading) {
-      console.log('🔄 Aguardando auth finalizar...');
       return;
     }
 
     if (!isAuthenticated || !user) {
-      console.log('🔒 Usuário não autenticado - carrinho vazio');
       setCartItems([]);
       setLoading(false);
       setInitialized(true);
@@ -37,9 +36,6 @@ export const useSecureCart = () => {
     }
 
     try {
-      console.log('🛒 Carregando carrinho:', user.id.substring(0, 8));
-      
-      // Query ÚNICA OTIMIZADA - JOIN direto
       const { data: cartData, error } = await supabase
         .from('cart_items')
         .select(`
@@ -59,17 +55,14 @@ export const useSecureCart = () => {
         .eq('user_id', user.id);
 
       if (error) {
-        console.error('❌ Erro ao carregar carrinho:', error);
         throw error;
       }
 
       if (!cartData || cartData.length === 0) {
-        console.log('📭 Carrinho vazio');
         setCartItems([]);
         return;
       }
 
-      // Mapear dados otimizado
       const items: CartItem[] = cartData.map(item => {
         const product = item.products as any;
         return {
@@ -85,22 +78,15 @@ export const useSecureCart = () => {
         };
       });
 
-      console.log(`✅ ${items.length} itens carregados no carrinho`);
       setCartItems(items);
-
     } catch (error) {
-      console.error('❌ Erro crítico carrinho:', error);
-      toast({
-        title: "Erro no carrinho",
-        description: "Erro ao carregar carrinho.",
-        variant: "destructive",
-      });
+      console.error('❌ Erro ao carregar carrinho:', error);
       setCartItems([]);
     } finally {
       setLoading(false);
       setInitialized(true);
     }
-  };
+  }, [user, isAuthenticated, authLoading]);
 
   const addToCart = async (productId: string, productName: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
     if (!isAuthenticated || !user) {
@@ -247,19 +233,19 @@ export const useSecureCart = () => {
     }
   };
 
-  const getTotalPrice = () => {
+  const getTotalPrice = useCallback(() => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
+  }, [cartItems]);
 
-  const getTotalItems = () => {
+  const getTotalItems = useCallback(() => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
-  };
+  }, [cartItems]);
 
   useEffect(() => {
     if (!authLoading) {
       loadCartItems();
     }
-  }, [isAuthenticated, user?.id, authLoading]);
+  }, [loadCartItems, authLoading]);
 
   return {
     cartItems,

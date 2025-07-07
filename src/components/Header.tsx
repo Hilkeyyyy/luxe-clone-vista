@@ -10,33 +10,28 @@ import NavigationMenu from './NavigationMenu';
 
 const Header = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
-  const { favoriteIds, loading: favoritesLoading, initialized: favoritesInitialized } = useSecureFavorites();
-  const { cartItems, loading: cartLoading, initialized: cartInitialized } = useSecureCart();
+  const { user, isAuthenticated, isAdmin } = useAuth();
+  const { favoriteIds, initialized: favoritesInitialized } = useSecureFavorites();
+  const { cartItems, initialized: cartInitialized } = useSecureCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNavigationMenu, setShowNavigationMenu] = useState(false);
 
-  const isAdmin = user && (
-    user.id === '589069fc-fb82-4388-a802-40d373950011' ||
-    user.id === '0fef94be-d716-4b9c-8053-e351a66927dc'
-  );
-
-  // CORREÇÃO: Mostrar contadores apenas quando inicializados
+  // CORREÇÃO: Contadores seguros com fallbacks
   const favoritesCount = favoritesInitialized ? favoriteIds.length : 0;
   const cartItemsCount = cartInitialized ? cartItems.reduce((total, item) => total + item.quantity, 0) : 0;
 
   useEffect(() => {
-    console.log('🧹 HEADER: Limpando localStorage obsoleto...');
+    // Limpeza única do localStorage obsoleto
+    const cleanupOldData = () => {
+      const keysToRemove = ['cart', 'favorites', 'cartItems', 'favoriteItems'];
+      keysToRemove.forEach(key => {
+        if (localStorage.getItem(key)) {
+          localStorage.removeItem(key);
+        }
+      });
+    };
     
-    const keysToRemove = ['cart', 'favorites', 'cartItems', 'favoriteItems'];
-    keysToRemove.forEach(key => {
-      if (localStorage.getItem(key)) {
-        console.log(`🗑️ Removendo ${key} do localStorage`);
-        localStorage.removeItem(key);
-      }
-    });
-    
-    console.log('✅ localStorage limpo - agora usando apenas banco de dados');
+    cleanupOldData();
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -46,15 +41,6 @@ const Header = () => {
       setSearchQuery('');
     }
   };
-
-  console.log('📊 CONTADORES ATUAIS:', {
-    favoritos: favoritesCount,
-    carrinho: cartItemsCount,
-    autenticado: isAuthenticated,
-    favoritesInitialized,
-    cartInitialized,
-    userId: user?.id?.substring(0, 8)
-  });
 
   return (
     <motion.header 
@@ -118,8 +104,7 @@ const Header = () => {
               whileTap={{ scale: 0.95 }}
             >
               <Heart size={20} />
-              {/* CORREÇÃO: Mostrar contador apenas quando inicializado */}
-              {favoritesInitialized && favoritesCount > 0 && (
+              {favoritesCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {favoritesCount}
                 </span>
@@ -134,15 +119,14 @@ const Header = () => {
               whileTap={{ scale: 0.95 }}
             >
               <ShoppingBag size={20} />
-              {/* CORREÇÃO: Mostrar contador apenas quando inicializado */}
-              {cartInitialized && cartItemsCount > 0 && (
+              {cartItemsCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-neutral-900 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {cartItemsCount}
                 </span>
               )}
             </motion.button>
 
-            {/* Admin Settings */}
+            {/* Admin Settings - Usando verificação de database */}
             {isAdmin && (
               <motion.button 
                 onClick={() => navigate('/admin')}

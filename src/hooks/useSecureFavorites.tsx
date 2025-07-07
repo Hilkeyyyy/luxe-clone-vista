@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,15 +28,12 @@ export const useSecureFavorites = () => {
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
 
-  const loadFavorites = async () => {
-    // CORREÇÃO: Aguardar autenticação completa antes de carregar
+  const loadFavorites = useCallback(async () => {
     if (authLoading) {
-      console.log('🔄 Aguardando autenticação completar...');
       return;
     }
 
     if (!isAuthenticated || !user) {
-      console.log('🔒 Usuário não autenticado');
       setFavoriteProducts([]);
       setFavoriteIds([]);
       setLoading(false);
@@ -45,15 +42,12 @@ export const useSecureFavorites = () => {
     }
 
     try {
-      console.log('❤️ Carregando favoritos do usuário:', user.id.substring(0, 8));
-      
       const { data: favoritesData, error: favoritesError } = await supabase
         .from('favorites')
         .select('product_id')
         .eq('user_id', user.id);
 
       if (favoritesError) {
-        console.error('❌ Erro ao buscar favoritos:', favoritesError);
         throw favoritesError;
       }
 
@@ -73,24 +67,19 @@ export const useSecureFavorites = () => {
         .in('id', productIds);
 
       if (productsError) {
-        console.error('❌ Erro ao buscar produtos favoritos:', productsError);
         throw productsError;
       }
 
-      console.log(`✅ ${productsData?.length || 0} favoritos carregados`);
       setFavoriteProducts(productsData || []);
     } catch (error) {
       console.error('❌ Erro ao carregar favoritos:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar seus produtos favoritos.",
-        variant: "destructive",
-      });
+      setFavoriteProducts([]);
+      setFavoriteIds([]);
     } finally {
       setLoading(false);
       setInitialized(true);
     }
-  };
+  }, [user, isAuthenticated, authLoading]);
 
   const toggleFavorite = async (productId: string, productName: string) => {
     if (!isAuthenticated || !user) {
@@ -157,14 +146,13 @@ export const useSecureFavorites = () => {
     }
   };
 
-  const isFavorite = (productId: string) => favoriteIds.includes(productId);
+  const isFavorite = useCallback((productId: string) => favoriteIds.includes(productId), [favoriteIds]);
 
-  // CORREÇÃO: Aguardar autenticação antes de carregar favoritos
   useEffect(() => {
     if (!authLoading) {
       loadFavorites();
     }
-  }, [isAuthenticated, user?.id, authLoading]);
+  }, [loadFavorites, authLoading]);
 
   return {
     favoriteProducts,
