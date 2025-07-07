@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,9 +27,13 @@ export const useSecureFavorites = () => {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+  
+  // Flags para prevenir loops infinitos
+  const mounted = useRef(true);
+  const processing = useRef(false);
 
   const loadFavorites = useCallback(async () => {
-    if (authLoading) {
+    if (authLoading || processing.current || !mounted.current) {
       return;
     }
 
@@ -41,22 +45,25 @@ export const useSecureFavorites = () => {
       return;
     }
 
+    processing.current = true;
+    
     try {
-      // Timeout para evitar travamento
+      // Timeout reduzido para 3s
+      const controller = new AbortController();
       const timeoutId = setTimeout(() => {
+        controller.abort();
         console.warn('⏰ Timeout ao carregar favoritos');
-        setFavoriteProducts([]);
-        setFavoriteIds([]);
-        setLoading(false);
-        setInitialized(true);
-      }, 8000);
+      }, 3000);
 
       const { data: favoritesData, error: favoritesError } = await supabase
         .from('favorites')
         .select('product_id')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .abortSignal(controller.signal);
 
       clearTimeout(timeoutId);
+
+      if (!mounted.current) return;
 
       if (favoritesError) {
         throw favoritesError;
@@ -75,20 +82,28 @@ export const useSecureFavorites = () => {
       const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('*')
-        .in('id', productIds);
+        .in('id', productIds)
+        .abortSignal(controller.signal);
+
+      if (!mounted.current) return;
 
       if (productsError) {
         throw productsError;
       }
 
       setFavoriteProducts(productsData || []);
-    } catch (error) {
-      console.error('❌ Erro ao carregar favoritos:', error);
-      setFavoriteProducts([]);
-      setFavoriteIds([]);
+    } catch (error: any) {
+      if (error.name !== 'AbortError' && mounted.current) {
+        console.error('❌ Erro ao carregar favoritos:', error);
+        setFavoriteProducts([]);
+        setFavoriteIds([]);
+      }
     } finally {
-      setLoading(false);
-      setInitialized(true);
+      if (mounted.current) {
+        setLoading(false);
+        setInitialized(true);
+      }
+      processing.current = false;
     }
   }, [user, isAuthenticated, authLoading]);
 
@@ -131,13 +146,14 @@ export const useSecureFavorites = () => {
 
         setFavoriteIds(prev => [...prev, productId]);
         
+        // Buscar dados do produto
         const { data: productData } = await supabase
           .from('products')
           .select('*')
           .eq('id', productId)
           .single();
 
-        if (productData) {
+        if (productData && mounted.current) {
           setFavoriteProducts(prev => [...prev, productData]);
         }
         
@@ -163,9 +179,16 @@ export const useSecureFavorites = () => {
   );
 
   useEffect(() => {
-    if (!authLoading && !initialized) {
+    mounted.current = true;
+    
+    // Só carregar quando auth estiver pronto e não inicializado ainda
+    if (!authLoading && !initialized && !processing.current) {
       loadFavorites();
     }
+
+    return () => {
+      mounted.current = false;
+    };
   }, [loadFavorites, authLoading, initialized]);
 
   return {

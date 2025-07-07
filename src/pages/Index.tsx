@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Header from '../components/Header';
 import HeroSection from '../components/HeroSection';
 import ProductCarousel from '../components/ProductCarousel';
@@ -13,17 +13,21 @@ import { useProductsByType } from '../hooks/useProductsByType';
 const Index = () => {
   const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
 
+  // Memoizar componentes pesados para evitar re-renders desnecessários
+  const memoizedHeroSection = useMemo(() => <HeroSection />, []);
+  const memoizedBrandCarousel = useMemo(() => <BrandCategoryCarousel />, []);
+
   return (
     <SecurityWrapper>
       <ErrorBoundary>
         <div className="min-h-screen bg-white font-outfit">
           <Header />
           
-          <HeroSection />
+          {memoizedHeroSection}
           
           <ErrorBoundary fallback={
-            <div className="py-8 text-center">
-              <p className="text-neutral-500">Erro ao carregar novidades</p>
+            <div className="py-4 sm:py-8 text-center">
+              <p className="text-neutral-500 text-sm sm:text-base">Erro ao carregar novidades</p>
             </div>
           }>
             <ProductCarousel 
@@ -34,8 +38,8 @@ const Index = () => {
           </ErrorBoundary>
           
           <ErrorBoundary fallback={
-            <div className="py-8 text-center">
-              <p className="text-neutral-500">Erro ao carregar ofertas</p>
+            <div className="py-4 sm:py-8 text-center">
+              <p className="text-neutral-500 text-sm sm:text-base">Erro ao carregar ofertas</p>
             </div>
           }>
             <ProductCarousel 
@@ -46,8 +50,8 @@ const Index = () => {
           </ErrorBoundary>
           
           <ErrorBoundary fallback={
-            <div className="py-8 text-center">
-              <p className="text-neutral-500">Erro ao carregar produtos em destaque</p>
+            <div className="py-4 sm:py-8 text-center">
+              <p className="text-neutral-500 text-sm sm:text-base">Erro ao carregar produtos em destaque</p>
             </div>
           }>
             <FeaturedProductsGrid 
@@ -57,11 +61,11 @@ const Index = () => {
           </ErrorBoundary>
           
           <ErrorBoundary fallback={
-            <div className="py-8 text-center">
-              <p className="text-neutral-500">Erro ao carregar categorias</p>
+            <div className="py-4 sm:py-8 text-center">
+              <p className="text-neutral-500 text-sm sm:text-base">Erro ao carregar categorias</p>
             </div>
           }>
-            <BrandCategoryCarousel />
+            {memoizedBrandCarousel}
           </ErrorBoundary>
           
           <Footer />

@@ -26,57 +26,34 @@ export const useAuth = () => {
     user: null,
     loading: true,
     isAuthenticated: false,
-    sessionValid: false
+    sessionValid: true
   });
   const { toast } = useToast();
+  
+  // Flags para prevenir loops infinitos
   const initialized = useRef(false);
   const processing = useRef(false);
+  const mounted = useRef(true);
 
   const setUserData = useCallback(async (authUser: any) => {
-    if (processing.current) return;
+    if (processing.current || !mounted.current) return;
     processing.current = true;
 
     try {
-      // Buscar perfil do usuário com timeout
-      const timeoutId = setTimeout(() => {
-        console.warn('⏰ Timeout ao buscar perfil do usuário');
-        setAuthState({
-          user: {
-            id: authUser.id,
-            email: authUser.email,
-            isAdmin: false
-          },
-          loading: false,
-          isAuthenticated: true,
-          sessionValid: true
-        });
-        processing.current = false;
-      }, 5000);
+      // Timeout para evitar travamentos
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
 
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('role, full_name, email')
         .eq('id', authUser.id)
-        .single();
+        .maybeSingle()
+        .abortSignal(controller.signal);
 
       clearTimeout(timeoutId);
 
-      if (error) {
-        console.error('❌ Erro ao buscar perfil:', error);
-        // Perfil será criado automaticamente pelo trigger
-        setAuthState({
-          user: {
-            id: authUser.id,
-            email: authUser.email,
-            isAdmin: false
-          },
-          loading: false,
-          isAuthenticated: true,
-          sessionValid: true
-        });
-        processing.current = false;
-        return;
-      }
+      if (!mounted.current) return;
 
       const isAdmin = profile?.role === 'admin';
       
@@ -92,17 +69,28 @@ export const useAuth = () => {
         sessionValid: true
       });
 
-      console.log(`✅ Usuário autenticado: ${authUser.email} (${isAdmin ? 'ADMIN' : 'USER'})`);
-    } catch (error) {
-      console.error('❌ Erro ao configurar dados do usuário:', error);
-      setAuthState(prev => ({ ...prev, loading: false, sessionValid: false }));
+      console.log(`✅ Auth: ${authUser.email} (${isAdmin ? 'ADMIN' : 'USER'})`);
+    } catch (error: any) {
+      if (error.name !== 'AbortError' && mounted.current) {
+        console.warn('⚠️ Auth: Erro ao buscar perfil, usando dados básicos');
+        setAuthState({
+          user: {
+            id: authUser.id,
+            email: authUser.email,
+            isAdmin: false
+          },
+          loading: false,
+          isAuthenticated: true,
+          sessionValid: true
+        });
+      }
     } finally {
       processing.current = false;
     }
   }, []);
 
-  const handleSignOut = useCallback(() => {
-    console.log('🚪 Processando logout...');
+  const clearAuthState = useCallback(() => {
+    if (!mounted.current) return;
     setAuthState({
       user: null,
       loading: false,
@@ -112,59 +100,65 @@ export const useAuth = () => {
     processing.current = false;
   }, []);
 
-  const checkSession = useCallback(async () => {
-    if (processing.current || initialized.current) return;
-    
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('❌ Erro ao verificar sessão:', error);
-        setAuthState(prev => ({ ...prev, loading: false, sessionValid: false }));
-        return;
-      }
-
-      if (session?.user) {
-        await setUserData(session.user);
-      } else {
-        setAuthState(prev => ({ ...prev, loading: false, sessionValid: true }));
-      }
-    } catch (error) {
-      console.error('❌ Erro crítico na verificação de sessão:', error);
-      setAuthState(prev => ({ ...prev, loading: false, sessionValid: false }));
-    }
-  }, [setUserData]);
-
   useEffect(() => {
     if (initialized.current) return;
     
-    console.log('🔐 AUTH: Inicializando sistema de autenticação...');
+    console.log('🔐 AUTH: Inicializando...');
     initialized.current = true;
     
     // Configurar listener uma única vez
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted.current) return;
+        
         console.log(`🔄 Auth Event: ${event}`);
         
         if (event === 'SIGNED_IN' && session?.user) {
-          // Usar setTimeout para evitar deadlock
+          // Usar timeout para evitar deadlock
           setTimeout(() => {
-            setUserData(session.user);
+            if (mounted.current && !processing.current) {
+              setUserData(session.user);
+            }
           }, 100);
         } else if (event === 'SIGNED_OUT') {
-          handleSignOut();
+          clearAuthState();
         }
       }
     );
 
     // Verificar sessão existente apenas uma vez
-    checkSession();
+    const checkInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!mounted.current) return;
+        
+        if (error) {
+          console.error('❌ Erro ao verificar sessão:', error);
+          setAuthState(prev => ({ ...prev, loading: false, sessionValid: false }));
+          return;
+        }
+
+        if (session?.user) {
+          await setUserData(session.user);
+        } else {
+          setAuthState(prev => ({ ...prev, loading: false }));
+        }
+      } catch (error) {
+        console.error('❌ Erro crítico na verificação de sessão:', error);
+        if (mounted.current) {
+          setAuthState(prev => ({ ...prev, loading: false, sessionValid: false }));
+        }
+      }
+    };
+
+    checkInitialSession();
 
     return () => {
+      mounted.current = false;
       subscription.unsubscribe();
-      initialized.current = false;
     };
-  }, []); // Dependências vazias para evitar loop
+  }, []); // Dependências vazias para executar apenas uma vez
 
   const signIn = async (email: string, password: string) => {
     try {

@@ -15,25 +15,24 @@ const Header = () => {
   const { cartItems, initialized: cartInitialized } = useSecureCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNavigationMenu, setShowNavigationMenu] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detectar mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Contadores seguros com fallbacks e proteção contra loading
   const favoritesCount = !authLoading && favoritesInitialized ? favoriteIds.length : 0;
   const cartItemsCount = !authLoading && cartInitialized ? 
     cartItems.reduce((total, item) => total + item.quantity, 0) : 0;
-
-  useEffect(() => {
-    // Limpeza única do localStorage obsoleto
-    const cleanupOldData = () => {
-      const keysToRemove = ['cart', 'favorites', 'cartItems', 'favoriteItems'];
-      keysToRemove.forEach(key => {
-        if (localStorage.getItem(key)) {
-          localStorage.removeItem(key);
-        }
-      });
-    };
-    
-    cleanupOldData();
-  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,21 +42,21 @@ const Header = () => {
     }
   };
 
-  // Loading state simples
+  // Loading state otimizado para mobile
   if (authLoading) {
     return (
       <header className="bg-white shadow-sm border-b border-neutral-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20">
+          <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
             <div className="flex items-center">
-              <h1 className="text-2xl sm:text-3xl font-outfit font-bold text-neutral-900">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-outfit font-bold text-neutral-900">
                 VELAR WATCHES
               </h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-neutral-200 rounded animate-pulse"></div>
-              <div className="w-8 h-8 bg-neutral-200 rounded animate-pulse"></div>
-              <div className="w-8 h-8 bg-neutral-200 rounded animate-pulse"></div>
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-neutral-200 rounded animate-pulse"></div>
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-neutral-200 rounded animate-pulse"></div>
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-neutral-200 rounded animate-pulse"></div>
             </div>
           </div>
         </div>
@@ -68,20 +67,21 @@ const Header = () => {
   return (
     <motion.header 
       className="bg-white shadow-sm border-b border-neutral-100 sticky top-0 z-50"
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
+      initial={false}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20">
+        <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
           {/* Logo */}
           <motion.button 
             onClick={() => navigate('/')}
             className="flex items-center"
-            whileHover={{ scale: 1.05 }}
+            whileHover={!isMobile ? { scale: 1.02 } : {}}
+            whileTap={{ scale: 0.98 }}
             transition={{ duration: 0.2 }}
           >
-            <h1 className="text-2xl sm:text-3xl font-outfit font-bold text-neutral-900">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-outfit font-bold text-neutral-900 truncate">
               VELAR WATCHES
             </h1>
           </motion.button>
@@ -90,20 +90,20 @@ const Header = () => {
           <div className="hidden md:flex flex-1 max-w-lg mx-8">
             <form onSubmit={handleSearch} className="w-full">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={20} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={18} />
                 <input
                   type="text"
                   placeholder="Buscar produtos..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:border-transparent"
+                  className="w-full pl-11 pr-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:border-transparent text-sm"
                 />
               </div>
             </form>
           </div>
 
           {/* Right side icons */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             {/* Search - Mobile */}
             <div className="md:hidden">
               <motion.button 
@@ -112,10 +112,9 @@ const Header = () => {
                   if (searchInput) searchInput.focus();
                 }}
                 className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
-                whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Search size={20} />
+                <Search size={18} />
               </motion.button>
             </div>
 
@@ -123,13 +122,12 @@ const Header = () => {
             <motion.button 
               onClick={() => navigate('/favorites')}
               className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors relative"
-              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Heart size={20} />
+              <Heart size={18} />
               {favoritesCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {favoritesCount}
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center text-[10px] sm:text-xs">
+                  {favoritesCount > 99 ? '99+' : favoritesCount}
                 </span>
               )}
             </motion.button>
@@ -138,13 +136,12 @@ const Header = () => {
             <motion.button 
               onClick={() => navigate('/cart')}
               className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors relative"
-              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
             >
-              <ShoppingBag size={20} />
+              <ShoppingBag size={18} />
               {cartItemsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-neutral-900 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {cartItemsCount}
+                <span className="absolute -top-1 -right-1 bg-neutral-900 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center text-[10px] sm:text-xs">
+                  {cartItemsCount > 99 ? '99+' : cartItemsCount}
                 </span>
               )}
             </motion.button>
@@ -154,11 +151,10 @@ const Header = () => {
               <motion.button 
                 onClick={() => navigate('/admin')}
                 className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
-                whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 title="Painel Administrativo"
               >
-                <Settings size={20} />
+                <Settings size={18} />
               </motion.button>
             )}
 
@@ -167,10 +163,9 @@ const Header = () => {
               <motion.button 
                 onClick={() => setShowNavigationMenu(!showNavigationMenu)}
                 className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
-                whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <User size={20} />
+                <User size={18} />
               </motion.button>
 
               <NavigationMenu 
@@ -184,17 +179,17 @@ const Header = () => {
         </div>
 
         {/* Mobile Search Bar */}
-        <div className="md:hidden pb-4">
+        <div className="md:hidden pb-3">
           <form onSubmit={handleSearch}>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={20} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={18} />
               <input
                 id="mobile-search"
                 type="text"
                 placeholder="Buscar produtos..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:border-transparent"
+                className="w-full pl-11 pr-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:border-transparent text-sm"
               />
             </div>
           </form>

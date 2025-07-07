@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,9 +22,13 @@ export const useSecureCart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+  
+  // Flags para prevenir loops infinitos
+  const mounted = useRef(true);
+  const processing = useRef(false);
 
   const loadCartItems = useCallback(async () => {
-    if (authLoading) {
+    if (authLoading || processing.current || !mounted.current) {
       return;
     }
 
@@ -34,14 +39,15 @@ export const useSecureCart = () => {
       return;
     }
 
+    processing.current = true;
+
     try {
-      // Timeout para evitar travamento
+      // Timeout reduzido para 3s
+      const controller = new AbortController();
       const timeoutId = setTimeout(() => {
+        controller.abort();
         console.warn('⏰ Timeout ao carregar carrinho');
-        setCartItems([]);
-        setLoading(false);
-        setInitialized(true);
-      }, 8000);
+      }, 3000);
 
       const { data: cartData, error } = await supabase
         .from('cart_items')
@@ -59,9 +65,12 @@ export const useSecureCart = () => {
             images
           )
         `)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .abortSignal(controller.signal);
 
       clearTimeout(timeoutId);
+
+      if (!mounted.current) return;
 
       if (error) {
         throw error;
@@ -90,12 +99,17 @@ export const useSecureCart = () => {
       });
 
       setCartItems(items);
-    } catch (error) {
-      console.error('❌ Erro ao carregar carrinho:', error);
-      setCartItems([]);
+    } catch (error: any) {
+      if (error.name !== 'AbortError' && mounted.current) {
+        console.error('❌ Erro ao carregar carrinho:', error);
+        setCartItems([]);
+      }
     } finally {
-      setLoading(false);
-      setInitialized(true);
+      if (mounted.current) {
+        setLoading(false);
+        setInitialized(true);
+      }
+      processing.current = false;
     }
   }, [user, isAuthenticated, authLoading]);
 
@@ -253,9 +267,16 @@ export const useSecureCart = () => {
   }, [cartItems]);
 
   useEffect(() => {
-    if (!authLoading && !initialized) {
+    mounted.current = true;
+    
+    // Só carregar quando auth estiver pronto e não inicializado ainda
+    if (!authLoading && !initialized && !processing.current) {
       loadCartItems();
     }
+
+    return () => {
+      mounted.current = false;
+    };
   }, [loadCartItems, authLoading, initialized]);
 
   return {

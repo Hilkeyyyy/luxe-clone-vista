@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { secureLog } from '@/utils/secureLogger';
 import { Product } from '@/types/product';
@@ -9,19 +9,25 @@ export const useProductsByType = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [offerProducts, setOfferProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const mounted = useRef(true);
+  const initialized = useRef(false);
 
   const fetchProductsByType = useCallback(async () => {
+    if (!mounted.current || initialized.current) return;
+    
     try {
       setLoading(true);
+      initialized.current = true;
       
       console.log('🚀 Buscando produtos...');
 
-      // Query otimizada com timeout mais agressivo
+      // Query otimizada com timeout de 3s
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-        console.warn('⏰ Query cancelada por timeout (5s)');
-      }, 5000); // Reduzido para 5s
+        console.warn('⏰ Query cancelada por timeout (3s)');
+      }, 3000);
 
       const { data: allProducts, error } = await supabase
         .from('products')
@@ -41,10 +47,12 @@ export const useProductsByType = () => {
           stock_status,
           created_at
         `)
-        .limit(20) // Reduzido para carregamento mais rápido
+        .limit(15) // Reduzido para carregamento mais rápido
         .abortSignal(controller.signal);
 
       clearTimeout(timeoutId);
+
+      if (!mounted.current) return;
 
       if (error) {
         console.error('❌ Erro na query:', error);
@@ -84,11 +92,11 @@ export const useProductsByType = () => {
       }));
 
       // Filtrar produtos de forma mais eficiente
-      const novos = mappedProducts.filter(p => p.is_new).slice(0, 8);
-      const destaques = mappedProducts.filter(p => p.is_featured).slice(0, 8);
+      const novos = mappedProducts.filter(p => p.is_new).slice(0, 6);
+      const destaques = mappedProducts.filter(p => p.is_featured).slice(0, 6);
       const ofertas = mappedProducts.filter(p => {
         return p.original_price && p.original_price > 0 && p.original_price > p.price;
-      }).slice(0, 8);
+      }).slice(0, 6);
 
       console.log('📊 Produtos filtrados:', {
         total: mappedProducts.length,
@@ -97,9 +105,11 @@ export const useProductsByType = () => {
         ofertas: ofertas.length
       });
 
-      setNewProducts(novos);
-      setFeaturedProducts(destaques);
-      setOfferProducts(ofertas);
+      if (mounted.current) {
+        setNewProducts(novos);
+        setFeaturedProducts(destaques);
+        setOfferProducts(ofertas);
+      }
 
     } catch (error: any) {
       if (error.name === 'AbortError') {
@@ -110,26 +120,33 @@ export const useProductsByType = () => {
       }
       
       // Fallback para arrays vazios
-      setNewProducts([]);
-      setFeaturedProducts([]);
-      setOfferProducts([]);
+      if (mounted.current) {
+        setNewProducts([]);
+        setFeaturedProducts([]);
+        setOfferProducts([]);
+      }
     } finally {
-      setLoading(false);
+      if (mounted.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
   const refetch = useCallback(() => {
     console.log('🔄 Refetch produtos');
+    initialized.current = false;
     fetchProductsByType();
   }, [fetchProductsByType]);
 
   useEffect(() => {
-    // Delay inicial para evitar conflito com auth
-    const timer = setTimeout(() => {
-      fetchProductsByType();
-    }, 1000);
+    mounted.current = true;
+    
+    // Executar imediatamente sem delay
+    fetchProductsByType();
 
-    return () => clearTimeout(timer);
+    return () => {
+      mounted.current = false;
+    };
   }, [fetchProductsByType]);
 
   return {
