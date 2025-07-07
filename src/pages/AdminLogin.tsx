@@ -68,22 +68,22 @@ const AdminLogin = () => {
       console.log('📧 Tentando login admin para:', email);
       
       // Usar o sistema seguro de login
-      const { data } = await secureSignIn(email, password);
+      const authResult = await secureSignIn(email, password);
 
-      if (data.user) {
+      if (authResult.user) {
         console.log('👤 Verificando permissões de admin...');
         
         // Verificar se é admin pelo perfil no banco
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role, full_name')
-          .eq('id', data.user.id)
+          .eq('id', authResult.user.id)
           .single();
 
         if (profileError || !profile || profile.role !== 'admin') {
           console.error('❌ Acesso admin negado:', { error: profileError, profile });
           await supabase.auth.signOut();
-          secureLog.warn('Tentativa de acesso admin negada', { email, userId: data.user.id });
+          secureLog.warn('Tentativa de acesso admin negada', { email, userId: authResult.user.id });
           throw new Error('Acesso negado. Apenas administradores podem acessar esta área.');
         }
 
@@ -91,7 +91,7 @@ const AdminLogin = () => {
         rateLimiter.reset(userKey);
         
         console.log('✅ Login de administrador aprovado');
-        secureLog.info('Login de administrador realizado com sucesso', { userId: data.user.id });
+        secureLog.info('Login de administrador realizado com sucesso', { userId: authResult.user.id });
 
         toast({
           title: "Login realizado com sucesso",
