@@ -13,7 +13,7 @@ export const useProductsApi = () => {
         .from('products')
         .select(`
           *,
-          brand_categories (
+          brand_categories:brand_category_id (
             id,
             name,
             slug

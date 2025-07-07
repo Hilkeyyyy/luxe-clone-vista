@@ -267,12 +267,15 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
                   className="hidden"
                   id="image-upload"
                 />
-                <label htmlFor="image-upload">
-                  <Button type="button" variant="outline" className="cursor-pointer">
-                    <Upload size={16} className="mr-2" />
-                    Selecionar Imagem
-                  </Button>
-                </label>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => document.getElementById('image-upload')?.click()}
+                  className="cursor-pointer"
+                >
+                  <Upload size={16} className="mr-2" />
+                  Selecionar Imagem
+                </Button>
               </div>
               <p className="text-xs text-neutral-500">
                 PNG, JPG ou WEBP até 5MB
