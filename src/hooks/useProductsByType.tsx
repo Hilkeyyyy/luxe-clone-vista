@@ -18,9 +18,9 @@ export const useProductsByType = () => {
     try {
       setLoading(true);
       
-      console.log('🚀 Buscando produtos...');
+      console.log('🚀 Iniciando busca de produtos...');
 
-      // Query SIMPLIFICADA - apenas campos essenciais, sem timeout artificial
+      // Query DIRETA e SIMPLES - sem timeout artificial
       const { data: allProducts, error } = await supabase
         .from('products')
         .select(`
@@ -34,62 +34,62 @@ export const useProductsByType = () => {
           is_featured,
           clone_category
         `)
-        .limit(50);
+        .limit(30);
 
       if (error) {
-        console.error('❌ Erro na query:', error);
+        console.error('❌ Erro na query de produtos:', error);
         throw error;
       }
 
-      console.log('✅ Produtos carregados:', allProducts?.length || 0);
+      console.log('✅ Produtos recebidos:', allProducts?.length || 0);
 
       if (!allProducts || allProducts.length === 0) {
-        console.warn('⚠️ Nenhum produto encontrado');
+        console.warn('⚠️ Nenhum produto encontrado no banco');
         setNewProducts([]);
         setFeaturedProducts([]);
         setOfferProducts([]);
-        setLoading(false);
         return;
       }
 
-      // Filtros SIMPLES e DIRETOS - garantindo conversão de tipos
-      const novos = allProducts.filter(p => p.is_new === true);
-      const destaques = allProducts.filter(p => p.is_featured === true);
+      // Filtros SIMPLES - garantindo tipos corretos
+      const novos = allProducts.filter(p => Boolean(p.is_new));
+      const destaques = allProducts.filter(p => Boolean(p.is_featured));
       
-      // Correção na lógica de ofertas - garantindo conversão para number
+      // Lógica de ofertas corrigida - conversão de tipos
       const ofertas = allProducts.filter(p => {
-        const price = Number(p.price) || 0;
-        const originalPrice = Number(p.original_price) || 0;
+        const price = parseFloat(String(p.price)) || 0;
+        const originalPrice = parseFloat(String(p.original_price)) || 0;
         return originalPrice > 0 && originalPrice > price;
       });
 
-      console.log('✨ Resultados:', {
+      console.log('📊 Produtos filtrados:', {
         total: allProducts.length,
         novos: novos.length,
         destaques: destaques.length,
         ofertas: ofertas.length
       });
 
-      // Definir produtos limitando quantidade para performance
-      setNewProducts(novos.slice(0, 8));
-      setFeaturedProducts(destaques.slice(0, 8));
-      setOfferProducts(ofertas.slice(0, 8));
+      // Setar produtos diretamente - sem slice desnecessário
+      setNewProducts(novos);
+      setFeaturedProducts(destaques);
+      setOfferProducts(ofertas);
 
     } catch (error: any) {
-      console.error('💥 Erro ao buscar produtos:', error?.message);
-      secureLog.error('Erro ao buscar produtos por tipo', error);
+      console.error('💥 Erro crítico ao buscar produtos:', error);
+      secureLog.error('Erro crítico useProductsByType', error);
       
-      // Em caso de erro, definir arrays vazios em vez de fallback
+      // Arrays vazios em caso de erro
       setNewProducts([]);
       setFeaturedProducts([]);
       setOfferProducts([]);
     } finally {
+      console.log('🏁 Finalizando loading...');
       setLoading(false);
     }
   };
 
   const refetch = () => {
-    console.log('🔄 Refetch manual');
+    console.log('🔄 Refetch solicitado');
     fetchProductsByType();
   };
 

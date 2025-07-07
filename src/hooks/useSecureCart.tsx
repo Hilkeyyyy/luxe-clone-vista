@@ -24,12 +24,12 @@ export const useSecureCart = () => {
 
   const loadCartItems = async () => {
     if (authLoading) {
-      console.log('🔄 Aguardando autenticação...');
+      console.log('🔄 Aguardando auth finalizar...');
       return;
     }
 
     if (!isAuthenticated || !user) {
-      console.log('🔒 Usuário não autenticado');
+      console.log('🔒 Usuário não autenticado - carrinho vazio');
       setCartItems([]);
       setLoading(false);
       setInitialized(true);
@@ -37,10 +37,10 @@ export const useSecureCart = () => {
     }
 
     try {
-      console.log('🛒 Carregando carrinho do usuário:', user.id.substring(0, 8));
+      console.log('🛒 Carregando carrinho:', user.id.substring(0, 8));
       
-      // OTIMIZAÇÃO: Query única com JOIN para pegar carrinho + produtos
-      const { data: cartWithProducts, error } = await supabase
+      // Query ÚNICA OTIMIZADA - JOIN direto
+      const { data: cartData, error } = await supabase
         .from('cart_items')
         .select(`
           id,
@@ -59,40 +59,40 @@ export const useSecureCart = () => {
         .eq('user_id', user.id);
 
       if (error) {
-        console.error('❌ Erro ao buscar carrinho:', error);
+        console.error('❌ Erro ao carregar carrinho:', error);
         throw error;
       }
 
-      if (!cartWithProducts || cartWithProducts.length === 0) {
+      if (!cartData || cartData.length === 0) {
+        console.log('📭 Carrinho vazio');
         setCartItems([]);
-        setLoading(false);
-        setInitialized(true);
         return;
       }
 
-      // Mapear dados do carrinho
-      const cartItems = cartWithProducts.map(cartItem => {
-        const product = cartItem.products as any;
+      // Mapear dados otimizado
+      const items: CartItem[] = cartData.map(item => {
+        const product = item.products as any;
         return {
-          id: cartItem.id,
-          productId: cartItem.product_id,
-          name: product?.name || 'Produto não encontrado',
+          id: item.id,
+          productId: item.product_id,
+          name: product?.name || 'Produto',
           brand: product?.brand || '',
-          price: Number(product?.price) || 0,
+          price: parseFloat(String(product?.price)) || 0,
           image: product?.images?.[0] || '/placeholder.svg',
-          quantity: cartItem.quantity,
-          selectedColor: cartItem.selected_color,
-          selectedSize: cartItem.selected_size,
+          quantity: item.quantity,
+          selectedColor: item.selected_color,
+          selectedSize: item.selected_size,
         };
       });
 
-      console.log(`✅ ${cartItems.length} itens no carrinho carregados`);
-      setCartItems(cartItems);
+      console.log(`✅ ${items.length} itens carregados no carrinho`);
+      setCartItems(items);
+
     } catch (error) {
-      console.error('❌ Erro ao carregar carrinho:', error);
+      console.error('❌ Erro crítico carrinho:', error);
       toast({
-        title: "Erro",
-        description: "Erro ao carregar itens do carrinho.",
+        title: "Erro no carrinho",
+        description: "Erro ao carregar carrinho.",
         variant: "destructive",
       });
       setCartItems([]);
@@ -148,15 +148,15 @@ export const useSecureCart = () => {
       await loadCartItems();
       
       toast({
-        title: "🛒 Produto adicionado ao carrinho!",
-        description: `${quantity}x ${productName} foi adicionado ao seu carrinho.`,
-        duration: 3000,
+        title: "🛒 Adicionado ao carrinho!",
+        description: `${quantity}x ${productName}`,
+        duration: 2000,
       });
     } catch (error) {
       console.error('❌ Erro ao adicionar ao carrinho:', error);
       toast({
         title: "Erro",
-        description: "Erro ao adicionar produto ao carrinho.",
+        description: "Erro ao adicionar produto.",
         variant: "destructive",
       });
     }
@@ -185,7 +185,7 @@ export const useSecureCart = () => {
         )
       );
     } catch (error) {
-      console.error('❌ Erro ao atualizar quantidade:', error);
+      console.error('❌ Erro ao atualizar:', error);
       toast({
         title: "Erro",
         description: "Erro ao atualizar quantidade.",
@@ -211,10 +211,10 @@ export const useSecureCart = () => {
         description: "Produto removido do carrinho.",
       });
     } catch (error) {
-      console.error('❌ Erro ao remover item:', error);
+      console.error('❌ Erro ao remover:', error);
       toast({
         title: "Erro",
-        description: "Erro ao remover item do carrinho.",
+        description: "Erro ao remover item.",
         variant: "destructive",
       });
     }
@@ -235,10 +235,10 @@ export const useSecureCart = () => {
       
       toast({
         title: "Carrinho limpo",
-        description: "Todos os itens foram removidos do carrinho.",
+        description: "Todos os itens removidos.",
       });
     } catch (error) {
-      console.error('❌ Erro ao limpar carrinho:', error);
+      console.error('❌ Erro ao limpar:', error);
       toast({
         title: "Erro",
         description: "Erro ao limpar carrinho.",
