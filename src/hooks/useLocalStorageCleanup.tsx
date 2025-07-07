@@ -3,92 +3,53 @@ import { useEffect } from 'react';
 
 export const useLocalStorageCleanup = () => {
   const cleanupInvalidData = () => {
-    console.log('🧹 Iniciando limpeza do localStorage...');
+    console.log('🧹 LIMPEZA: Iniciando limpeza completa do localStorage...');
     
     try {
-      // Verificar e limpar dados de carrinho inválidos
-      const cart = localStorage.getItem('cart');
-      if (cart) {
-        console.log('🛒 Verificando dados do carrinho:', cart);
-        try {
-          const parsedCart = JSON.parse(cart);
-          if (!Array.isArray(parsedCart)) {
-            console.log('❌ Dados de carrinho inválidos, removendo');
-            localStorage.removeItem('cart');
-          } else {
-            console.log('✅ Dados do carrinho válidos:', parsedCart.length, 'itens');
-          }
-        } catch (error) {
-          console.log('❌ Erro ao fazer parse do carrinho, removendo');
-          localStorage.removeItem('cart');
+      // CORREÇÃO CRÍTICA: Remover TODOS os dados obsoletos de carrinho e favoritos do localStorage
+      const obsoleteKeys = ['cart', 'favorites', 'cartItems', 'favoriteItems'];
+      
+      obsoleteKeys.forEach(key => {
+        const value = localStorage.getItem(key);
+        if (value) {
+          console.log(`🗑️ Removendo ${key} obsoleto:`, value);
+          localStorage.removeItem(key);
         }
-      }
-
-      // Verificar e limpar dados de favoritos inválidos
-      const favorites = localStorage.getItem('favorites');
-      if (favorites) {
-        console.log('❤️ Verificando dados de favoritos:', favorites);
-        try {
-          const parsedFavorites = JSON.parse(favorites);
-          if (!Array.isArray(parsedFavorites)) {
-            console.log('❌ Dados de favoritos inválidos, removendo');
-            localStorage.removeItem('favorites');
-          } else {
-            console.log('✅ Dados dos favoritos válidos:', parsedFavorites.length, 'itens');
-          }
-        } catch (error) {
-          console.log('❌ Erro ao fazer parse dos favoritos, removendo');
-          localStorage.removeItem('favorites');
-        }
-      }
+      });
+      
+      console.log('✅ Limpeza concluída - agora usando apenas banco de dados');
     } catch (error) {
       console.error('❌ Erro ao limpar dados do localStorage:', error);
-      // Em caso de erro, remover todos os dados possivelmente corrompidos
-      localStorage.removeItem('cart');
-      localStorage.removeItem('favorites');
+      // Em caso de erro, forçar remoção individual
+      try {
+        localStorage.removeItem('cart');
+        localStorage.removeItem('favorites');
+        localStorage.removeItem('cartItems');
+        localStorage.removeItem('favoriteItems');
+      } catch (e) {
+        console.error('❌ Erro crítico na limpeza:', e);
+      }
     }
   };
 
-  // CORREÇÃO CRÍTICA: Função para reset completo do localStorage
   const resetLocalStorage = () => {
     console.log('🔄 RESET COMPLETO do localStorage');
-    localStorage.removeItem('cart');
-    localStorage.removeItem('favorites');
+    const keysToRemove = ['cart', 'favorites', 'cartItems', 'favoriteItems'];
     
-    // Disparar eventos para atualizar contadores
-    window.dispatchEvent(new Event('cartUpdated'));
-    window.dispatchEvent(new Event('favoritesUpdated'));
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
     
     console.log('✅ LocalStorage resetado completamente');
   };
 
-  // CORREÇÃO CRÍTICA: Remover inicialização automática que causa o bug do "1"
-  const initializeLocalStorage = () => {
-    console.log('🚀 Verificando se precisa inicializar localStorage...');
-    
-    // APENAS verificar se existem, NÃO criar automaticamente
-    const cart = localStorage.getItem('cart');
-    const favorites = localStorage.getItem('favorites');
-    
-    console.log('Estado atual:', {
-      cart: cart ? 'existe' : 'não existe',
-      favorites: favorites ? 'existe' : 'não existe'
-    });
-    
-    // NÃO inicializar automaticamente para evitar contadores falsos
-    // Os arrays serão criados apenas quando o usuário realmente adicionar itens
-  };
-
   useEffect(() => {
-    console.log('🔧 useLocalStorageCleanup iniciado');
+    console.log('🔧 useLocalStorageCleanup: Executando limpeza automática...');
     cleanupInvalidData();
-    // CORREÇÃO: NÃO inicializar automaticamente
-    // initializeLocalStorage(); <- REMOVIDO PARA CORRIGIR O BUG
   }, []);
 
   return { 
     cleanupInvalidData, 
-    initializeLocalStorage, 
-    resetLocalStorage // Nova função para casos extremos
+    resetLocalStorage
   };
 };

@@ -4,7 +4,7 @@ import { Upload, X, Loader, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuthCheck } from '@/hooks/useAuthCheck';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CategoryImageUploadProps {
   imageUrl?: string;
@@ -20,19 +20,30 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const { toast } = useToast();
-  const { user, isAdmin } = useAuthCheck();
+  const { user } = useAuth();
+
+  // Verificar se é admin pelos UIDs específicos
+  const isAdmin = user && (
+    user.id === '589069fc-fb82-4388-a802-40d373950011' ||
+    user.id === '0fef94be-d716-4b9c-8053-e351a66927dc'
+  );
 
   const uploadImage = async (file: File) => {
-    console.log('🔄 Iniciando upload da categoria...', { fileName: file.name, fileSize: file.size });
+    console.log('🔄 UPLOAD CATEGORIA: Iniciando...', {
+      fileName: file.name,
+      fileSize: file.size,
+      userId: user?.id?.substring(0, 8),
+      isAdmin
+    });
     
     if (!file) {
       console.error('❌ Nenhum arquivo fornecido');
       return;
     }
 
-    // CORREÇÃO CRÍTICA: Verificar se usuário está autenticado e é admin
+    // Verificar se usuário está autenticado e é admin
     if (!user || !isAdmin) {
-      console.error('❌ Usuário não autenticado ou não é admin:', { user: !!user, isAdmin });
+      console.error('❌ Usuário não é admin:', { user: !!user, isAdmin });
       toast({
         title: "Erro de Autenticação",
         description: "Você precisa estar logado como administrador para fazer upload de imagens.",
@@ -104,7 +115,6 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
     } catch (error: any) {
       console.error('❌ Erro completo no upload:', error);
       
-      // Mensagens de erro mais específicas
       let errorMessage = "Erro ao enviar imagem. Tente novamente.";
       
       if (error.message?.includes('Permission')) {
@@ -190,7 +200,7 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
     }
   };
 
-  // CORREÇÃO: Mostrar aviso se usuário não for admin
+  // Mostrar aviso se usuário não for admin
   if (!user || !isAdmin) {
     return (
       <div className="border-2 border-dashed border-neutral-300 rounded-lg p-8 text-center">
@@ -198,6 +208,9 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
           <Image className="w-12 h-12 mx-auto" />
           <p className="font-medium">Acesso Restrito</p>
           <p className="text-sm">Apenas administradores podem fazer upload de imagens.</p>
+          <p className="text-xs text-neutral-500">
+            ID atual: {user?.id?.substring(0, 8) || 'não logado'}
+          </p>
         </div>
       </div>
     );
@@ -263,6 +276,9 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
               </div>
               <p className="text-xs text-neutral-500">
                 PNG, JPG ou WEBP até 5MB
+              </p>
+              <p className="text-xs text-green-600">
+                ✅ Admin reconhecido: {user.id.substring(0, 8)}
               </p>
             </div>
           )}

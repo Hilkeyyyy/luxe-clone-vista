@@ -1,65 +1,43 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useAuth } from '@/hooks/useAuth';
 
-interface Product {
-  id: string;
-  name: string;
-  brand: string;
-  price: number;
-  original_price?: number;
-  images: string[];
-  clone_category: string;
-  stock_status: string;
-  is_sold_out: boolean;
-  custom_badge?: string;
-  is_bestseller: boolean;
-  is_featured: boolean;
-  is_new: boolean;
-}
+// HOOK OBSOLETO - MIGRADO PARA useSecureFavorites
+// Este hook agora redireciona para o novo sistema baseado em banco de dados
 
 export const useFavorites = () => {
   const { toast } = useToast();
-  const [favorites] = useLocalStorage<string[]>('favorites', []);
-  const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const loadFavorites = async () => {
-    try {
-      if (favorites.length === 0) {
-        setFavoriteProducts([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .in('id', favorites);
-
-      if (error) throw error;
-      setFavoriteProducts(data || []);
-    } catch (error) {
-      console.error('Erro ao carregar favoritos:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar seus produtos favoritos.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { isAuthenticated } = useAuth();
+  const [favorites, setFavorites] = useState<string[]>([]);
 
   useEffect(() => {
-    loadFavorites();
-  }, [favorites]);
+    console.log('⚠️ AVISO: useFavorites está obsoleto - use useSecureFavorites');
+    
+    // Limpar dados antigos do localStorage
+    const oldFavorites = localStorage.getItem('favorites');
+    if (oldFavorites) {
+      console.log('🗑️ Removendo dados antigos de favoritos do localStorage');
+      localStorage.removeItem('favorites');
+    }
+    
+    toast({
+      title: "Sistema Atualizado",
+      description: "Seus favoritos agora são salvos com segurança no banco de dados. Faça login para acessar.",
+      duration: 5000,
+    });
+  }, []);
+
+  // Funções vazias para compatibilidade
+  const toggleFavorite = () => {
+    console.log('⚠️ Use useSecureFavorites.toggleFavorite()');
+  };
+
+  const isFavorite = () => false;
 
   return {
-    favoriteProducts,
-    loading,
-    refetch: loadFavorites,
+    favorites,
+    toggleFavorite,
+    isFavorite,
   };
 };

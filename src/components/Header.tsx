@@ -3,122 +3,44 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, ShoppingBag, Heart, User, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthCheck } from '@/hooks/useAuthCheck';
-import { useLocalStorageCleanup } from '@/hooks/useLocalStorageCleanup';
+import { useAuth } from '@/hooks/useAuth';
+import { useSecureFavorites } from '@/hooks/useSecureFavorites';
+import { useSecureCart } from '@/hooks/useSecureCart';
 import NavigationMenu from './NavigationMenu';
 
 const Header = () => {
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuthCheck();
-  const { cleanupInvalidData, resetLocalStorage } = useLocalStorageCleanup();
+  const { user, isAuthenticated } = useAuth();
+  const { favoriteIds, loading: favoritesLoading } = useSecureFavorites();
+  const { cartItems, loading: cartLoading } = useSecureCart();
   const [searchQuery, setSearchQuery] = useState('');
-  const [cartItemsCount, setCartItemsCount] = useState(0);
-  const [favoritesCount, setFavoritesCount] = useState(0);
   const [showNavigationMenu, setShowNavigationMenu] = useState(false);
 
+  // Verificar se é admin pelos UIDs específicos
+  const isAdmin = user && (
+    user.id === '589069fc-fb82-4388-a802-40d373950011' ||
+    user.id === '0fef94be-d716-4b9c-8053-e351a66927dc'
+  );
+
+  // Calcular contadores em tempo real do banco de dados
+  const favoritesCount = favoriteIds.length;
+  const cartItemsCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+  // Limpeza completa do localStorage na inicialização
   useEffect(() => {
-    console.log('🔧 Header: Inicializando contadores...');
+    console.log('🧹 HEADER: Limpando localStorage obsoleto...');
     
-    // Limpar dados inválidos primeiro
-    cleanupInvalidData();
-    updateCounts();
+    // Remover dados antigos de carrinho e favoritos do localStorage
+    const keysToRemove = ['cart', 'favorites', 'cartItems', 'favoriteItems'];
+    keysToRemove.forEach(key => {
+      if (localStorage.getItem(key)) {
+        console.log(`🗑️ Removendo ${key} do localStorage`);
+        localStorage.removeItem(key);
+      }
+    });
     
-    // Listener para mudanças no localStorage
-    const handleStorageChange = () => {
-      console.log('📦 Storage mudou, atualizando contadores...');
-      updateCounts();
-    };
-
-    // Listener customizado para mudanças imediatas
-    const handleCartUpdate = () => {
-      console.log('🛒 Carrinho atualizado, atualizando contadores...');
-      setTimeout(updateCounts, 100);
-    };
-
-    const handleFavoritesUpdate = () => {
-      console.log('❤️ Favoritos atualizados, atualizando contadores...');
-      setTimeout(updateCounts, 100);
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('cartUpdated', handleCartUpdate);
-    window.addEventListener('favoritesUpdated', handleFavoritesUpdate);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('cartUpdated', handleCartUpdate);
-      window.removeEventListener('favoritesUpdated', handleFavoritesUpdate);
-    };
+    console.log('✅ localStorage limpo - agora usando apenas banco de dados');
   }, []);
-
-  const updateCounts = () => {
-    console.log('🔄 Atualizando contadores...');
-    
-    try {
-      const cart = localStorage.getItem('cart');
-      const favorites = localStorage.getItem('favorites');
-      
-      console.log('📊 Dados brutos:', { cart, favorites });
-      
-      // CORREÇÃO CRÍTICA: Inicializar com 0 e só contar se houver dados válidos
-      let totalCartItems = 0;
-      let totalFavorites = 0;
-      
-      // Processar carrinho apenas se existir
-      if (cart && cart !== 'null' && cart !== '[]') {
-        try {
-          const parsedCart = JSON.parse(cart);
-          if (Array.isArray(parsedCart) && parsedCart.length > 0) {
-            // Para o carrinho, somar as quantidades de todos os itens
-            totalCartItems = parsedCart.reduce((total: number, item: any) => {
-              if (item && typeof item.quantity === 'number' && item.quantity > 0) {
-                return total + item.quantity;
-              }
-              return total;
-            }, 0);
-            console.log('🛒 Carrinho processado:', parsedCart.length, 'produtos,', totalCartItems, 'itens totais');
-          }
-        } catch (error) {
-          console.error('❌ Erro ao processar carrinho:', error);
-          localStorage.removeItem('cart');
-        }
-      }
-      
-      // Processar favoritos apenas se existir
-      if (favorites && favorites !== 'null' && favorites !== '[]') {
-        try {
-          const parsedFavorites = JSON.parse(favorites);
-          if (Array.isArray(parsedFavorites) && parsedFavorites.length > 0) {
-            // Para favoritos, contar apenas IDs válidos e únicos
-            const validFavorites = parsedFavorites.filter((id: any) => 
-              typeof id === 'string' && id.trim().length > 0
-            );
-            
-            // Remover duplicatas
-            const uniqueFavorites = [...new Set(validFavorites)];
-            totalFavorites = uniqueFavorites.length;
-            console.log('❤️ Favoritos processados:', parsedFavorites.length, 'raw,', totalFavorites, 'válidos únicos');
-          }
-        } catch (error) {
-          console.error('❌ Erro ao processar favoritos:', error);
-          localStorage.removeItem('favorites');
-        }
-      }
-      
-      console.log('📈 Contadores finais:', {
-        carrinho: totalCartItems,
-        favoritos: totalFavorites
-      });
-      
-      setCartItemsCount(totalCartItems);
-      setFavoritesCount(totalFavorites);
-      
-    } catch (error) {
-      console.error('❌ Erro geral ao atualizar contadores:', error);
-      setCartItemsCount(0);
-      setFavoritesCount(0);
-    }
-  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,13 +50,13 @@ const Header = () => {
     }
   };
 
-  // Função de debug para casos extremos
-  const handleResetStorage = () => {
-    if (window.confirm('⚠️ ATENÇÃO: Isso vai limpar TODOS os dados do carrinho e favoritos. Confirmar?')) {
-      resetLocalStorage();
-      console.log('🔄 Storage resetado pelo usuário');
-    }
-  };
+  console.log('📊 CONTADORES ATUAIS:', {
+    favoritos: favoritesCount,
+    carrinho: cartItemsCount,
+    autenticado: isAuthenticated,
+    isAdmin,
+    userId: user?.id?.substring(0, 8)
+  });
 
   return (
     <motion.header 
@@ -198,7 +120,7 @@ const Header = () => {
               whileTap={{ scale: 0.95 }}
             >
               <Heart size={20} />
-              {favoritesCount > 0 && (
+              {!favoritesLoading && favoritesCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {favoritesCount}
                 </span>
@@ -213,14 +135,14 @@ const Header = () => {
               whileTap={{ scale: 0.95 }}
             >
               <ShoppingBag size={20} />
-              {cartItemsCount > 0 && (
+              {!cartLoading && cartItemsCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-neutral-900 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {cartItemsCount}
                 </span>
               )}
             </motion.button>
 
-            {/* Admin Settings - Only for Admins */}
+            {/* Admin Settings - Only for the two specific UIDs */}
             {isAdmin && (
               <motion.button 
                 onClick={() => navigate('/admin')}
@@ -251,17 +173,6 @@ const Header = () => {
                 isAdmin={isAdmin}
               />
             </div>
-
-            {/* DEBUG: Botão para reset em desenvolvimento */}
-            {process.env.NODE_ENV === 'development' && (
-              <button
-                onClick={handleResetStorage}
-                className="hidden text-xs bg-red-100 text-red-600 px-2 py-1 rounded"
-                title="DEBUG: Reset Storage"
-              >
-                🔄
-              </button>
-            )}
           </div>
         </div>
 

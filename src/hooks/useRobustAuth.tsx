@@ -23,6 +23,12 @@ interface RobustAuthState {
   error: string | null;
 }
 
+// UIDs específicos dos administradores
+const ADMIN_UIDS = [
+  '589069fc-fb82-4388-a802-40d373950011',
+  '0fef94be-d716-4b9c-8053-e351a66927dc'
+];
+
 export const useRobustAuth = () => {
   const [authState, setAuthState] = useState<RobustAuthState>({
     user: null,
@@ -35,7 +41,6 @@ export const useRobustAuth = () => {
   useEffect(() => {
     console.log('🔧 ROBUST AUTH: Inicializando sistema robusto de autenticação...');
     
-    // Validar origem da requisição
     if (!validateRequestOrigin()) {
       secureLog.warn('Sessão rejeitada - origem não autorizada');
       setAuthState(prev => ({ 
@@ -47,9 +52,7 @@ export const useRobustAuth = () => {
       return;
     }
 
-    // Verificar conflitos de sessão
     checkSessionConflicts();
-
     initializeAuth();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -61,7 +64,6 @@ export const useRobustAuth = () => {
         });
         
         if (event === 'SIGNED_IN' && session?.user) {
-          // Defer para evitar deadlocks
           setTimeout(() => {
             validateAndSetUser(session.user);
           }, 0);
@@ -81,7 +83,6 @@ export const useRobustAuth = () => {
       }
     );
 
-    // Validação de sessão a cada 5 minutos
     const sessionCheck = setInterval(validateCurrentSession, 300000);
 
     return () => {
@@ -133,6 +134,10 @@ export const useRobustAuth = () => {
     console.log('🔍 Validando usuário:', authUser.id.substring(0, 8));
     
     try {
+      // CORREÇÃO CRÍTICA: Verificar se é admin pelos UIDs específicos
+      const isAdmin = ADMIN_UIDS.includes(authUser.id);
+      console.log(`👤 VERIFICAÇÃO ADMIN: ${authUser.id} é admin? ${isAdmin}`);
+      
       // Verificar idade da sessão (24 horas)
       const sessionAge = Date.now() - new Date(authUser.last_sign_in_at || authUser.created_at).getTime();
       if (sessionAge > 86400000) {
@@ -175,22 +180,22 @@ export const useRobustAuth = () => {
           retries--;
           console.error(`❌ Erro na busca do perfil (${retries} tentativas restantes):`, error);
           if (retries === 0) {
-            // Tentar criar perfil se não existe
             await createUserProfile(authUser);
             return;
           }
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
 
-      const isAdmin = profile?.role === 'admin';
-      console.log(`👤 Usuário validado: ${authUser.email} (${isAdmin ? 'ADMIN' : 'USER'})`);
+      // CORREÇÃO: Usar verificação de UID para admin, não apenas perfil
+      const finalIsAdmin = isAdmin || profile?.role === 'admin';
+      console.log(`👤 Usuário validado: ${authUser.email} (${finalIsAdmin ? 'ADMIN' : 'USER'})`);
 
       setAuthState({
         user: {
           id: authUser.id,
           email: authUser.email,
-          isAdmin,
+          isAdmin: finalIsAdmin,
           profile: profile || undefined
         },
         loading: false,
@@ -202,7 +207,7 @@ export const useRobustAuth = () => {
       secureLog.info('Usuário validado com sucesso', { 
         userId: authUser.id.substring(0, 8),
         role: profile?.role,
-        isAdmin
+        isAdmin: finalIsAdmin
       });
     } catch (error) {
       console.error('❌ Erro na validação do usuário:', error);
@@ -219,22 +224,27 @@ export const useRobustAuth = () => {
     console.log('📝 Criando perfil para usuário:', authUser.id.substring(0, 8));
     
     try {
+      // CORREÇÃO: Verificar se é admin pelos UIDs e definir role corretamente
+      const isAdmin = ADMIN_UIDS.includes(authUser.id);
+      const role = isAdmin ? 'admin' : 'user';
+      
+      console.log(`📝 Criando perfil com role: ${role} (admin: ${isAdmin})`);
+      
       const { error } = await supabase
         .from('profiles')
         .insert({
           id: authUser.id,
           email: authUser.email,
           full_name: authUser.email,
-          role: 'user'
+          role: role
         });
 
       if (error) {
         console.error('❌ Erro ao criar perfil:', error);
         secureLog.error('Erro ao criar perfil', error);
       } else {
-        console.log('✅ Perfil criado automaticamente');
+        console.log('✅ Perfil criado automaticamente com role:', role);
         secureLog.info('Perfil criado automaticamente');
-        // Retry validação
         await validateAndSetUser(authUser);
       }
     } catch (error) {
