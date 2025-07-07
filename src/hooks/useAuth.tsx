@@ -1,9 +1,9 @@
-import { useEnhancedAuth } from './useEnhancedAuth';
+import { useSimpleAuth } from './useSimpleAuth';
 
-// Re-export the enhanced auth hook as the main auth hook
+// Main auth hook - now using the simplified version
 export const useAuth = () => {
-  return useEnhancedAuth();
+  return useSimpleAuth();
 };
 
 // Keep backward compatibility
-export { useEnhancedAuth };
+export { useSimpleAuth };

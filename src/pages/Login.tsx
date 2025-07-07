@@ -4,12 +4,12 @@ import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Mail, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, signIn, signUp } = useEnhancedAuth();
+  const { user, signIn, signUp } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,16 +43,10 @@ const Login = () => {
 
     try {
       await signIn(email, password);
-      console.log('✅ Login concluído, redirecionando...');
-      
-      // Aguardar um pouco e redirecionar
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
-      
+      // Redirecionamento imediato após login bem-sucedido
+      navigate('/');
     } catch (error: any) {
-      console.error('❌ Erro no login:', error);
-      // O toast já é mostrado pelo enhancedSignIn
+      console.error('Erro no login:', error);
     } finally {
       setLoading(false);
     }
@@ -93,16 +87,10 @@ const Login = () => {
 
     try {
       await signUp(email, password, fullName);
-      console.log('✅ Cadastro concluído, redirecionando...');
-      
-      // Aguardar um pouco e redirecionar
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
-      
+      // Redirecionamento imediato após cadastro bem-sucedido
+      navigate('/');
     } catch (error: any) {
-      console.error('❌ Erro no cadastro:', error);
-      // O toast já é mostrado pelo enhancedSignUp
+      console.error('Erro no cadastro:', error);
     } finally {
       setLoading(false);
     }
