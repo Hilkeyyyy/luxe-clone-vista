@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { Shield, Truck, Award } from 'lucide-react';
 
 interface ProductOptions {
@@ -21,6 +21,7 @@ interface ProductOptions {
 
 const ProductOptionsSettings = () => {
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [options, setOptions] = useState<ProductOptions>({
@@ -32,12 +33,27 @@ const ProductOptionsSettings = () => {
     quality_info: 'Produtos testados e com certificado de qualidade'
   });
 
+  // Verificar se é admin
+  const isAdmin = user?.isAdmin || false;
+
   useEffect(() => {
-    loadOptions();
-  }, []);
+    if (isAuthenticated && isAdmin) {
+      loadOptions();
+    } else {
+      setLoading(false);
+    }
+  }, [isAuthenticated, isAdmin]);
 
   const loadOptions = async () => {
+    if (!isAdmin) {
+      console.log('❌ Usuário não é admin, não carregando configurações');
+      setLoading(false);
+      return;
+    }
+
     try {
+      console.log('📋 Carregando configurações de opções do produto...');
+      
       const { data, error } = await supabase
         .from('admin_settings')
         .select('setting_key, setting_value')
@@ -47,8 +63,13 @@ const ProductOptionsSettings = () => {
           'quality_enabled', 'quality_info'
         ]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao carregar opções:', error);
+        throw error;
+      }
 
+      console.log('✅ Configurações carregadas:', data?.length || 0);
+      
       const loadedOptions = { ...options };
       data?.forEach(item => {
         const key = item.setting_key as keyof ProductOptions;
@@ -56,14 +77,16 @@ const ProductOptionsSettings = () => {
           if (key.includes('_enabled')) {
             (loadedOptions as any)[key] = Boolean(item.setting_value);
           } else {
-            (loadedOptions as any)[key] = String(item.setting_value || '').replace(/"/g, '');
+            // Limpar aspas duplas extras
+            const value = String(item.setting_value || '').replace(/^"|"$/g, '');
+            (loadedOptions as any)[key] = value;
           }
         }
       });
 
       setOptions(loadedOptions);
     } catch (error) {
-      console.error('Erro ao carregar opções:', error);
+      console.error('❌ Erro ao carregar opções:', error);
       toast({
         title: "Erro",
         description: "Erro ao carregar configurações de opções do produto.",
@@ -75,8 +98,19 @@ const ProductOptionsSettings = () => {
   };
 
   const saveOptions = async () => {
+    if (!isAdmin) {
+      toast({
+        title: "Erro",
+        description: "Apenas administradores podem salvar configurações.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
+      console.log('💾 Salvando configurações de opções...');
+      
       const settingsToSave = Object.entries(options).map(([key, value]) => ({
         setting_key: key,
         setting_value: value
@@ -90,15 +124,19 @@ const ProductOptionsSettings = () => {
             ignoreDuplicates: false 
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Erro ao salvar configuração:', setting.setting_key, error);
+          throw error;
+        }
       }
 
+      console.log('✅ Todas as configurações salvas com sucesso');
       toast({
         title: "Sucesso",
         description: "Configurações de opções salvas com sucesso!",
       });
     } catch (error) {
-      console.error('Erro ao salvar opções:', error);
+      console.error('❌ Erro ao salvar opções:', error);
       toast({
         title: "Erro",
         description: "Erro ao salvar configurações de opções.",
@@ -113,8 +151,29 @@ const ProductOptionsSettings = () => {
     key: K, 
     value: ProductOptions[K]
   ) => {
+    console.log(`📝 Atualizando ${key}:`, value);
     setOptions(prev => ({ ...prev, [key]: value }));
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="text-center">
+          <p className="text-neutral-600">Faça login para acessar as configurações.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="text-center">
+          <p className="text-neutral-600">Apenas administradores podem acessar esta seção.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -142,13 +201,19 @@ const ProductOptionsSettings = () => {
       {/* Garantia */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Shield className="h-5 w-5 text-blue-600" />
-            <span>Garantia</span>
-            <Switch
-              checked={options.warranty_enabled}
-              onCheckedChange={(checked) => updateOption('warranty_enabled', checked)}
-            />
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Shield className="h-5 w-5 text-blue-600" />
+              <span>Garantia</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="warranty-switch">Ativado</Label>
+              <Switch
+                id="warranty-switch"
+                checked={options.warranty_enabled}
+                onCheckedChange={(checked) => updateOption('warranty_enabled', checked)}
+              />
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -175,13 +240,19 @@ const ProductOptionsSettings = () => {
       {/* Entrega */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Truck className="h-5 w-5 text-green-600" />
-            <span>Entrega</span>
-            <Switch
-              checked={options.delivery_enabled}
-              onCheckedChange={(checked) => updateOption('delivery_enabled', checked)}
-            />
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Truck className="h-5 w-5 text-green-600" />
+              <span>Entrega</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="delivery-switch">Ativado</Label>
+              <Switch
+                id="delivery-switch"
+                checked={options.delivery_enabled}
+                onCheckedChange={(checked) => updateOption('delivery_enabled', checked)}
+              />
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -208,13 +279,19 @@ const ProductOptionsSettings = () => {
       {/* Qualidade */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Award className="h-5 w-5 text-purple-600" />
-            <span>Qualidade</span>
-            <Switch
-              checked={options.quality_enabled}
-              onCheckedChange={(checked) => updateOption('quality_enabled', checked)}
-            />
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Award className="h-5 w-5 text-purple-600" />
+              <span>Qualidade</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="quality-switch">Ativado</Label>
+              <Switch
+                id="quality-switch"
+                checked={options.quality_enabled}
+                onCheckedChange={(checked) => updateOption('quality_enabled', checked)}
+              />
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

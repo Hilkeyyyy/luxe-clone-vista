@@ -6,10 +6,32 @@ import FavoritesHeader from '@/components/favorites/FavoritesHeader';
 import FavoritesGrid from '@/components/favorites/FavoritesGrid';
 import EmptyFavorites from '@/components/favorites/EmptyFavorites';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { useFavorites } from '@/hooks/useFavorites';
+import { useSecureFavorites } from '@/hooks/useSecureFavorites';
+import { useAuth } from '@/hooks/useAuth';
+import { ShoppingBag } from 'lucide-react';
+import EmptyState from '@/components/ui/EmptyState';
 
 const Favorites = () => {
-  const { favoriteProducts, loading } = useFavorites();
+  const { isAuthenticated } = useAuth();
+  const { favoriteProducts, loading } = useSecureFavorites();
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-white font-outfit">
+        <Header />
+        <EmptyState
+          icon={ShoppingBag}
+          title="Faça login para ver seus favoritos"
+          description="Entre na sua conta para acessar seus produtos favoritos."
+          action={{
+            label: "Fazer Login",
+            onClick: () => window.location.href = '/login'
+          }}
+        />
+        <Footer />
+      </div>
+    );
+  }
 
   if (loading) {
     return (

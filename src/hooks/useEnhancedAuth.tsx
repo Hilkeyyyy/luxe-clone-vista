@@ -89,7 +89,6 @@ export const useEnhancedAuth = () => {
 
       console.log('📧 Fazendo cadastro para:', email);
       
-      // CORREÇÃO CRÍTICA: Não requer confirmação de email
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,

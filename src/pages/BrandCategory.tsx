@@ -27,7 +27,6 @@ interface BrandCategory {
   name: string;
   description?: string;
   image_url?: string;
-  products_count: number;
 }
 
 const BrandCategory = () => {
@@ -46,6 +45,8 @@ const BrandCategory = () => {
 
   const fetchCategoryAndProducts = async () => {
     try {
+      console.log('🔍 Buscando categoria por slug:', slug);
+      
       // Buscar categoria por slug
       const { data: categoryData, error: categoryError } = await supabase
         .from('brand_categories')
@@ -54,22 +55,36 @@ const BrandCategory = () => {
         .eq('is_active', true)
         .single();
 
-      if (categoryError) throw categoryError;
+      if (categoryError) {
+        console.error('❌ Erro ao buscar categoria:', categoryError);
+        throw categoryError;
+      }
+      
+      console.log('✅ Categoria encontrada:', categoryData.name);
       setCategory(categoryData);
 
-      // Buscar produtos da categoria
+      // CORREÇÃO CRÍTICA: Buscar produtos pela MARCA (brand) e não por brand_category_id
+      // Normalizar o nome da categoria para buscar produtos da marca
+      const brandName = categoryData.name.toUpperCase();
+      console.log('🔍 Buscando produtos da marca:', brandName);
+      
       const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('*')
-        .eq('brand_category_id', categoryData.id)
+        .ilike('brand', `%${brandName}%`) // Buscar por marca que contenha o nome da categoria
         .eq('in_stock', true)
         .order('created_at', { ascending: false });
 
-      if (productsError) throw productsError;
+      if (productsError) {
+        console.error('❌ Erro ao buscar produtos:', productsError);
+        throw productsError;
+      }
+      
+      console.log(`✅ ${productsData?.length || 0} produtos encontrados da marca ${brandName}`);
       setProducts(productsData || []);
 
     } catch (error) {
-      console.error('Erro ao buscar categoria e produtos:', error);
+      console.error('❌ Erro ao buscar categoria e produtos:', error);
     } finally {
       setLoading(false);
     }
@@ -150,7 +165,7 @@ const BrandCategory = () => {
                 {category.description || `Explore nossa coleção completa de relógios ${category.name}`}
               </p>
               <p className="text-sm text-neutral-500 mt-1">
-                {category.products_count} produto{category.products_count !== 1 ? 's' : ''} disponível{category.products_count !== 1 ? 'is' : ''}
+                {products.length} produto{products.length !== 1 ? 's' : ''} disponível{products.length !== 1 ? 'is' : ''}
               </p>
             </div>
           </div>
@@ -234,9 +249,14 @@ const BrandCategory = () => {
 
         {sortedProducts.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-neutral-600 text-lg">
-              Nenhum produto disponível nesta categoria no momento.
-            </p>
+            <div className="bg-neutral-50 rounded-2xl p-12">
+              <h3 className="text-xl font-semibold text-neutral-900 mb-2">
+                Nenhum produto disponível
+              </h3>
+              <p className="text-neutral-600">
+                Não encontramos produtos da marca {category.name} no momento.
+              </p>
+            </div>
           </div>
         )}
       </div>

@@ -8,15 +8,12 @@ import CartItem from '@/components/cart/CartItem';
 import CartSummary from '@/components/cart/CartSummary';
 import EmptyCart from '@/components/cart/EmptyCart';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { useCart } from '@/hooks/useCart';
+import { useSecureCart } from '@/hooks/useSecureCart';
 import { useAuth } from '@/hooks/useAuth';
-import { useAuthActions } from '@/hooks/useAuthActions';
-import AuthModal from '@/components/auth/AuthModal';
 import EmptyState from '@/components/ui/EmptyState';
 
 const Cart = () => {
   const { isAuthenticated } = useAuth();
-  const { showAuthModal, authMode, closeAuthModal } = useAuthActions();
   const { 
     cartItems, 
     loading, 
@@ -25,8 +22,7 @@ const Cart = () => {
     clearCart, 
     getTotalPrice, 
     getTotalItems,
-    refetch 
-  } = useCart();
+  } = useSecureCart();
 
   const handleWhatsAppOrder = () => {
     const message = cartItems.map(item => 
@@ -50,19 +46,10 @@ const Cart = () => {
           description="Entre na sua conta para acessar seus produtos salvos no carrinho."
           action={{
             label: "Fazer Login",
-            onClick: () => {}
+            onClick: () => window.location.href = '/login'
           }}
         />
         <Footer />
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={closeAuthModal}
-          mode="login"
-          onSuccess={() => {
-            closeAuthModal();
-            refetch();
-          }}
-        />
       </div>
     );
   }
@@ -92,8 +79,8 @@ const Cart = () => {
                   key={item.id}
                   {...item}
                   index={index}
-                  onUpdateQuantity={updateQuantity}
-                  onRemove={removeItem}
+                  onUpdateQuantity={(productId, quantity) => updateQuantity(item.id, quantity)}
+                  onRemove={() => removeItem(item.id)}
                 />
               ))}
             </div>
