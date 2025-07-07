@@ -12,22 +12,31 @@ const Index = () => {
   const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
 
   useEffect(() => {
+    console.log('🏠 =================================');
     console.log('🏠 INDEX: Componente montado');
+    console.log('🏠 =================================');
     
     // Log dos produtos recebidos
-    console.log('📦 INDEX: Produtos recebidos:', {
+    console.log('📦 INDEX: Produtos recebidos do hook:', {
       newProducts: newProducts.length,
       featuredProducts: featuredProducts.length,
       offerProducts: offerProducts.length,
       loading
     });
 
-    // Scroll automático para hero section ao carregar página
-    const heroSection = document.querySelector('section');
-    if (heroSection) {
-      heroSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    console.log('📦 INDEX: Detalhes dos produtos:');
+    console.log('🆕 Novos:', newProducts);
+    console.log('⭐ Destaques:', featuredProducts);
+    console.log('💰 Ofertas:', offerProducts);
+
   }, [newProducts, featuredProducts, offerProducts, loading]);
+
+  console.log('🏠 INDEX: Renderizando com:', {
+    newCount: newProducts.length,
+    featuredCount: featuredProducts.length,
+    offerCount: offerProducts.length,
+    loading
+  });
 
   return (
     <div className="min-h-screen bg-white font-outfit">
