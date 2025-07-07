@@ -23,9 +23,8 @@ export const useSecureCart = () => {
   const [initialized, setInitialized] = useState(false);
 
   const loadCartItems = async () => {
-    // CORREÇÃO: Aguardar autenticação completa antes de carregar
     if (authLoading) {
-      console.log('🔄 Aguardando autenticação completar...');
+      console.log('🔄 Aguardando autenticação...');
       return;
     }
 
@@ -40,42 +39,46 @@ export const useSecureCart = () => {
     try {
       console.log('🛒 Carregando carrinho do usuário:', user.id.substring(0, 8));
       
-      const { data: cartData, error: cartError } = await supabase
+      // OTIMIZAÇÃO: Query única com JOIN para pegar carrinho + produtos
+      const { data: cartWithProducts, error } = await supabase
         .from('cart_items')
-        .select('*')
+        .select(`
+          id,
+          quantity,
+          selected_color,
+          selected_size,
+          product_id,
+          products (
+            id,
+            name,
+            brand,
+            price,
+            images
+          )
+        `)
         .eq('user_id', user.id);
 
-      if (cartError) {
-        console.error('❌ Erro ao buscar carrinho:', cartError);
-        throw cartError;
+      if (error) {
+        console.error('❌ Erro ao buscar carrinho:', error);
+        throw error;
       }
 
-      if (!cartData || cartData.length === 0) {
+      if (!cartWithProducts || cartWithProducts.length === 0) {
         setCartItems([]);
         setLoading(false);
         setInitialized(true);
         return;
       }
 
-      const productIds = cartData.map(item => item.product_id);
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('id, name, brand, price, images')
-        .in('id', productIds);
-
-      if (productsError) {
-        console.error('❌ Erro ao buscar produtos do carrinho:', productsError);
-        throw productsError;
-      }
-
-      const cartWithProducts = cartData.map(cartItem => {
-        const product = productsData?.find(p => p.id === cartItem.product_id);
+      // Mapear dados do carrinho
+      const cartItems = cartWithProducts.map(cartItem => {
+        const product = cartItem.products as any;
         return {
           id: cartItem.id,
           productId: cartItem.product_id,
           name: product?.name || 'Produto não encontrado',
           brand: product?.brand || '',
-          price: product?.price || 0,
+          price: Number(product?.price) || 0,
           image: product?.images?.[0] || '/placeholder.svg',
           quantity: cartItem.quantity,
           selectedColor: cartItem.selected_color,
@@ -83,8 +86,8 @@ export const useSecureCart = () => {
         };
       });
 
-      console.log(`✅ ${cartWithProducts.length} itens no carrinho carregados`);
-      setCartItems(cartWithProducts);
+      console.log(`✅ ${cartItems.length} itens no carrinho carregados`);
+      setCartItems(cartItems);
     } catch (error) {
       console.error('❌ Erro ao carregar carrinho:', error);
       toast({
@@ -92,6 +95,7 @@ export const useSecureCart = () => {
         description: "Erro ao carregar itens do carrinho.",
         variant: "destructive",
       });
+      setCartItems([]);
     } finally {
       setLoading(false);
       setInitialized(true);
@@ -251,7 +255,6 @@ export const useSecureCart = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
 
-  // CORREÇÃO: Aguardar autenticação antes de carregar carrinho
   useEffect(() => {
     if (!authLoading) {
       loadCartItems();
