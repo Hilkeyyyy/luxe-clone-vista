@@ -3,20 +3,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import ProductCard from './ProductCard';
 import ProductSkeleton from '@/components/ui/ProductSkeleton';
-
-interface Product {
-  id: string;
-  name: string;
-  brand: string;
-  price: number;
-  original_price?: number;
-  images: string[];
-  is_new?: boolean;
-  clone_category?: string;
-}
+import { ProductDisplay } from '@/types/product';
 
 interface FeaturedProductsGridProps {
-  products: Product[];
+  products: ProductDisplay[];
   loading: boolean;
 }
 

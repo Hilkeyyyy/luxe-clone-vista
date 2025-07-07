@@ -2,25 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { secureLog } from '@/utils/secureLogger';
-
-interface Product {
-  id: string;
-  name: string;
-  brand: string;
-  category: string;
-  clone_category?: string;
-  price: number;
-  original_price?: number;
-  images: string[];
-  colors: string[];
-  sizes: string[];
-  is_new?: boolean;
-  is_featured?: boolean;
-  is_bestseller?: boolean;
-  is_sold_out?: boolean;
-  stock_status: string;
-  created_at: string;
-}
+import { Product } from '@/types/product';
 
 export const useProductsByType = () => {
   const [newProducts, setNewProducts] = useState<Product[]>([]);
@@ -36,18 +18,7 @@ export const useProductsByType = () => {
   const fetchProductsByType = async () => {
     try {
       setLoading(true);
-      setDebugInfo('🔍 Conectando com Supabase...');
-
-      console.log('🚀 MOBILE DEBUG: Iniciando busca de produtos...');
-
-      if (!supabase) {
-        const errorMsg = '❌ Supabase client não encontrado';
-        setDebugInfo(errorMsg);
-        console.error('ERRO CRÍTICO:', errorMsg);
-        return;
-      }
-
-      setDebugInfo('📡 Executando query...');
+      setDebugInfo('🔍 Carregando produtos...');
 
       // Query otimizada com campos específicos
       const { data: allProducts, error } = await supabase
@@ -67,27 +38,22 @@ export const useProductsByType = () => {
           is_featured,
           is_bestseller,
           is_sold_out,
+          is_coming_soon,
+          custom_badge,
+          in_stock,
           stock_status,
           created_at
         `)
         .order('created_at', { ascending: false });
 
-      console.log('📊 RESPOSTA SUPABASE:', {
-        produtos_encontrados: allProducts?.length || 0,
-        erro: error?.message || 'nenhum',
-        primeiro_produto: allProducts?.[0]?.name || 'nenhum'
-      });
-
       if (error) {
-        const errorMsg = `❌ Erro na query: ${error.message}`;
-        setDebugInfo(errorMsg);
-        console.error('ERRO SUPABASE:', error);
+        setDebugInfo(`❌ Erro: ${error.message}`);
+        console.error('Erro ao carregar produtos:', error);
         throw error;
       }
 
       if (!allProducts || allProducts.length === 0) {
-        setDebugInfo('⚠️ Nenhum produto encontrado no banco');
-        console.log('AVISO: Banco de dados vazio ou sem produtos');
+        setDebugInfo('⚠️ Nenhum produto encontrado');
         setNewProducts([]);
         setFeaturedProducts([]);
         setOfferProducts([]);
@@ -95,47 +61,20 @@ export const useProductsByType = () => {
         return;
       }
 
-      console.log('✅ PRODUTOS CARREGADOS:', allProducts.length);
-      setDebugInfo(`✅ ${allProducts.length} produtos carregados`);
-
-      // Filtrar PRODUTOS NOVOS
+      // Filtrar produtos
       const novos = allProducts.filter(p => p.is_new === true);
-      console.log('🆕 PRODUTOS NOVOS:', {
-        quantidade: novos.length,
-        nomes: novos.slice(0, 3).map(p => p.name)
-      });
-      setNewProducts(novos.slice(0, 8));
-
-      // Filtrar PRODUTOS EM DESTAQUE  
       const destaques = allProducts.filter(p => p.is_featured === true);
-      console.log('⭐ PRODUTOS DESTAQUE:', {
-        quantidade: destaques.length,
-        nomes: destaques.slice(0, 3).map(p => p.name)
-      });
-      setFeaturedProducts(destaques);
-
-      // Filtrar PRODUTOS EM OFERTA
       const ofertas = allProducts.filter(p => 
         p.original_price && 
         p.original_price > 0 && 
         p.original_price > p.price
       );
-      console.log('🏷️ PRODUTOS OFERTA:', {
-        quantidade: ofertas.length,
-        nomes: ofertas.slice(0, 3).map(p => p.name)
-      });
+
+      setNewProducts(novos.slice(0, 8));
+      setFeaturedProducts(destaques);
       setOfferProducts(ofertas.slice(0, 8));
 
-      const finalMsg = `🎉 Sucesso: ${novos.length} novos, ${destaques.length} destaques, ${ofertas.length} ofertas`;
-      setDebugInfo(finalMsg);
-
-      console.log('🏁 RESULTADO FINAL:', {
-        novos: novos.length,
-        destaques: destaques.length,
-        ofertas: ofertas.length,
-        loading: false,
-        status: 'CONCLUÍDO'
-      });
+      setDebugInfo(`✅ ${allProducts.length} produtos: ${novos.length} novos, ${destaques.length} destaques, ${ofertas.length} ofertas`);
 
     } catch (error: any) {
       const errorMsg = `💥 Erro crítico: ${error?.message || 'Desconhecido'}`;

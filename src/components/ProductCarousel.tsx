@@ -4,21 +4,11 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from './ProductCard';
 import CarouselSkeleton from '@/components/ui/CarouselSkeleton';
-
-interface Product {
-  id: string;
-  name: string;
-  brand: string;
-  price: number;
-  original_price?: number;
-  images: string[];
-  is_new?: boolean;
-  clone_category?: string;
-}
+import { ProductDisplay } from '@/types/product';
 
 interface ProductCarouselProps {
   title: string;
-  products: Product[];
+  products: ProductDisplay[];
   loading?: boolean;
 }
 
