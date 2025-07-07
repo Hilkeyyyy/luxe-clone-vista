@@ -70,6 +70,7 @@ const ProductsGrid: React.FC<ProductsGridProps> = ({ products, onClearFilters })
           is_featured={product.is_featured}
           isNew={product.is_new}
           delay={index * 0.1}
+          simplified={true}
         />
       ))}
     </motion.div>

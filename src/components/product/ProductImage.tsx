@@ -1,6 +1,7 @@
 
 import React from 'react';
 import ProductBadges from './ProductBadges';
+import ProductBadgesSimple from './ProductBadgesSimple';
 
 interface ProductImageProps {
   image: string;
@@ -13,6 +14,7 @@ interface ProductImageProps {
   price: number;
   cloneCategory?: string;
   customBadge?: string;
+  simplified?: boolean;
 }
 
 const ProductImage: React.FC<ProductImageProps> = ({
@@ -26,6 +28,7 @@ const ProductImage: React.FC<ProductImageProps> = ({
   price,
   cloneCategory,
   customBadge,
+  simplified = false,
 }) => {
   return (
     <div className="relative aspect-square overflow-hidden bg-neutral-50">
@@ -36,16 +39,24 @@ const ProductImage: React.FC<ProductImageProps> = ({
         loading="lazy"
       />
       
-      <ProductBadges
-        isNew={isNew}
-        isFeatured={isFeatured}
-        isBestseller={isBestseller}
-        isSoldOut={isSoldOut}
-        originalPrice={originalPrice}
-        price={price}
-        cloneCategory={cloneCategory}
-        customBadge={customBadge}
-      />
+      {simplified ? (
+        <ProductBadgesSimple
+          isSoldOut={isSoldOut}
+          cloneCategory={cloneCategory}
+          customBadge={customBadge}
+        />
+      ) : (
+        <ProductBadges
+          isNew={isNew}
+          isFeatured={isFeatured}
+          isBestseller={isBestseller}
+          isSoldOut={isSoldOut}
+          originalPrice={originalPrice}
+          price={price}
+          cloneCategory={cloneCategory}
+          customBadge={customBadge}
+        />
+      )}
     </div>
   );
 };

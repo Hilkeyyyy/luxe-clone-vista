@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -22,6 +21,7 @@ interface ProductCardProps {
   is_featured?: boolean;
   isNew?: boolean;
   delay?: number;
+  simplified?: boolean;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -39,8 +39,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
   is_featured,
   isNew,
   delay = 0,
+  simplified = false,
 }) => {
-  const { toggleFavorite, addToCart, buyNow, isFavorite, getButtonState } = useSecureProductActions();
+  const { toggleFavorite, addToCart, buySpecificProduct, isFavorite, getButtonState } = useSecureProductActions();
   const buttonState = getButtonState(id);
 
   const numericPrice = parseFloat(price.replace(/[^\d,]/g, '').replace(',', '.'));
@@ -58,11 +59,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
     addToCart(id, name);
   };
 
-  // CORREÇÃO: Botão comprar agora envia todo o carrinho
   const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    buyNow(); // Sem parâmetros - usa todo o carrinho
+    buySpecificProduct(id, name, brand, numericPrice, image);
   };
 
   return (
@@ -85,6 +85,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           price={numericPrice}
           cloneCategory={clone_category}
           customBadge={custom_badge}
+          simplified={simplified}
         />
 
         <div className="p-4">

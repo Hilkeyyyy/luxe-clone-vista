@@ -44,7 +44,7 @@ const Categories = () => {
                 whileHover={{ y: -4 }}
                 onClick={() => navigate(`/products?category=${category.slug}`)}
               >
-                <div className="aspect-square bg-neutral-100 overflow-hidden">
+                <div className="aspect-square bg-neutral-100 overflow-hidden relative">
                   {category.image_url ? (
                     <img
                       src={category.image_url}

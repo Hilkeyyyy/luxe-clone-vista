@@ -61,7 +61,61 @@ export const useSecureProductActions = () => {
     return settingValue?.number || '';
   };
 
-  // CORREÇÃO: Nova função para enviar todo o carrinho via WhatsApp
+  // NOVA FUNÇÃO: Comprar produto específico via WhatsApp
+  const handleBuySpecificProduct = async (productId: string, productName: string, brand: string, price: number, image: string) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login necessário",
+        description: "Faça login para finalizar compra.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const whatsappNumber = await getWhatsAppSettings();
+      
+      if (!whatsappNumber) {
+        toast({
+          title: "Erro",
+          description: "WhatsApp não configurado. Entre em contato pelo site.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const storeUrl = window.location.origin;
+      const productUrl = `${storeUrl}/products/${productId}`;
+      
+      let message = `🛒 *INTERESSE EM PRODUTO*\n\n`;
+      message += `📋 *PRODUTO SELECIONADO:*\n\n`;
+      message += `🏷️ *${productName}*\n`;
+      message += `   • Marca: ${brand}\n`;
+      message += `   • Preço: R$ ${price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+      message += `   • Link: ${productUrl}\n\n`;
+      message += `📞 Gostaria de mais informações sobre este produto!\n`;
+      message += `Formas de pagamento e entrega disponíveis?`;
+
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+      
+      window.open(whatsappUrl, '_blank');
+      
+      toast({
+        title: "📱 Redirecionando para WhatsApp",
+        description: `Enviando informações do produto ${productName}.`,
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Erro ao abrir WhatsApp:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao abrir WhatsApp. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Função para enviar todo o carrinho (mantida para uso no carrinho)
   const handleBuyNow = async () => {
     if (!isAuthenticated) {
       toast({
@@ -82,7 +136,6 @@ export const useSecureProductActions = () => {
     }
 
     try {
-      // Buscar configurações do WhatsApp
       const whatsappNumber = await getWhatsAppSettings();
       
       if (!whatsappNumber) {
@@ -94,11 +147,9 @@ export const useSecureProductActions = () => {
         return;
       }
 
-      // Montar mensagem completa do carrinho
       const storeUrl = window.location.origin;
       let message = `🛒 *PEDIDO - RELÓGIOS*\n\n📋 *PRODUTOS:*\n\n`;
 
-      // Adicionar cada produto do carrinho
       cartItems.forEach((item, index) => {
         const productUrl = `${storeUrl}/products/${item.productId}`;
         const subtotal = item.price * item.quantity;
@@ -119,7 +170,6 @@ export const useSecureProductActions = () => {
         message += `   🔗 Link: ${productUrl}\n\n`;
       });
 
-      // Adicionar resumo financeiro
       const totalPrice = getTotalPrice;
       message += `💰 *RESUMO FINANCEIRO:*\n`;
       message += `   • Total de itens: ${cartItems.reduce((sum, item) => sum + item.quantity, 0)}\n`;
@@ -127,10 +177,8 @@ export const useSecureProductActions = () => {
       message += `📞 Gostaria de finalizar este pedido!\n`;
       message += `Poderia me informar sobre formas de pagamento e entrega?`;
 
-      // Gerar URL do WhatsApp
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
       
-      // Abrir WhatsApp
       window.open(whatsappUrl, '_blank');
       
       toast({
@@ -151,7 +199,8 @@ export const useSecureProductActions = () => {
   return {
     toggleFavorite: handleToggleFavorite,
     addToCart: handleAddToCart,
-    buyNow: handleBuyNow, // CORREÇÃO: Agora envia todo o carrinho
+    buyNow: handleBuyNow, // Para uso no carrinho (todos os produtos)
+    buySpecificProduct: handleBuySpecificProduct, // Para produto específico
     isFavorite,
     getButtonState,
   };
