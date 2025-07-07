@@ -4,24 +4,31 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Mail, ArrowLeft } from 'lucide-react';
-import { rateLimiter } from '@/utils/security';
+import { useAuth } from '@/hooks/useAuth';
+import { rateLimiter } from '@/utils/secureAuth';
 import { secureLog } from '@/utils/secureLogger';
 import { validateRequestOrigin } from '@/utils/securityHeaders';
-import { secureSignIn } from '@/utils/authStateCleanup';
-import { supabase } from '@/integrations/supabase/client';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn, user, isAdmin } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Redirecionar se já logado como admin
+  React.useEffect(() => {
+    if (user && isAdmin) {
+      navigate('/admin');
+    }
+  }, [user, isAdmin, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('🔐 ADMIN LOGIN: Iniciando login administrativo...');
     
-    // Validar origem da requisição
+    // Validações de segurança
     if (!validateRequestOrigin()) {
       toast({
         title: "Erro de segurança",
@@ -31,19 +38,19 @@ const AdminLogin = () => {
       return;
     }
     
-    // Rate limiting baseado no email
+    // Rate limiting
     const userKey = `admin_login_${email.toLowerCase()}`;
     if (rateLimiter.isRateLimited(userKey)) {
       toast({
         title: "Muitas tentativas",
-        description: "Aguarde um momento antes de tentar novamente.",
+        description: "Aguarde antes de tentar novamente.",
         variant: "destructive",
       });
-      secureLog.warn('Tentativa de login admin bloqueada por rate limiting', { email });
+      secureLog.warn('Admin login rate limited', { email });
       return;
     }
 
-    // Validação básica de entrada
+    // Validação de entrada
     if (!email || !password) {
       toast({
         title: "Campos obrigatórios",
@@ -53,59 +60,31 @@ const AdminLogin = () => {
       return;
     }
 
-    if (email.length > 320 || password.length > 128) {
-      toast({
-        title: "Dados inválidos",
-        description: "Email ou senha muito longos.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
 
     try {
-      console.log('📧 Tentando login admin para:', email);
+      await signIn(email, password);
       
-      // Usar o sistema seguro de login
-      const authResult = await secureSignIn(email, password);
-
-      if (authResult.user) {
-        console.log('👤 Verificando permissões de admin...');
-        
-        // Verificar se é admin pelo perfil no banco
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role, full_name')
-          .eq('id', authResult.user.id)
-          .single();
-
-        if (profileError || !profile || profile.role !== 'admin') {
-          console.error('❌ Acesso admin negado:', { error: profileError, profile });
-          await supabase.auth.signOut();
-          secureLog.warn('Tentativa de acesso admin negada', { email, userId: authResult.user.id });
-          throw new Error('Acesso negado. Apenas administradores podem acessar esta área.');
-        }
-
-        // Reset rate limiting em caso de sucesso
-        rateLimiter.reset(userKey);
-        
-        console.log('✅ Login de administrador aprovado');
-        secureLog.info('Login de administrador realizado com sucesso', { userId: authResult.user.id });
-
-        toast({
-          title: "Login realizado com sucesso",
-          description: "Redirecionando para o painel administrativo...",
-        });
-
-        // Aguardar um pouco e redirecionar
-        setTimeout(() => {
-          navigate('/admin');
-        }, 1000);
+      // Verificar se é admin após login
+      const currentUser = user;
+      if (!currentUser || !isAdmin) {
+        secureLog.warn('Non-admin attempted admin login', { email });
+        throw new Error('Acesso negado. Apenas administradores podem acessar esta área.');
       }
+
+      rateLimiter.reset(userKey);
+      
+      toast({
+        title: "Login realizado com sucesso",
+        description: "Redirecionando para o painel administrativo...",
+      });
+
+      setTimeout(() => {
+        navigate('/admin');
+      }, 1000);
     } catch (error: any) {
       console.error('❌ Falha na autenticação de administrador:', error);
-      secureLog.error('Falha na autenticação de administrador', error, { email });
+      secureLog.error('Admin login failed', error, { email });
       
       const errorMessage = error.message?.includes('Invalid login credentials') 
         ? 'Credenciais inválidas.' 
@@ -207,14 +186,6 @@ const AdminLogin = () => {
               Apenas administradores autorizados podem acessar este painel.
             </p>
           </div>
-
-          {/* Debug info para desenvolvimento */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-4 p-2 bg-red-100 rounded text-xs">
-              <p>Admin Login v2.0 - Secure & Isolated</p>
-              <p>Email de teste: operacional.grupostratton@gmail.com</p>
-            </div>
-          )}
         </motion.div>
       </div>
     </div>

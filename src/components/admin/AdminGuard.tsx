@@ -9,7 +9,7 @@ interface AdminGuardProps {
 }
 
 const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
-  const { user, loading, isAdmin } = useAuthCheck();
+  const { user, loading, isAdminVerified } = useAuthCheck();
 
   if (loading) {
     return (
@@ -26,7 +26,7 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
     return <Navigate to="/admin/login" replace />;
   }
 
-  if (!isAdmin) {
+  if (!isAdminVerified) {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
         <div className="text-center">

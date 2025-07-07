@@ -1,26 +1,13 @@
 
-import { useState, useEffect } from 'react';
-import { useRobustAuth } from './useRobustAuth';
+import { useAuth } from './useAuth';
 
-interface AuthUser {
-  id: string;
-  email: string;
-  isAdmin: boolean;
-  profile?: {
-    full_name: string;
-    role: string;
-  };
-}
-
+// Hook específico para verificações de admin
 export const useAuthCheck = () => {
-  const authState = useRobustAuth();
+  const authState = useAuth();
   
   return {
-    user: authState.user,
-    loading: authState.loading,
-    isAdmin: authState.isAdmin,
-    isAuthenticated: authState.isAuthenticated,
-    sessionValid: authState.sessionValid,
-    error: authState.error
+    ...authState,
+    // Verificação adicional de segurança para admin
+    isAdminVerified: authState.isAuthenticated && authState.user?.isAdmin === true
   };
 };
