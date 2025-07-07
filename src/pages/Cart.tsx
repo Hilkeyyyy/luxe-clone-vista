@@ -13,10 +13,11 @@ import { useAuth } from '@/hooks/useAuth';
 import EmptyState from '@/components/ui/EmptyState';
 
 const Cart = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const { 
     cartItems, 
-    loading, 
+    loading: cartLoading, 
+    initialized,
     updateQuantity, 
     removeItem, 
     clearCart, 
@@ -36,6 +37,17 @@ const Cart = () => {
     window.open(whatsappUrl, '_blank');
   };
 
+  // CORREÇÃO: Aguardar autenticação antes de mostrar conteúdo
+  if (authLoading || !initialized) {
+    return (
+      <div className="min-h-screen bg-white font-outfit">
+        <Header />
+        <LoadingSpinner />
+        <Footer />
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-white font-outfit">
@@ -54,7 +66,7 @@ const Cart = () => {
     );
   }
 
-  if (loading) {
+  if (cartLoading) {
     return (
       <div className="min-h-screen bg-white font-outfit">
         <Header />

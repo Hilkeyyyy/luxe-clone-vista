@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -18,24 +17,29 @@ interface CartItem {
 
 export const useSecureCart = () => {
   const { toast } = useToast();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   const loadCartItems = async () => {
-    console.log('🛒 LOADING CART - Auth:', { isAuthenticated, userId: user?.id?.substring(0, 8) });
-    
+    // CORREÇÃO: Aguardar autenticação completa antes de carregar
+    if (authLoading) {
+      console.log('🔄 Aguardando autenticação completar...');
+      return;
+    }
+
     if (!isAuthenticated || !user) {
-      console.log('🔒 Usuário não autenticado, não carregando carrinho');
+      console.log('🔒 Usuário não autenticado');
       setCartItems([]);
       setLoading(false);
+      setInitialized(true);
       return;
     }
 
     try {
       console.log('🛒 Carregando carrinho do usuário:', user.id.substring(0, 8));
       
-      // Buscar itens do carrinho do usuário APENAS
       const { data: cartData, error: cartError } = await supabase
         .from('cart_items')
         .select('*')
@@ -49,10 +53,10 @@ export const useSecureCart = () => {
       if (!cartData || cartData.length === 0) {
         setCartItems([]);
         setLoading(false);
+        setInitialized(true);
         return;
       }
 
-      // Buscar detalhes dos produtos no carrinho
       const productIds = cartData.map(item => item.product_id);
       const { data: productsData, error: productsError } = await supabase
         .from('products')
@@ -64,7 +68,6 @@ export const useSecureCart = () => {
         throw productsError;
       }
 
-      // Combinar dados do carrinho com detalhes dos produtos
       const cartWithProducts = cartData.map(cartItem => {
         const product = productsData?.find(p => p.id === cartItem.product_id);
         return {
@@ -91,6 +94,7 @@ export const useSecureCart = () => {
       });
     } finally {
       setLoading(false);
+      setInitialized(true);
     }
   };
 
@@ -105,7 +109,6 @@ export const useSecureCart = () => {
     }
 
     try {
-      // Verificar se item já existe no carrinho
       const { data: existingItem, error: searchError } = await supabase
         .from('cart_items')
         .select('*')
@@ -118,7 +121,6 @@ export const useSecureCart = () => {
       if (searchError) throw searchError;
 
       if (existingItem) {
-        // Atualizar quantidade do item existente
         const { error: updateError } = await supabase
           .from('cart_items')
           .update({ quantity: existingItem.quantity + quantity })
@@ -126,7 +128,6 @@ export const useSecureCart = () => {
 
         if (updateError) throw updateError;
       } else {
-        // Adicionar novo item
         const { error: insertError } = await supabase
           .from('cart_items')
           .insert({
@@ -140,7 +141,7 @@ export const useSecureCart = () => {
         if (insertError) throw insertError;
       }
 
-      await loadCartItems(); // Recarregar carrinho
+      await loadCartItems();
       
       toast({
         title: "🛒 Produto adicionado ao carrinho!",
@@ -168,7 +169,7 @@ export const useSecureCart = () => {
         .from('cart_items')
         .update({ quantity: newQuantity })
         .eq('id', cartItemId)
-        .eq('user_id', user?.id); // Garantir que só atualiza itens do próprio usuário
+        .eq('user_id', user?.id);
 
       if (error) throw error;
 
@@ -195,7 +196,7 @@ export const useSecureCart = () => {
         .from('cart_items')
         .delete()
         .eq('id', cartItemId)
-        .eq('user_id', user?.id); // Garantir que só remove itens do próprio usuário
+        .eq('user_id', user?.id);
 
       if (error) throw error;
 
@@ -222,7 +223,7 @@ export const useSecureCart = () => {
       const { error } = await supabase
         .from('cart_items')
         .delete()
-        .eq('user_id', user.id); // Limpar apenas itens do próprio usuário
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
@@ -250,13 +251,17 @@ export const useSecureCart = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
 
+  // CORREÇÃO: Aguardar autenticação antes de carregar carrinho
   useEffect(() => {
-    loadCartItems();
-  }, [isAuthenticated, user?.id]);
+    if (!authLoading) {
+      loadCartItems();
+    }
+  }, [isAuthenticated, user?.id, authLoading]);
 
   return {
     cartItems,
-    loading,
+    loading: loading || authLoading,
+    initialized,
     addToCart,
     updateQuantity,
     removeItem,

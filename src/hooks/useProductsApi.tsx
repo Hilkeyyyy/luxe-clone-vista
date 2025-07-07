@@ -9,11 +9,12 @@ export const useProductsApi = () => {
 
   const fetchProducts = async () => {
     return secureApiClient.secureRequest(async () => {
+      // CORREÇÃO: Usar LEFT JOIN correto em vez da sintaxe incorreta
       const { data, error } = await supabase
         .from('products')
         .select(`
           *,
-          brand_categories!brand_category_id (
+          brand_categories (
             id,
             name,
             slug

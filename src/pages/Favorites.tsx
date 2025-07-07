@@ -12,8 +12,19 @@ import { ShoppingBag } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
 
 const Favorites = () => {
-  const { isAuthenticated } = useAuth();
-  const { favoriteProducts, loading } = useSecureFavorites();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { favoriteProducts, loading: favoritesLoading, initialized } = useSecureFavorites();
+
+  // CORREÇÃO: Aguardar autenticação antes de mostrar conteúdo
+  if (authLoading || !initialized) {
+    return (
+      <div className="min-h-screen bg-white font-outfit">
+        <Header />
+        <LoadingSpinner />
+        <Footer />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -33,7 +44,7 @@ const Favorites = () => {
     );
   }
 
-  if (loading) {
+  if (favoritesLoading) {
     return (
       <div className="min-h-screen bg-white font-outfit">
         <Header />
