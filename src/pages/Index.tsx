@@ -12,12 +12,22 @@ const Index = () => {
   const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
 
   useEffect(() => {
+    console.log('🏠 INDEX: Componente montado');
+    
+    // Log dos produtos recebidos
+    console.log('📦 INDEX: Produtos recebidos:', {
+      newProducts: newProducts.length,
+      featuredProducts: featuredProducts.length,
+      offerProducts: offerProducts.length,
+      loading
+    });
+
     // Scroll automático para hero section ao carregar página
     const heroSection = document.querySelector('section');
     if (heroSection) {
       heroSection.scrollIntoView({ behavior: 'smooth' });
     }
-  }, []);
+  }, [newProducts, featuredProducts, offerProducts, loading]);
 
   return (
     <div className="min-h-screen bg-white font-outfit">
