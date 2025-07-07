@@ -23,6 +23,8 @@ export const useSecureCart = () => {
   const [loading, setLoading] = useState(true);
 
   const loadCartItems = async () => {
+    console.log('🛒 LOADING CART - Auth:', { isAuthenticated, userId: user?.id?.substring(0, 8) });
+    
     if (!isAuthenticated || !user) {
       console.log('🔒 Usuário não autenticado, não carregando carrinho');
       setCartItems([]);

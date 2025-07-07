@@ -17,6 +17,7 @@ import AdminLanding from '@/pages/AdminLanding';
 import Categories from '@/pages/Categories';
 import Favorites from '@/pages/Favorites';
 import NotFound from '@/pages/NotFound';
+import BrandCategory from '@/pages/BrandCategory';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,7 +38,9 @@ function App() {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/products" element={<Products />} />
+                <Route path="/produtos" element={<Products />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
+                <Route path="/brand/:slug" element={<BrandCategory />} />
                 <Route path="/categories" element={<Categories />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/favorites" element={<Favorites />} />

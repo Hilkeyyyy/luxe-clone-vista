@@ -27,7 +27,8 @@ const BrandCategoryCarousel: React.FC = () => {
   const navigate = useNavigate();
 
   const handleCategoryClick = (category: BrandCategory) => {
-    navigate(`/produtos?marca=${encodeURIComponent(category.name)}`);
+    console.log('🔗 Navegando para categoria:', category.slug);
+    navigate(`/brand/${category.slug}`);
   };
 
   if (loading) {

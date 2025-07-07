@@ -28,6 +28,8 @@ export const useSecureFavorites = () => {
   const [loading, setLoading] = useState(true);
 
   const loadFavorites = async () => {
+    console.log('❤️ LOADING FAVORITES - Auth:', { isAuthenticated, userId: user?.id?.substring(0, 8) });
+    
     if (!isAuthenticated || !user) {
       console.log('🔒 Usuário não autenticado, não carregando favoritos');
       setFavoriteProducts([]);
