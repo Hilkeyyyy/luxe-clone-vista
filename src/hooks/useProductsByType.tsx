@@ -19,6 +19,7 @@ export const useProductsByType = () => {
     try {
       setLoading(true);
       setDebugInfo('🔍 Carregando produtos...');
+      console.log('🚀 INICIANDO BUSCA DE PRODUTOS');
 
       // Query otimizada com campos específicos
       const { data: allProducts, error } = await supabase
