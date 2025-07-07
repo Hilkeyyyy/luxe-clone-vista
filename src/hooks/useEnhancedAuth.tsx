@@ -1,14 +1,14 @@
 
-import { useRobustAuth } from './useRobustAuth';
+import { useAuth } from './useAuth';
 import { validatePasswordStrength } from '@/utils/securityEnhancements';
-import { secureSignIn, secureSignOut } from '@/utils/authStateCleanup';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { secureLog } from '@/utils/secureLogger';
 import { validateUserInput } from '@/utils/enhancedSecurityValidation';
+import { cleanAuthState } from '@/utils/secureAuth';
 
 export const useEnhancedAuth = () => {
-  const authState = useRobustAuth();
+  const authState = useAuth();
   const { toast } = useToast();
 
   const enhancedSignIn = async (email: string, password: string) => {
@@ -34,7 +34,16 @@ export const useEnhancedAuth = () => {
       }
 
       console.log('📧 Fazendo login seguro para:', email);
-      const data = await secureSignIn(email, password);
+      
+      // Limpar estado anterior
+      cleanAuthState();
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password: password.trim()
+      });
+
+      if (error) throw error;
 
       toast({
         title: "Login realizado com sucesso",
@@ -141,7 +150,9 @@ export const useEnhancedAuth = () => {
     console.log('🚪 ENHANCED SIGN OUT: Iniciando logout aprimorado...');
     
     try {
-      await secureSignOut();
+      cleanAuthState();
+      await supabase.auth.signOut();
+      
       toast({
         title: "Logout realizado",
         description: "Até logo!",

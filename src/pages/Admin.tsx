@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import AdminGuard from '@/components/admin/AdminGuard';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useRealTimeStats } from '@/hooks/useRealTimeStats';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminStats from '@/components/admin/AdminStats';
@@ -10,8 +10,13 @@ import AdminNavigation from '@/components/admin/AdminNavigation';
 import ProductCategories from '@/components/admin/ProductCategories';
 
 const Admin = () => {
-  const { user, loading, handleLogout } = useAdminAuth();
+  const { user, loading, signOut } = useAuth();
   const { stats } = useRealTimeStats();
+
+  const handleLogout = async () => {
+    await signOut();
+    window.location.href = '/';
+  };
 
   if (loading) {
     return (
