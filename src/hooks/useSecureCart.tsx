@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,6 +35,14 @@ export const useSecureCart = () => {
     }
 
     try {
+      // Timeout para evitar travamento
+      const timeoutId = setTimeout(() => {
+        console.warn('⏰ Timeout ao carregar carrinho');
+        setCartItems([]);
+        setLoading(false);
+        setInitialized(true);
+      }, 8000);
+
       const { data: cartData, error } = await supabase
         .from('cart_items')
         .select(`
@@ -54,12 +61,16 @@ export const useSecureCart = () => {
         `)
         .eq('user_id', user.id);
 
+      clearTimeout(timeoutId);
+
       if (error) {
         throw error;
       }
 
       if (!cartData || cartData.length === 0) {
         setCartItems([]);
+        setLoading(false);
+        setInitialized(true);
         return;
       }
 
@@ -88,7 +99,7 @@ export const useSecureCart = () => {
     }
   }, [user, isAuthenticated, authLoading]);
 
-  const addToCart = async (productId: string, productName: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
+  const addToCart = useCallback(async (productId: string, productName: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
     if (!isAuthenticated || !user) {
       toast({
         title: "Login necessário",
@@ -146,7 +157,7 @@ export const useSecureCart = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [user, isAuthenticated, toast, loadCartItems]);
 
   const updateQuantity = async (cartItemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -233,19 +244,19 @@ export const useSecureCart = () => {
     }
   };
 
-  const getTotalPrice = useCallback(() => {
+  const getTotalPrice = useMemo(() => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   }, [cartItems]);
 
-  const getTotalItems = useCallback(() => {
+  const getTotalItems = useMemo(() => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   }, [cartItems]);
 
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && !initialized) {
       loadCartItems();
     }
-  }, [loadCartItems, authLoading]);
+  }, [loadCartItems, authLoading, initialized]);
 
   return {
     cartItems,

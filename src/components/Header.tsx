@@ -10,15 +10,16 @@ import NavigationMenu from './NavigationMenu';
 
 const Header = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isAdmin } = useAuth();
+  const { user, isAuthenticated, isAdmin, loading: authLoading } = useAuth();
   const { favoriteIds, initialized: favoritesInitialized } = useSecureFavorites();
   const { cartItems, initialized: cartInitialized } = useSecureCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNavigationMenu, setShowNavigationMenu] = useState(false);
 
-  // CORREÇÃO: Contadores seguros com fallbacks
-  const favoritesCount = favoritesInitialized ? favoriteIds.length : 0;
-  const cartItemsCount = cartInitialized ? cartItems.reduce((total, item) => total + item.quantity, 0) : 0;
+  // Contadores seguros com fallbacks e proteção contra loading
+  const favoritesCount = !authLoading && favoritesInitialized ? favoriteIds.length : 0;
+  const cartItemsCount = !authLoading && cartInitialized ? 
+    cartItems.reduce((total, item) => total + item.quantity, 0) : 0;
 
   useEffect(() => {
     // Limpeza única do localStorage obsoleto
@@ -41,6 +42,28 @@ const Header = () => {
       setSearchQuery('');
     }
   };
+
+  // Loading state simples
+  if (authLoading) {
+    return (
+      <header className="bg-white shadow-sm border-b border-neutral-100 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
+            <div className="flex items-center">
+              <h1 className="text-2xl sm:text-3xl font-outfit font-bold text-neutral-900">
+                VELAR WATCHES
+              </h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="w-8 h-8 bg-neutral-200 rounded animate-pulse"></div>
+              <div className="w-8 h-8 bg-neutral-200 rounded animate-pulse"></div>
+              <div className="w-8 h-8 bg-neutral-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <motion.header 
@@ -126,7 +149,7 @@ const Header = () => {
               )}
             </motion.button>
 
-            {/* Admin Settings - Usando verificação de database */}
+            {/* Admin Settings - Verificação via database */}
             {isAdmin && (
               <motion.button 
                 onClick={() => navigate('/admin')}

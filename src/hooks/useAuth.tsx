@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { secureLog } from '@/utils/secureLogger';
@@ -29,15 +29,37 @@ export const useAuth = () => {
     sessionValid: false
   });
   const { toast } = useToast();
+  const initialized = useRef(false);
+  const processing = useRef(false);
 
   const setUserData = useCallback(async (authUser: any) => {
+    if (processing.current) return;
+    processing.current = true;
+
     try {
-      // Buscar perfil do usuário
+      // Buscar perfil do usuário com timeout
+      const timeoutId = setTimeout(() => {
+        console.warn('⏰ Timeout ao buscar perfil do usuário');
+        setAuthState({
+          user: {
+            id: authUser.id,
+            email: authUser.email,
+            isAdmin: false
+          },
+          loading: false,
+          isAuthenticated: true,
+          sessionValid: true
+        });
+        processing.current = false;
+      }, 5000);
+
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('role, full_name, email')
         .eq('id', authUser.id)
         .single();
+
+      clearTimeout(timeoutId);
 
       if (error) {
         console.error('❌ Erro ao buscar perfil:', error);
@@ -52,6 +74,7 @@ export const useAuth = () => {
           isAuthenticated: true,
           sessionValid: true
         });
+        processing.current = false;
         return;
       }
 
@@ -73,6 +96,8 @@ export const useAuth = () => {
     } catch (error) {
       console.error('❌ Erro ao configurar dados do usuário:', error);
       setAuthState(prev => ({ ...prev, loading: false, sessionValid: false }));
+    } finally {
+      processing.current = false;
     }
   }, []);
 
@@ -84,9 +109,12 @@ export const useAuth = () => {
       isAuthenticated: false,
       sessionValid: true
     });
+    processing.current = false;
   }, []);
 
   const checkSession = useCallback(async () => {
+    if (processing.current || initialized.current) return;
+    
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
       
@@ -108,29 +136,35 @@ export const useAuth = () => {
   }, [setUserData]);
 
   useEffect(() => {
-    console.log('🔐 AUTH: Inicializando sistema de autenticação...');
+    if (initialized.current) return;
     
-    // Configurar listener OTIMIZADO
+    console.log('🔐 AUTH: Inicializando sistema de autenticação...');
+    initialized.current = true;
+    
+    // Configurar listener uma única vez
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log(`🔄 Auth Event: ${event}`);
         
         if (event === 'SIGNED_IN' && session?.user) {
-          // Defer para evitar deadlock
+          // Usar setTimeout para evitar deadlock
           setTimeout(() => {
             setUserData(session.user);
-          }, 0);
+          }, 100);
         } else if (event === 'SIGNED_OUT') {
           handleSignOut();
         }
       }
     );
 
-    // Verificar sessão existente
+    // Verificar sessão existente apenas uma vez
     checkSession();
 
-    return () => subscription.unsubscribe();
-  }, [setUserData, handleSignOut, checkSession]);
+    return () => {
+      subscription.unsubscribe();
+      initialized.current = false;
+    };
+  }, []); // Dependências vazias para evitar loop
 
   const signIn = async (email: string, password: string) => {
     try {

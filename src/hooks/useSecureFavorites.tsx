@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -42,10 +42,21 @@ export const useSecureFavorites = () => {
     }
 
     try {
+      // Timeout para evitar travamento
+      const timeoutId = setTimeout(() => {
+        console.warn('⏰ Timeout ao carregar favoritos');
+        setFavoriteProducts([]);
+        setFavoriteIds([]);
+        setLoading(false);
+        setInitialized(true);
+      }, 8000);
+
       const { data: favoritesData, error: favoritesError } = await supabase
         .from('favorites')
         .select('product_id')
         .eq('user_id', user.id);
+
+      clearTimeout(timeoutId);
 
       if (favoritesError) {
         throw favoritesError;
@@ -81,7 +92,7 @@ export const useSecureFavorites = () => {
     }
   }, [user, isAuthenticated, authLoading]);
 
-  const toggleFavorite = async (productId: string, productName: string) => {
+  const toggleFavorite = useCallback(async (productId: string, productName: string) => {
     if (!isAuthenticated || !user) {
       toast({
         title: "Login necessário",
@@ -144,15 +155,18 @@ export const useSecureFavorites = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [favoriteIds, user, isAuthenticated, toast]);
 
-  const isFavorite = useCallback((productId: string) => favoriteIds.includes(productId), [favoriteIds]);
+  const isFavorite = useMemo(() => 
+    (productId: string) => favoriteIds.includes(productId), 
+    [favoriteIds]
+  );
 
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && !initialized) {
       loadFavorites();
     }
-  }, [loadFavorites, authLoading]);
+  }, [loadFavorites, authLoading, initialized]);
 
   return {
     favoriteProducts,
