@@ -30,7 +30,7 @@ const Cart = () => {
       `• ${item.name} (${item.quantity}x) - R$ ${(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
     ).join('\n');
     
-    const total = getTotalPrice();
+    const total = getTotalPrice;
     const whatsappMessage = `🛒 *Pedido do Carrinho*\n\n${message}\n\n💰 *Total: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}*\n\nOlá! Gostaria de finalizar este pedido. Poderia me informar sobre formas de pagamento e entrega?`;
     
     const whatsappUrl = `https://wa.me/5519999413755?text=${encodeURIComponent(whatsappMessage)}`;
@@ -81,7 +81,7 @@ const Cart = () => {
       <Header />
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <CartHeader itemCount={getTotalItems()} />
+        <CartHeader itemCount={getTotalItems} />
 
         {cartItems.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -98,8 +98,8 @@ const Cart = () => {
             </div>
 
             <CartSummary
-              totalItems={getTotalItems()}
-              totalPrice={getTotalPrice()}
+              totalItems={getTotalItems}
+              totalPrice={getTotalPrice}
               onCheckout={handleWhatsAppOrder}
               onClear={clearCart}
             />
