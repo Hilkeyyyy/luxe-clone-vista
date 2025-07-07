@@ -150,26 +150,13 @@ export const useProductsByType = () => {
         return;
       }
 
-      // FILTROS CORRIGIDOS - Tratar valores nullable/undefined
-      const novos = allProducts.filter(p => {
-        const isNew = p.is_new === true; // Explicitamente true
-        console.log(`Produto ${p.name}: is_new=${p.is_new} (${typeof p.is_new}) -> ${isNew}`);
-        return isNew;
-      });
-
-      const destaques = allProducts.filter(p => {
-        const isFeatured = p.is_featured === true; // Explicitamente true
-        console.log(`Produto ${p.name}: is_featured=${p.is_featured} (${typeof p.is_featured}) -> ${isFeatured}`);
-        return isFeatured;
-      });
-
+      // FILTROS CORRIGIDOS - Tratar valores do Supabase
+      const novos = allProducts.filter(p => p.is_new === true);
+      const destaques = allProducts.filter(p => p.is_featured === true);
       const ofertas = allProducts.filter(p => {
-        // Converter para números e verificar se original > atual
         const price = Number(p.price) || 0;
         const originalPrice = Number(p.original_price) || 0;
-        const hasOffer = originalPrice > 0 && originalPrice > price;
-        console.log(`Produto ${p.name}: price=${p.price} (${typeof p.price}), original=${p.original_price} (${typeof p.original_price}) -> ${hasOffer}`);
-        return hasOffer;
+        return originalPrice > 0 && originalPrice > price;
       });
 
       console.log('✨ FILTROS APLICADOS:', {
