@@ -40,18 +40,11 @@ export const useAuth = () => {
     processing.current = true;
 
     try {
-      // Timeout para evitar travamentos
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('role, full_name, email')
         .eq('id', authUser.id)
-        .maybeSingle()
-        .abortSignal(controller.signal);
-
-      clearTimeout(timeoutId);
+        .maybeSingle();
 
       if (!mounted.current) return;
 
@@ -71,7 +64,7 @@ export const useAuth = () => {
 
       console.log(`✅ Auth: ${authUser.email} (${isAdmin ? 'ADMIN' : 'USER'})`);
     } catch (error: any) {
-      if (error.name !== 'AbortError' && mounted.current) {
+      if (mounted.current) {
         console.warn('⚠️ Auth: Erro ao buscar perfil, usando dados básicos');
         setAuthState({
           user: {
