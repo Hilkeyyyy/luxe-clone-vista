@@ -27,12 +27,17 @@ export const useProductsByType = () => {
           id,
           name,
           brand,
+          category,
           price,
           original_price,
           images,
           is_new,
           is_featured,
-          clone_category
+          clone_category,
+          colors,
+          sizes,
+          stock_status,
+          created_at
         `)
         .limit(30);
 
@@ -48,31 +53,48 @@ export const useProductsByType = () => {
         setNewProducts([]);
         setFeaturedProducts([]);
         setOfferProducts([]);
-        return;
+      } else {
+        // Mapear dados para o tipo Product completo
+        const mappedProducts: Product[] = allProducts.map(p => ({
+          id: p.id,
+          name: p.name,
+          brand: p.brand,
+          category: p.category,
+          clone_category: p.clone_category || 'Clone',
+          price: parseFloat(String(p.price)) || 0,
+          original_price: p.original_price ? parseFloat(String(p.original_price)) : undefined,
+          images: p.images || [],
+          colors: p.colors || [],
+          sizes: p.sizes || [],
+          is_new: Boolean(p.is_new),
+          is_featured: Boolean(p.is_featured),
+          stock_status: p.stock_status || 'in_stock',
+          created_at: p.created_at,
+          // Propriedades opcionais com valores padrão seguros
+          is_bestseller: false,
+          is_sold_out: false,
+          is_coming_soon: false,
+          in_stock: true
+        }));
+
+        // Aplicar filtros
+        const novos = mappedProducts.filter(p => p.is_new);
+        const destaques = mappedProducts.filter(p => p.is_featured);
+        const ofertas = mappedProducts.filter(p => {
+          return p.original_price && p.original_price > 0 && p.original_price > p.price;
+        });
+
+        console.log('📊 Produtos filtrados:', {
+          total: mappedProducts.length,
+          novos: novos.length,
+          destaques: destaques.length,
+          ofertas: ofertas.length
+        });
+
+        setNewProducts(novos);
+        setFeaturedProducts(destaques);
+        setOfferProducts(ofertas);
       }
-
-      // Filtros SIMPLES - garantindo tipos corretos
-      const novos = allProducts.filter(p => Boolean(p.is_new));
-      const destaques = allProducts.filter(p => Boolean(p.is_featured));
-      
-      // Lógica de ofertas corrigida - conversão de tipos
-      const ofertas = allProducts.filter(p => {
-        const price = parseFloat(String(p.price)) || 0;
-        const originalPrice = parseFloat(String(p.original_price)) || 0;
-        return originalPrice > 0 && originalPrice > price;
-      });
-
-      console.log('📊 Produtos filtrados:', {
-        total: allProducts.length,
-        novos: novos.length,
-        destaques: destaques.length,
-        ofertas: ofertas.length
-      });
-
-      // Setar produtos diretamente - sem slice desnecessário
-      setNewProducts(novos);
-      setFeaturedProducts(destaques);
-      setOfferProducts(ofertas);
 
     } catch (error: any) {
       console.error('💥 Erro crítico ao buscar produtos:', error);
