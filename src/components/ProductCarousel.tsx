@@ -3,6 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from './ProductCard';
+import CarouselSkeleton from '@/components/ui/CarouselSkeleton';
 
 interface Product {
   id: string;
@@ -35,21 +36,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products, load
   };
 
   if (loading) {
-    return (
-      <section className="py-12 sm:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl sm:text-4xl font-outfit font-bold text-neutral-900 mb-4">
-              {title}
-            </h2>
-          </div>
-          
-          <div className="flex justify-center">
-            <div className="w-8 h-8 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin"></div>
-          </div>
-        </div>
-      </section>
-    );
+    return <CarouselSkeleton title={title} />;
   }
 
   if (products.length === 0) {

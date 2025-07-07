@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import ProductCard from './ProductCard';
+import ProductSkeleton from '@/components/ui/ProductSkeleton';
 
 interface Product {
   id: string;
@@ -22,22 +23,18 @@ interface FeaturedProductsGridProps {
 const FeaturedProductsGrid: React.FC<FeaturedProductsGridProps> = ({ products, loading }) => {
   if (loading) {
     return (
-      <section className="py-12 sm:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-outfit font-bold text-neutral-900 mb-4">
-              DESTAQUES
-            </h2>
-            <p className="text-neutral-600 text-lg max-w-2xl mx-auto">
-              Os relógios mais procurados da nossa coleção
-            </p>
-          </div>
-          
-          <div className="flex justify-center">
-            <div className="w-8 h-8 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin"></div>
-          </div>
+      <div className="px-4 sm:px-6 lg:px-8 mb-16">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-bold text-neutral-900 font-outfit">
+            PRODUTOS EM DESTAQUE
+          </h2>
         </div>
-      </section>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <ProductSkeleton key={index} />
+          ))}
+        </div>
+      </div>
     );
   }
 

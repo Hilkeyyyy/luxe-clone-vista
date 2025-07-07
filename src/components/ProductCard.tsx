@@ -40,7 +40,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   isNew,
   delay = 0,
 }) => {
-  const { toggleFavorite, addToCart, buyNow, isFavorite } = useSecureProductActions();
+  const { toggleFavorite, addToCart, buyNow, isFavorite, getButtonState } = useSecureProductActions();
+  const buttonState = getButtonState(id);
 
   const numericPrice = parseFloat(price.replace(/[^\d,]/g, '').replace(',', '.'));
   const numericOriginalPrice = originalPrice ? parseFloat(originalPrice.replace(/[^\d,]/g, '').replace(',', '.')) : undefined;
@@ -128,7 +129,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
           onBuyNow={handleBuyNow}
           customBadge={custom_badge}
           showBuyButton={false}
-          showCartText={true}
+          showCartText={false}
+          isCartLoading={buttonState.isLoading}
+          isCartAdded={buttonState.isSuccess}
+          productId={id}
         />
       </div>
     </motion.div>

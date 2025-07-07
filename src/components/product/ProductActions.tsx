@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Heart, ShoppingCart, CreditCard } from 'lucide-react';
+import { Heart, ShoppingCart, CreditCard, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ProductActionsProps {
@@ -11,7 +11,10 @@ interface ProductActionsProps {
   onBuyNow: (e: React.MouseEvent) => void;
   customBadge?: string;
   showBuyButton?: boolean;
-  showCartText?: boolean; // NOVA PROP: controlar se mostra texto do carrinho
+  showCartText?: boolean;
+  isCartLoading?: boolean;
+  isCartAdded?: boolean;
+  productId?: string;
 }
 
 const ProductActions: React.FC<ProductActionsProps> = ({
@@ -22,7 +25,10 @@ const ProductActions: React.FC<ProductActionsProps> = ({
   onBuyNow,
   customBadge,
   showBuyButton = false,
-  showCartText = true, // CORREÇÃO: Por padrão mostra texto, mas pode ser desabilitado
+  showCartText = true,
+  isCartLoading = false,
+  isCartAdded = false,
+  productId = '',
 }) => {
   return (
     <div className="flex flex-col space-y-2">
@@ -30,12 +36,12 @@ const ProductActions: React.FC<ProductActionsProps> = ({
       {showBuyButton && !isSoldOut && (
         <motion.button
           onClick={onBuyNow}
-          className="flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-sm font-medium text-sm"
+          className="flex items-center justify-center space-x-2 bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors shadow-sm font-medium text-sm"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
           <CreditCard size={16} />
-          <span>COMPRAR</span>
+          <span>COMPRAR VIA WHATSAPP</span>
         </motion.button>
       )}
 
@@ -45,13 +51,26 @@ const ProductActions: React.FC<ProductActionsProps> = ({
         {!isSoldOut && (
           <motion.button 
             onClick={onAddToCart}
-            className="flex-1 flex items-center justify-center space-x-1 bg-neutral-900 text-white px-3 py-2 rounded-lg hover:bg-neutral-800 transition-colors shadow-sm text-xs"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            disabled={isCartLoading}
+            className={`flex-1 flex items-center justify-center space-x-1 px-3 py-2 rounded-lg transition-colors shadow-sm text-xs ${
+              isCartAdded 
+                ? 'bg-green-600 text-white' 
+                : 'bg-neutral-900 text-white hover:bg-neutral-800'
+            } ${isCartLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            whileHover={{ scale: isCartLoading ? 1 : 1.02 }}
+            whileTap={{ scale: isCartLoading ? 1 : 0.98 }}
           >
-            <ShoppingCart size={14} />
-            {/* CORREÇÃO: Mostrar texto apenas quando showCartText for true */}
-            {showCartText && <span>Carrinho</span>}
+            {isCartAdded ? (
+              <>
+                <Check size={14} />
+                {showCartText && <span>Adicionado</span>}
+              </>
+            ) : (
+              <>
+                <ShoppingCart size={14} />
+                {showCartText && <span>{isCartLoading ? 'Adicionando...' : 'Carrinho'}</span>}
+              </>
+            )}
           </motion.button>
         )}
 
