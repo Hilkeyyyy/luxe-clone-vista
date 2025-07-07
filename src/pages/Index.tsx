@@ -12,61 +12,60 @@ const Index = () => {
   const { newProducts, featuredProducts, offerProducts, loading, debugInfo } = useProductsByType();
 
   useEffect(() => {
-    console.log('🏠 INDEX MOBILE: Página carregada');
-    console.log('🏠 Produtos recebidos:', {
+    console.log('🏠 INDEX: Estado atualizado', {
       novos: newProducts.length,
       destaques: featuredProducts.length,
       ofertas: offerProducts.length,
-      loading,
+      carregando: loading,
       debug: debugInfo
     });
   }, [newProducts, featuredProducts, offerProducts, loading, debugInfo]);
 
-  // DEBUG VISUAL MOBILE - Mostrar info na tela
+  // Mostrar debug visual apenas se houver problema OU durante carregamento
   const showDebug = loading || (newProducts.length === 0 && featuredProducts.length === 0 && offerProducts.length === 0);
 
   return (
     <div className="min-h-screen bg-white font-outfit">
       <Header />
       
-      {/* DEBUG INFO MOBILE - Só mostra se houver problema */}
+      {/* DEBUG INFO MOBILE - Mais detalhado */}
       {showDebug && (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 m-4 rounded">
-          <strong>DEBUG MOBILE:</strong> {debugInfo}
-          <br />
-          <small>
-            Carregando: {loading ? 'Sim' : 'Não'} | 
-            Novos: {newProducts.length} | 
-            Destaques: {featuredProducts.length} | 
-            Ofertas: {offerProducts.length}
-          </small>
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 px-4 py-3 m-4 rounded">
+          <div className="font-bold text-sm mb-2">🔧 DEBUG MOBILE:</div>
+          <div className="text-sm mb-2">{debugInfo}</div>
+          <div className="text-xs grid grid-cols-2 gap-2">
+            <div>⏳ Carregando: <strong>{loading ? 'Sim' : 'Não'}</strong></div>
+            <div>🆕 Novos: <strong>{newProducts.length}</strong></div>
+            <div>⭐ Destaques: <strong>{featuredProducts.length}</strong></div>
+            <div>🏷️ Ofertas: <strong>{offerProducts.length}</strong></div>
+          </div>
+          {!loading && newProducts.length === 0 && featuredProducts.length === 0 && offerProducts.length === 0 && (
+            <div className="mt-2 text-xs text-red-600">
+              ❌ Nenhum produto carregado - verificar logs do console
+            </div>
+          )}
         </div>
       )}
       
-      {/* Hero Section com carrossel vertical das marcas */}
       <HeroSection />
       
-      {/* Carrossel NOVIDADES (horizontal) */}
       <ProductCarousel 
         title="NOVIDADES" 
         products={newProducts} 
         loading={loading}
       />
       
-      {/* Carrossel OFERTAS (horizontal) */}
       <ProductCarousel 
         title="OFERTAS" 
         products={offerProducts} 
         loading={loading}
       />
       
-      {/* Seção DESTAQUES (grid vertical, usuário rola a tela) */}
       <FeaturedProductsGrid 
         products={featuredProducts} 
         loading={loading}
       />
       
-      {/* Carrossel das marcas (horizontal) */}
       <BrandCategoryCarousel />
       
       <Footer />
