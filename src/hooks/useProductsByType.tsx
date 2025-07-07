@@ -22,43 +22,49 @@ export const useProductsByType = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [offerProducts, setOfferProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [debugInfo, setDebugInfo] = useState<string>('Iniciando...');
 
   useEffect(() => {
-    console.log('🚀 =================================');
-    console.log('🚀 useProductsByType: INICIANDO DEBUG');
-    console.log('🚀 =================================');
     fetchProductsByType();
   }, []);
 
   const fetchProductsByType = async () => {
     try {
-      console.log('🔥 STEP 1: Iniciando fetchProductsByType...');
       setLoading(true);
+      setDebugInfo('🔍 Conectando com banco...');
 
-      // TESTE 1: Verificar conexão com Supabase
-      console.log('🔥 STEP 2: Testando conexão Supabase...');
-      console.log('🔥 Supabase client existe?', !!supabase);
+      // TESTE 1: Verificar se Supabase funciona
+      console.log('DEBUG MOBILE: Testando Supabase...');
       
-      // TESTE 2: Buscar TODOS os produtos primeiro
-      console.log('🔥 STEP 3: Buscando TODOS os produtos...');
-      const { data: allProducts, error: allError } = await supabase
+      if (!supabase) {
+        setDebugInfo('❌ Supabase não conectado');
+        console.error('ERRO: Supabase client não existe');
+        return;
+      }
+
+      setDebugInfo('📡 Buscando produtos...');
+
+      // TESTE 2: Buscar TODOS os produtos
+      const { data: allProducts, error } = await supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
 
-      console.log('🔥 TODOS OS PRODUTOS:', {
-        error: allError,
-        count: allProducts?.length || 0,
-        products: allProducts
+      console.log('DEBUG MOBILE - Resposta do banco:', {
+        produtos: allProducts?.length || 0,
+        erro: error?.message,
+        dados: allProducts?.slice(0, 2) // Primeiros 2 produtos
       });
 
-      if (allError) {
-        console.error('❌ ERRO ao buscar todos produtos:', allError);
-        throw allError;
+      if (error) {
+        setDebugInfo(`❌ Erro do banco: ${error.message}`);
+        console.error('ERRO SUPABASE:', error);
+        throw error;
       }
 
       if (!allProducts || allProducts.length === 0) {
-        console.error('❌ NENHUM PRODUTO ENCONTRADO NO BANCO!');
+        setDebugInfo('⚠️ Nenhum produto no banco');
+        console.log('AVISO: Banco vazio');
         setNewProducts([]);
         setFeaturedProducts([]);
         setOfferProducts([]);
@@ -66,75 +72,58 @@ export const useProductsByType = () => {
         return;
       }
 
-      console.log('✅ PRODUTOS ENCONTRADOS:', allProducts.length);
+      setDebugInfo(`✅ ${allProducts.length} produtos encontrados`);
 
-      // TESTE 3: Verificar produtos NOVOS
-      console.log('🔥 STEP 4: Filtrando produtos NOVOS...');
-      const newProductsFiltered = allProducts.filter(p => p.is_new === true);
-      console.log('🆕 PRODUTOS NOVOS filtrados:', {
-        count: newProductsFiltered.length,
-        products: newProductsFiltered.map(p => ({ id: p.id, name: p.name, is_new: p.is_new }))
-      });
-      setNewProducts(newProductsFiltered.slice(0, 8));
+      // FILTRAR PRODUTOS NOVOS
+      const novos = allProducts.filter(p => p.is_new === true);
+      console.log('PRODUTOS NOVOS:', novos.length, novos.map(p => p.name));
+      setNewProducts(novos.slice(0, 8));
 
-      // TESTE 4: Verificar produtos EM DESTAQUE
-      console.log('🔥 STEP 5: Filtrando produtos EM DESTAQUE...');
-      const featuredProductsFiltered = allProducts.filter(p => p.is_featured === true);
-      console.log('⭐ PRODUTOS EM DESTAQUE filtrados:', {
-        count: featuredProductsFiltered.length,
-        products: featuredProductsFiltered.map(p => ({ id: p.id, name: p.name, is_featured: p.is_featured }))
-      });
-      setFeaturedProducts(featuredProductsFiltered);
+      // FILTRAR PRODUTOS EM DESTAQUE  
+      const destaques = allProducts.filter(p => p.is_featured === true);
+      console.log('PRODUTOS DESTAQUE:', destaques.length, destaques.map(p => p.name));
+      setFeaturedProducts(destaques);
 
-      // TESTE 5: Verificar produtos EM OFERTA
-      console.log('🔥 STEP 6: Filtrando produtos EM OFERTA...');
-      const offerProductsFiltered = allProducts.filter(p => 
+      // FILTRAR PRODUTOS EM OFERTA
+      const ofertas = allProducts.filter(p => 
         p.original_price && p.original_price > p.price
       );
-      console.log('💰 PRODUTOS EM OFERTA filtrados:', {
-        count: offerProductsFiltered.length,
-        products: offerProductsFiltered.map(p => ({ 
-          id: p.id, 
-          name: p.name, 
-          price: p.price, 
-          original_price: p.original_price 
-        }))
+      console.log('PRODUTOS OFERTA:', ofertas.length, ofertas.map(p => p.name));
+      setOfferProducts(ofertas.slice(0, 8));
+
+      setDebugInfo(`🎉 Carregado: ${novos.length} novos, ${destaques.length} destaques, ${ofertas.length} ofertas`);
+
+      // LOG FINAL
+      console.log('🎯 RESULTADO FINAL MOBILE:', {
+        novos: novos.length,
+        destaques: destaques.length, 
+        ofertas: ofertas.length,
+        primeiroProduto: allProducts[0]?.name,
+        loading: false
       });
-      setOfferProducts(offerProductsFiltered.slice(0, 8));
 
-      console.log('🎉 =================================');
-      console.log('🎉 RESULTADO FINAL:');
-      console.log('📊 Novos:', newProductsFiltered.length);
-      console.log('📊 Destaques:', featuredProductsFiltered.length);
-      console.log('📊 Ofertas:', offerProductsFiltered.length);
-      console.log('🎉 =================================');
-
-    } catch (error) {
-      console.error('💥 =================================');
-      console.error('💥 ERRO CRÍTICO em fetchProductsByType:');
-      console.error('💥 Error object:', error);
-      console.error('💥 Error message:', error?.message);
-      console.error('💥 Error stack:', error?.stack);
-      console.error('💥 =================================');
+    } catch (error: any) {
+      const errorMsg = `💥 Erro: ${error?.message || 'Desconhecido'}`;
+      setDebugInfo(errorMsg);
+      console.error('ERRO CRÍTICO MOBILE:', error);
       secureLog.error('Erro crítico ao buscar produtos por tipo', error);
     } finally {
       setLoading(false);
-      console.log('✨ useProductsByType: Loading finalizado');
     }
   };
 
   const refetch = () => {
-    console.log('🔄 Refazendo busca de produtos...');
-    setLoading(true);
+    console.log('🔄 REFETCH chamado');
     fetchProductsByType();
   };
 
-  // Log do estado atual
-  console.log('📊 Estado atual dos produtos:', {
+  // LOG ESTADO ATUAL
+  console.log('📊 ESTADO HOOK:', {
     loading,
     newCount: newProducts.length,
     featuredCount: featuredProducts.length,
-    offerCount: offerProducts.length
+    offerCount: offerProducts.length,
+    debugInfo
   });
 
   return {
@@ -142,6 +131,7 @@ export const useProductsByType = () => {
     featuredProducts,
     offerProducts,
     loading,
-    refetch
+    refetch,
+    debugInfo // Para mostrar na tela se necessário
   };
 };

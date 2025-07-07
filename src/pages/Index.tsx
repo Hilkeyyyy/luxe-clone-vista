@@ -9,38 +9,39 @@ import Footer from '../components/Footer';
 import { useProductsByType } from '../hooks/useProductsByType';
 
 const Index = () => {
-  const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
+  const { newProducts, featuredProducts, offerProducts, loading, debugInfo } = useProductsByType();
 
   useEffect(() => {
-    console.log('🏠 =================================');
-    console.log('🏠 INDEX: Componente montado');
-    console.log('🏠 =================================');
-    
-    // Log dos produtos recebidos
-    console.log('📦 INDEX: Produtos recebidos do hook:', {
-      newProducts: newProducts.length,
-      featuredProducts: featuredProducts.length,
-      offerProducts: offerProducts.length,
-      loading
+    console.log('🏠 INDEX MOBILE: Página carregada');
+    console.log('🏠 Produtos recebidos:', {
+      novos: newProducts.length,
+      destaques: featuredProducts.length,
+      ofertas: offerProducts.length,
+      loading,
+      debug: debugInfo
     });
+  }, [newProducts, featuredProducts, offerProducts, loading, debugInfo]);
 
-    console.log('📦 INDEX: Detalhes dos produtos:');
-    console.log('🆕 Novos:', newProducts);
-    console.log('⭐ Destaques:', featuredProducts);
-    console.log('💰 Ofertas:', offerProducts);
-
-  }, [newProducts, featuredProducts, offerProducts, loading]);
-
-  console.log('🏠 INDEX: Renderizando com:', {
-    newCount: newProducts.length,
-    featuredCount: featuredProducts.length,
-    offerCount: offerProducts.length,
-    loading
-  });
+  // DEBUG VISUAL MOBILE - Mostrar info na tela
+  const showDebug = loading || (newProducts.length === 0 && featuredProducts.length === 0 && offerProducts.length === 0);
 
   return (
     <div className="min-h-screen bg-white font-outfit">
       <Header />
+      
+      {/* DEBUG INFO MOBILE - Só mostra se houver problema */}
+      {showDebug && (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 m-4 rounded">
+          <strong>DEBUG MOBILE:</strong> {debugInfo}
+          <br />
+          <small>
+            Carregando: {loading ? 'Sim' : 'Não'} | 
+            Novos: {newProducts.length} | 
+            Destaques: {featuredProducts.length} | 
+            Ofertas: {offerProducts.length}
+          </small>
+        </div>
+      )}
       
       {/* Hero Section com carrossel vertical das marcas */}
       <HeroSection />
