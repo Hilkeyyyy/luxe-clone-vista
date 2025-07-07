@@ -12,7 +12,7 @@ interface Product {
   price: number;
   original_price?: number;
   images: string[];
-  is_new: boolean;
+  is_new?: boolean;
   clone_category?: string;
 }
 
@@ -110,7 +110,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products, load
                   ? `R$ ${product.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
                   : undefined}
                 image={product.images[0]}
-                isNew={product.is_new}
+                isNew={product.is_new || false}
                 clone_category={product.clone_category}
                 delay={0}
               />
