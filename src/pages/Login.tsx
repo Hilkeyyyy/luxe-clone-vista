@@ -2,15 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Mail, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { useAuthCheck } from '@/hooks/useAuthCheck';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuthCheck();
+  const { user, signIn, signUp } = useEnhancedAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,13 +19,16 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
+    // Se usuário já está logado, redirecionar
     if (user) {
+      console.log('👤 Usuário já logado, redirecionando...');
       navigate('/');
     }
   }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🔐 Iniciando processo de login...');
     
     if (!email || !password) {
       toast({
@@ -40,26 +42,17 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        toast({
-          title: "Login realizado com sucesso!",
-          description: "Bem-vindo de volta à VELAR WATCHES.",
-        });
+      await signIn(email, password);
+      console.log('✅ Login concluído, redirecionando...');
+      
+      // Aguardar um pouco e redirecionar
+      setTimeout(() => {
         navigate('/');
-      }
+      }, 1000);
+      
     } catch (error: any) {
-      toast({
-        title: "Erro no login",
-        description: error.message || 'Credenciais inválidas.',
-        variant: "destructive",
-      });
+      console.error('❌ Erro no login:', error);
+      // O toast já é mostrado pelo enhancedSignIn
     } finally {
       setLoading(false);
     }
@@ -67,6 +60,7 @@ const Login = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('📝 Iniciando processo de cadastro...');
     
     if (!email || !password || !confirmPassword || !fullName) {
       toast({
@@ -98,32 +92,17 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim().toLowerCase(),
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-          emailRedirectTo: `${window.location.origin}/`
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        toast({
-          title: "Conta criada com sucesso!",
-          description: "Bem-vindo à VELAR WATCHES! Você já pode começar a explorar nossos produtos.",
-        });
+      await signUp(email, password, fullName);
+      console.log('✅ Cadastro concluído, redirecionando...');
+      
+      // Aguardar um pouco e redirecionar
+      setTimeout(() => {
         navigate('/');
-      }
+      }, 1000);
+      
     } catch (error: any) {
-      toast({
-        title: "Erro no cadastro",
-        description: error.message || 'Erro interno do servidor.',
-        variant: "destructive",
-      });
+      console.error('❌ Erro no cadastro:', error);
+      // O toast já é mostrado pelo enhancedSignUp
     } finally {
       setLoading(false);
     }
@@ -201,6 +180,7 @@ const Login = () => {
                     className="w-full pl-12 pr-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
                     placeholder="Seu nome completo"
                     required={!isLogin}
+                    autoComplete="name"
                   />
                 </div>
               </div>
@@ -220,6 +200,7 @@ const Login = () => {
                   className="w-full pl-12 pr-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
                   placeholder="seu@email.com"
                   required
+                  autoComplete="email"
                 />
               </div>
             </div>
@@ -238,6 +219,7 @@ const Login = () => {
                   className="w-full pl-12 pr-12 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
                   placeholder="••••••••"
                   required
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                 />
                 <button
                   type="button"
@@ -265,6 +247,7 @@ const Login = () => {
                     className="w-full pl-12 pr-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300"
                     placeholder="••••••••"
                     required={!isLogin}
+                    autoComplete="new-password"
                   />
                 </div>
               </div>
@@ -290,6 +273,13 @@ const Login = () => {
               </button>
             </p>
           </div>
+
+          {/* Debug info para desenvolvimento */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
+              <p>Debug: Auth system v2.0 - Robust & Isolated</p>
+            </div>
+          )}
         </motion.div>
       </div>
     </div>

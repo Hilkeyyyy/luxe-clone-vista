@@ -2,12 +2,13 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Mail, ArrowLeft } from 'lucide-react';
 import { rateLimiter } from '@/utils/security';
 import { secureLog } from '@/utils/secureLogger';
 import { validateRequestOrigin } from '@/utils/securityHeaders';
+import { secureSignIn } from '@/utils/authStateCleanup';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const AdminLogin = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🔐 ADMIN LOGIN: Iniciando login administrativo...');
     
     // Validar origem da requisição
     if (!validateRequestOrigin()) {
@@ -30,14 +32,14 @@ const AdminLogin = () => {
     }
     
     // Rate limiting baseado no email
-    const userKey = `login_${email.toLowerCase()}`;
+    const userKey = `admin_login_${email.toLowerCase()}`;
     if (rateLimiter.isRateLimited(userKey)) {
       toast({
         title: "Muitas tentativas",
         description: "Aguarde um momento antes de tentar novamente.",
         variant: "destructive",
       });
-      secureLog.warn('Tentativa de login bloqueada por rate limiting', { email });
+      secureLog.warn('Tentativa de login admin bloqueada por rate limiting', { email });
       return;
     }
 
@@ -63,33 +65,32 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
-
-      if (error) {
-        secureLog.error('Erro no login de administrador', error, { email });
-        throw error;
-      }
+      console.log('📧 Tentando login admin para:', email);
+      
+      // Usar o sistema seguro de login
+      const { data } = await secureSignIn(email, password);
 
       if (data.user) {
+        console.log('👤 Verificando permissões de admin...');
+        
         // Verificar se é admin pelo perfil no banco
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, full_name')
           .eq('id', data.user.id)
           .single();
 
         if (profileError || !profile || profile.role !== 'admin') {
+          console.error('❌ Acesso admin negado:', { error: profileError, profile });
           await supabase.auth.signOut();
           secureLog.warn('Tentativa de acesso admin negada', { email, userId: data.user.id });
-          throw new Error('Acesso negado. Apenas administradores podem acessar.');
+          throw new Error('Acesso negado. Apenas administradores podem acessar esta área.');
         }
 
         // Reset rate limiting em caso de sucesso
         rateLimiter.reset(userKey);
         
+        console.log('✅ Login de administrador aprovado');
         secureLog.info('Login de administrador realizado com sucesso', { userId: data.user.id });
 
         toast({
@@ -97,9 +98,13 @@ const AdminLogin = () => {
           description: "Redirecionando para o painel administrativo...",
         });
 
-        navigate('/admin');
+        // Aguardar um pouco e redirecionar
+        setTimeout(() => {
+          navigate('/admin');
+        }, 1000);
       }
     } catch (error: any) {
+      console.error('❌ Falha na autenticação de administrador:', error);
       secureLog.error('Falha na autenticação de administrador', error, { email });
       
       const errorMessage = error.message?.includes('Invalid login credentials') 
@@ -202,6 +207,14 @@ const AdminLogin = () => {
               Apenas administradores autorizados podem acessar este painel.
             </p>
           </div>
+
+          {/* Debug info para desenvolvimento */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4 p-2 bg-red-100 rounded text-xs">
+              <p>Admin Login v2.0 - Secure & Isolated</p>
+              <p>Email de teste: operacional.grupostratton@gmail.com</p>
+            </div>
+          )}
         </motion.div>
       </div>
     </div>
