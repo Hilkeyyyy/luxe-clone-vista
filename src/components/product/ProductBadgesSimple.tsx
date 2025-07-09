@@ -30,7 +30,7 @@ const ProductBadgesSimple: React.FC<ProductBadgesSimpleProps> = ({
       {/* Clone Category - Top Left */}
       {cloneCategory && (
         <div className="absolute top-2 left-2 z-10">
-          <Badge className="text-xs font-medium px-2 py-1 bg-slate-600/90 text-white backdrop-blur-sm border-0 shadow-sm">
+          <Badge className="text-xs font-medium px-2 py-1 bg-sky-600 text-white border-0 shadow-sm">
             {getCloneCategoryDisplay(cloneCategory)}
           </Badge>
         </div>
@@ -39,16 +39,16 @@ const ProductBadgesSimple: React.FC<ProductBadgesSimpleProps> = ({
       {/* Custom Badge - Top Right */}
       {customBadge && (
         <div className="absolute top-2 right-2 z-10">
-          <Badge className="text-xs font-medium px-2 py-1 bg-violet-600/90 text-white backdrop-blur-sm border-0 shadow-sm">
+          <Badge className="text-xs font-medium px-2 py-1 bg-slate-600 text-white border-0 shadow-sm">
             {customBadge.toUpperCase()}
           </Badge>
         </div>
       )}
 
-      {/* Stock Status - Bottom Left (only if sold out) */}
+      {/* CORREÇÃO 6: Stock Status - Bottom Left (ESGOTADO) */}
       {isSoldOut && (
         <div className="absolute bottom-2 left-2 z-10">
-          <Badge className="text-xs font-medium px-2 py-1 bg-neutral-600/90 text-white backdrop-blur-sm border-0 shadow-sm">
+          <Badge className="text-xs font-medium px-2 py-1 bg-neutral-600 text-white border-0 shadow-sm">
             ESGOTADO
           </Badge>
         </div>

@@ -25,6 +25,15 @@ const Index = () => {
           
           {memoizedHeroSection}
           
+          {/* CORREÇÃO 8: Mover carrossel de categorias para o topo (antes de NOVIDADES) */}
+          <ErrorBoundary fallback={
+            <div className="py-4 sm:py-8 text-center">
+              <p className="text-neutral-500 text-sm sm:text-base">Erro ao carregar categorias</p>
+            </div>
+          }>
+            {memoizedBrandCarousel}
+          </ErrorBoundary>
+          
           <ErrorBoundary fallback={
             <div className="py-4 sm:py-8 text-center">
               <p className="text-neutral-500 text-sm sm:text-base">Erro ao carregar novidades</p>
@@ -58,14 +67,6 @@ const Index = () => {
               products={featuredProducts} 
               loading={loading}
             />
-          </ErrorBoundary>
-          
-          <ErrorBoundary fallback={
-            <div className="py-4 sm:py-8 text-center">
-              <p className="text-neutral-500 text-sm sm:text-base">Erro ao carregar categorias</p>
-            </div>
-          }>
-            {memoizedBrandCarousel}
           </ErrorBoundary>
           
           <Footer />

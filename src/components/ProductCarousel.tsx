@@ -41,7 +41,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products, load
       transition={{ duration: 0.6 }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
+        {/* Section Header - CORREÇÃO 9: Design mais elegante */}
         <div className="flex items-center justify-between mb-8">
           <motion.div 
             className="text-center sm:text-left"
@@ -49,29 +49,30 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products, load
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h2 className="text-3xl sm:text-4xl font-outfit font-bold text-neutral-900 mb-2">
+            <h2 className="text-3xl sm:text-4xl font-outfit font-light text-neutral-900 mb-2 tracking-wide">
               {title}
             </h2>
-            <p className="text-neutral-600">
+            <p className="text-neutral-600 font-light">
               {title === 'NOVIDADES' && 'Os lançamentos mais recentes da nossa coleção'}
               {title === 'OFERTAS' && 'Descontos especiais por tempo limitado'}
             </p>
           </motion.div>
           
+          {/* CORREÇÃO 9: Navegação mais elegante */}
           <div className="hidden sm:flex items-center space-x-2">
             <motion.button
               onClick={() => scroll('left')}
-              className="p-3 rounded-full bg-white shadow-md hover:shadow-lg transition-shadow text-neutral-600 hover:text-neutral-900 border border-neutral-200"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="p-3 rounded-none bg-white shadow-sm hover:shadow-md transition-shadow text-neutral-600 hover:text-neutral-900 border border-neutral-200 hover:border-neutral-300"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <ChevronLeft size={20} />
             </motion.button>
             <motion.button
               onClick={() => scroll('right')}
-              className="p-3 rounded-full bg-white shadow-md hover:shadow-lg transition-shadow text-neutral-600 hover:text-neutral-900 border border-neutral-200"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="p-3 rounded-none bg-white shadow-sm hover:shadow-md transition-shadow text-neutral-600 hover:text-neutral-900 border border-neutral-200 hover:border-neutral-300"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <ChevronRight size={20} />
             </motion.button>
@@ -102,24 +103,25 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products, load
                 image={product.images[0]}
                 isNew={product.is_new || false}
                 clone_category={product.clone_category}
+                is_sold_out={product.is_sold_out}
                 delay={0}
               />
             </motion.div>
           ))}
         </div>
 
-        {/* Mobile scroll indicators */}
+        {/* Mobile scroll indicators - CORREÇÃO 9: Mais elegantes */}
         <div className="flex justify-center mt-6 sm:hidden">
           <div className="flex space-x-2">
             <button
               onClick={() => scroll('left')}
-              className="p-2 rounded-full bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors"
+              className="p-2 rounded-none bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors border border-neutral-200"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => scroll('right')}
-              className="p-2 rounded-full bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors"
+              className="p-2 rounded-none bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors border border-neutral-200"
             >
               <ChevronRight size={16} />
             </button>

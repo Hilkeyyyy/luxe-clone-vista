@@ -61,17 +61,8 @@ export const useSecureProductActions = () => {
     return settingValue?.number || '';
   };
 
-  // NOVA FUNÇÃO: Comprar produto específico via WhatsApp
+  // CORREÇÃO 1: Comprar produto específico via WhatsApp SEM EXIGIR LOGIN
   const handleBuySpecificProduct = async (productId: string, productName: string, brand: string, price: number, image: string) => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Login necessário",
-        description: "Faça login para finalizar compra.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       const whatsappNumber = await getWhatsAppSettings();
       
@@ -200,7 +191,7 @@ export const useSecureProductActions = () => {
     toggleFavorite: handleToggleFavorite,
     addToCart: handleAddToCart,
     buyNow: handleBuyNow, // Para uso no carrinho (todos os produtos)
-    buySpecificProduct: handleBuySpecificProduct, // Para produto específico
+    buySpecificProduct: handleBuySpecificProduct, // Para produto específico SEM LOGIN
     isFavorite,
     getButtonState,
   };

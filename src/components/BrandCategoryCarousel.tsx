@@ -44,7 +44,8 @@ const BrandCategoryCarousel: React.FC = () => {
   return (
     <div className="px-4 sm:px-6 lg:px-8 mb-12">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-bold text-neutral-900 font-outfit">
+        {/* CORREÇÃO 9: Título mais elegante */}
+        <h2 className="text-3xl font-light text-neutral-900 font-outfit tracking-wide">
           Marcas em Destaque
         </h2>
       </div>
@@ -64,59 +65,62 @@ const BrandCategoryCarousel: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -4 }}
+                whileHover={{ y: -2 }}
                 onClick={() => handleCategoryClick(category)}
               >
-                <div className="relative w-full h-80 bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-2xl overflow-hidden shadow-md group-hover:shadow-lg transition-all duration-300">
+                {/* CORREÇÃO 9: Design mais elegante e limpo */}
+                <div className="relative w-full h-80 bg-neutral-50 rounded-none overflow-hidden shadow-sm group-hover:shadow-md transition-all duration-300 border border-neutral-100">
                   {/* Background Image */}
                   {category.image_url ? (
                     <img
                       src={category.image_url}
                       alt={category.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-neutral-100 to-neutral-200 flex items-center justify-center">
-                      <span className="text-5xl font-bold text-neutral-400 font-outfit">
+                    <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
+                      <span className="text-4xl font-light text-neutral-400 font-outfit">
                         {category.name.charAt(0)}
                       </span>
                     </div>
                   )}
 
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  {/* Overlay - mais sutil */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
                   {/* Content */}
                   <div className="absolute bottom-0 left-0 right-0 p-6">
                     <div className="text-center">
-                      <h3 className="text-xl font-bold text-white mb-2 font-outfit">
+                      <h3 className="text-xl font-light text-white mb-2 font-outfit tracking-wide">
                         {category.name}
                       </h3>
                       
+                      {/* CORREÇÃO 4: Contador de produtos em todas as categorias */}
                       {category.products_count > 0 && (
-                        <p className="text-white/80 mb-4 text-sm font-outfit">
+                        <p className="text-white/80 mb-4 text-sm font-outfit font-light">
                           {category.products_count} produtos disponíveis
                         </p>
                       )}
 
+                      {/* CORREÇÃO 9: Botão mais elegante */}
                       <motion.button
-                        className="bg-white text-neutral-900 px-6 py-2 rounded-full font-semibold text-sm font-outfit hover:bg-neutral-100 transition-colors shadow-md"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        className="bg-white text-neutral-900 px-6 py-2 rounded-none font-light text-sm font-outfit hover:bg-neutral-100 transition-colors shadow-sm border border-white"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleCategoryClick(category);
                         }}
                       >
-                        CONFIRA
+                        EXPLORAR
                       </motion.button>
                     </div>
                   </div>
 
-                  {/* Badge */}
+                  {/* Badge - CORREÇÃO 4: Contador sempre visível */}
                   {category.products_count > 0 && (
                     <div className="absolute top-4 right-4">
-                      <span className="bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-semibold">
+                      <span className="bg-white/90 text-neutral-900 px-3 py-1 rounded-full text-xs font-medium shadow-sm">
                         {category.products_count}
                       </span>
                     </div>
@@ -127,8 +131,9 @@ const BrandCategoryCarousel: React.FC = () => {
           ))}
         </CarouselContent>
         
-        <CarouselPrevious className="hidden sm:flex -left-12 w-10 h-10 border-2 border-neutral-300 hover:border-neutral-400 bg-white/90 hover:bg-white shadow-md" />
-        <CarouselNext className="hidden sm:flex -right-12 w-10 h-10 border-2 border-neutral-300 hover:border-neutral-400 bg-white/90 hover:bg-white shadow-md" />
+        {/* CORREÇÃO 9: Navegação mais elegante */}
+        <CarouselPrevious className="hidden sm:flex -left-12 w-10 h-10 border border-neutral-300 hover:border-neutral-400 bg-white/95 hover:bg-white shadow-sm rounded-none" />
+        <CarouselNext className="hidden sm:flex -right-12 w-10 h-10 border border-neutral-300 hover:border-neutral-400 bg-white/95 hover:bg-white shadow-sm rounded-none" />
       </Carousel>
     </div>
   );

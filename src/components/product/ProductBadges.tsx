@@ -24,15 +24,14 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
   customBadge,
 }) => {
   const getBadgeVariant = (type: string) => {
-    // MELHORIA: Cores mais elegantes e sofisticadas
+    // CORREÇÃO 9: Cores neutras e elegantes (sem gradientes)
     const variants = {
-      custom: 'bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600 text-white border-violet-400 shadow-lg backdrop-blur-sm',
-      new: 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white border-emerald-400 shadow-lg backdrop-blur-sm',
-      featured: 'bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 text-white border-amber-400 shadow-lg backdrop-blur-sm',
-      bestseller: 'bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white border-blue-400 shadow-lg backdrop-blur-sm',
-      discount: 'bg-gradient-to-br from-rose-500 via-pink-500 to-red-500 text-white border-rose-400 shadow-lg backdrop-blur-sm',
-      soldout: 'bg-gradient-to-br from-slate-500 via-gray-500 to-neutral-600 text-white border-slate-400 shadow-lg backdrop-blur-sm',
-      clone: 'bg-gradient-to-br from-sky-500 via-blue-500 to-indigo-500 text-white border-sky-400 shadow-lg backdrop-blur-sm'
+      custom: 'bg-slate-800 text-white border-slate-600 shadow-sm',
+      new: 'bg-emerald-600 text-white border-emerald-500 shadow-sm',
+      bestseller: 'bg-blue-600 text-white border-blue-500 shadow-sm',
+      discount: 'bg-red-600 text-white border-red-500 shadow-sm',
+      soldout: 'bg-neutral-600 text-white border-neutral-500 shadow-sm',
+      clone: 'bg-sky-600 text-white border-sky-500 shadow-sm'
     };
     return variants[type as keyof typeof variants] || variants.custom;
   };
@@ -49,7 +48,7 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
     return categoryMap[category] || category.toUpperCase();
   };
 
-  // CORREÇÃO: Calcular porcentagem real de desconto
+  // Calcular porcentagem real de desconto
   const getDiscountPercentage = () => {
     if (!originalPrice || originalPrice <= price) return null;
     const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
@@ -61,33 +60,29 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
       {/* Badges - Left Side */}
       <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
         {isNew && (
-          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('new')} ring-1 ring-white/20`}>
+          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('new')}`}>
             NOVO
           </Badge>
         )}
-        {isFeatured && (
-          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('featured')} ring-1 ring-white/20`}>
-            DESTAQUE
-          </Badge>
-        )}
+        {/* CORREÇÃO 7: Remover tag visual "DESTAQUE" - produto destaque aparece só na seção de destaques */}
         {isBestseller && (
-          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('bestseller')} ring-1 ring-white/20`}>
+          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('bestseller')}`}>
             MAIS VENDIDO
           </Badge>
         )}
-        {/* CORREÇÃO: Mostrar porcentagem real em vez de "PROMOÇÃO" */}
         {originalPrice && originalPrice > price && (
-          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('discount')} ring-1 ring-white/20`}>
+          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('discount')}`}>
             {getDiscountPercentage()}
           </Badge>
         )}
+        {/* CORREÇÃO 6: Tag "ESGOTADO" em todas as páginas */}
         {isSoldOut && (
-          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('soldout')} ring-1 ring-white/20`}>
+          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('soldout')}`}>
             ESGOTADO
           </Badge>
         )}
         {cloneCategory && (
-          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('clone')} ring-1 ring-white/20`}>
+          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('clone')}`}>
             {getCloneCategoryDisplay(cloneCategory)}
           </Badge>
         )}
@@ -96,7 +91,7 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
       {/* Custom Badge - Top Right */}
       {customBadge && (
         <div className="absolute top-3 right-3 z-10">
-          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('custom')} animate-pulse ring-1 ring-white/20`}>
+          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('custom')}`}>
             {customBadge.toUpperCase()}
           </Badge>
         </div>
