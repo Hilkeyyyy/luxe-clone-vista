@@ -4,8 +4,9 @@ import { Save, Phone, Building, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { secureApiClient } from '@/utils/secureApiClient';
+import { enhancedSecureApiClient } from '@/utils/enhancedSecureApiClient';
 import { sanitizeInput } from '@/utils/securityEnhancements';
+import { enhancedCsrfManager } from '@/utils/enhancedCsrfProtection';
 import { supabase } from '@/integrations/supabase/client';
 
 // Componentes das seções
@@ -46,6 +47,8 @@ const SystemSettings = () => {
 
   useEffect(() => {
     loadSettings();
+    // Gerar token CSRF na inicialização
+    enhancedCsrfManager.getToken();
   }, []);
 
   const loadSettings = async () => {
@@ -67,10 +70,10 @@ const SystemSettings = () => {
           if (key === 'whatsapp_enabled') {
             loadedSettings[key] = Boolean(value);
           }
-          // For string fields - sanitize on load
+          // For string fields - sanitize on load with enhanced security
           else {
             const stringValue = String(value || '').replace(/"/g, '');
-            loadedSettings[key] = sanitizeInput(stringValue, { maxLength: 500 });
+            loadedSettings[key] = sanitizeInput(stringValue, { maxLength: 1000 });
           }
         }
       });
@@ -79,8 +82,8 @@ const SystemSettings = () => {
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
       toast({
-        title: "Erro",
-        description: "Erro ao carregar configurações do sistema.",
+        title: "Erro de Segurança",
+        description: "Erro ao carregar configurações do sistema com segurança.",
         variant: "destructive",
       });
     } finally {
@@ -91,17 +94,18 @@ const SystemSettings = () => {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      await secureApiClient.secureAdminSettingsUpdate(settings);
+      // Usar cliente API seguro aprimorado
+      await enhancedSecureApiClient.secureAdminSettingsUpdate(settings);
 
       toast({
         title: "Sucesso",
-        description: "Configurações salvas com sucesso!",
+        description: "Configurações salvas com segurança!",
       });
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
       toast({
-        title: "Erro",
-        description: "Erro ao salvar configurações.",
+        title: "Erro de Segurança",
+        description: error instanceof Error ? error.message : "Erro ao salvar configurações com segurança.",
         variant: "destructive",
       });
     } finally {
@@ -113,9 +117,9 @@ const SystemSettings = () => {
     key: K, 
     value: SystemSettings[K]
   ) => {
-    // Sanitize string inputs
+    // Enhanced sanitization for string inputs
     const sanitizedValue = typeof value === 'string' ? 
-      sanitizeInput(value, { maxLength: 500 }) : value;
+      sanitizeInput(value, { maxLength: 1000 }) : value;
     
     setSettings(prev => ({ ...prev, [key]: sanitizedValue }));
   };
@@ -125,7 +129,7 @@ const SystemSettings = () => {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-neutral-600">Carregando configurações...</p>
+          <p className="text-neutral-600">Carregando configurações com segurança...</p>
         </div>
       </div>
     );
@@ -137,11 +141,11 @@ const SystemSettings = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-neutral-900">Configurações do Sistema</h2>
-          <p className="text-neutral-600">Configure as opções gerais da sua loja</p>
+          <p className="text-neutral-600">Configure as opções gerais da sua loja com segurança</p>
         </div>
         <Button onClick={saveSettings} disabled={saving} className="flex items-center space-x-2">
           <Save size={20} />
-          <span>{saving ? 'Salvando...' : 'Salvar Configurações'}</span>
+          <span>{saving ? 'Salvando com Segurança...' : 'Salvar Configurações'}</span>
         </Button>
       </div>
 
@@ -161,7 +165,6 @@ const SystemSettings = () => {
           </TabsTrigger>
         </TabsList>
 
-        {/* WhatsApp */}
         <TabsContent value="whatsapp">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -172,7 +175,6 @@ const SystemSettings = () => {
           </motion.div>
         </TabsContent>
 
-        {/* Empresa */}
         <TabsContent value="company">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -183,7 +185,6 @@ const SystemSettings = () => {
           </motion.div>
         </TabsContent>
 
-        {/* Opções do Produto */}
         <TabsContent value="product-options">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
