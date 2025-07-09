@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Star, Shield, Truck } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -133,40 +132,7 @@ const ProductInfo = ({
         </div>
       )}
 
-      {/* Features */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-neutral-200">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-neutral-100 rounded-full">
-            <Shield size={20} className="text-neutral-700" />
-          </div>
-          <div>
-            <p className="font-outfit font-medium text-neutral-900 text-sm">Garantia</p>
-            <p className="text-neutral-600 text-xs">12 meses</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-neutral-100 rounded-full">
-            <Truck size={20} className="text-neutral-700" />
-          </div>
-          <div>
-            <p className="font-outfit font-medium text-neutral-900 text-sm">Entrega</p>
-            <p className="text-neutral-600 text-xs">5-7 dias úteis</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-neutral-100 rounded-full">
-            <Star size={20} className="text-neutral-700" />
-          </div>
-          <div>
-            <p className="font-outfit font-medium text-neutral-900 text-sm">Qualidade</p>
-            <p className="text-neutral-600 text-xs">Premium</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Stock Status */}
+      {/* Stock Status - CORRIGIDO PARA MOSTRAR ESGOTADO */}
       <div className={`flex items-center space-x-2 ${
         (product.stock_status || (product.in_stock ? 'in_stock' : 'out_of_stock')) === 'in_stock' ? 'text-green-600' : 
         (product.stock_status || (product.in_stock ? 'in_stock' : 'out_of_stock')) === 'low_stock' ? 'text-yellow-600' : 
@@ -180,7 +146,7 @@ const ProductInfo = ({
         <span className="text-sm font-medium">
           {(product.stock_status || (product.in_stock ? 'in_stock' : 'out_of_stock')) === 'in_stock' ? 'Em estoque' : 
            (product.stock_status || (product.in_stock ? 'in_stock' : 'out_of_stock')) === 'low_stock' ? 'Pouco estoque' : 
-           'Fora de estoque'}
+           'Esgotado'}
         </span>
       </div>
     </motion.div>

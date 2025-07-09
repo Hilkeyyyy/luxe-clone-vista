@@ -155,8 +155,9 @@ const ProductDetail = () => {
       localStorage.setItem('cart', JSON.stringify(cartItems));
       
       toast({
-        title: "Produto adicionado ao carrinho!",
-        description: `${quantity}x ${product.name} foi adicionado ao seu carrinho.`,
+        title: "✅ Produto adicionado!",
+        description: `${quantity}x ${product.name}`,
+        duration: 2000,
       });
     } catch (error) {
       toast({
@@ -165,35 +166,19 @@ const ProductDetail = () => {
         variant: "destructive",
       });
     } finally {
-      setIsAddingToCart(false);
+      setTimeout(() => setIsAddingToCart(false), 500);
     }
   };
 
-  // CORREÇÃO 1: Comprar via WhatsApp SEM LOGIN
+  // WHATSAPP DIRETO SEM LOGIN
   const buyViaWhatsApp = async () => {
     if (!product) return;
 
     try {
-      const { data } = await supabase
-        .from('admin_settings')
-        .select('setting_value')
-        .eq('setting_key', 'whatsapp_number')
-        .single();
-      
-      const settingValue = data?.setting_value as any;
-      const whatsappNumber = settingValue?.number || '';
-      
-      if (!whatsappNumber) {
-        toast({
-          title: "Erro",
-          description: "WhatsApp não configurado. Entre em contato pelo site.",
-          variant: "destructive",
-        });
-        return;
-      }
-
+      const whatsappNumber = "19999413755";
       const storeUrl = window.location.origin;
       const productUrl = `${storeUrl}/products/${product.id}`;
+      const productImage = product.images?.[0] || '';
       
       let message = `🛒 *INTERESSE EM PRODUTO*\n\n`;
       message += `📋 *PRODUTO SELECIONADO:*\n\n`;
@@ -203,8 +188,9 @@ const ProductDetail = () => {
       message += `   • Quantidade: ${quantity}\n`;
       if (selectedColor) message += `   • Cor: ${selectedColor}\n`;
       if (selectedSize) message += `   • Tamanho: ${selectedSize}\n`;
-      message += `   • Link: ${productUrl}\n\n`;
-      message += `📞 Gostaria de mais informações sobre este produto!\n`;
+      message += `   • Link do produto: ${productUrl}\n`;
+      if (productImage) message += `   • Imagem: ${productImage}\n`;
+      message += `\n📞 Gostaria de mais informações sobre este produto!\n`;
       message += `Formas de pagamento e entrega disponíveis?`;
 
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
@@ -264,7 +250,6 @@ const ProductDetail = () => {
     );
   }
 
-  // CORREÇÃO 6: Verificar se produto está esgotado
   const isProductSoldOut = product.is_sold_out || product.stock_status === 'out_of_stock' || !product.in_stock;
 
   return (
@@ -325,18 +310,18 @@ const ProductDetail = () => {
               {!isProductSoldOut && (
                 <div className="flex items-center space-x-4">
                   <span className="font-outfit font-medium text-neutral-900">Quantidade:</span>
-                  <div className="flex items-center border border-neutral-200 rounded-xl">
+                  <div className="flex items-center border-2 border-neutral-200 rounded-xl overflow-hidden">
                     <button
                       onClick={() => updateQuantity(false)}
-                      className="p-3 hover:bg-neutral-50 transition-colors"
+                      className="px-4 py-3 hover:bg-neutral-50 transition-colors text-neutral-700 font-medium"
                       disabled={quantity <= 1}
                     >
                       <Minus size={16} />
                     </button>
-                    <span className="px-4 py-3 font-medium">{quantity}</span>
+                    <span className="px-6 py-3 font-semibold text-lg bg-neutral-50">{quantity}</span>
                     <button
                       onClick={() => updateQuantity(true)}
-                      className="p-3 hover:bg-neutral-50 transition-colors"
+                      className="px-4 py-3 hover:bg-neutral-50 transition-colors text-neutral-700 font-medium"
                     >
                       <Plus size={16} />
                     </button>
@@ -344,30 +329,75 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <ProductActions
-                isFavorite={isFavorite}
-                isSoldOut={isProductSoldOut}
-                onToggleFavorite={toggleFavorite}
-                onAddToCart={addToCart}
-                onBuyNow={buyViaWhatsApp} // CORREÇÃO 1: Usar nova função sem login
-                showBuyButton={true}
-                isCartLoading={isAddingToCart}
-              />
+              {/* BOTÕES ELEGANTES */}
+              <div className="space-y-4">
+                {/* Botão Comprar via WhatsApp */}
+                {!isProductSoldOut && (
+                  <motion.button
+                    onClick={buyViaWhatsApp}
+                    className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-4 rounded-2xl font-outfit font-semibold text-lg shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center space-x-3"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <span className="text-2xl">💬</span>
+                    <span>COMPRAR VIA WHATSAPP</span>
+                  </motion.button>
+                )}
 
-              {/* CORREÇÃO 6: Mostrar "Esgotado" em vez de "Em estoque" */}
+                {/* Linha com Carrinho e Favoritos */}
+                <div className="flex space-x-4">
+                  {/* Botão Carrinho */}
+                  {!isProductSoldOut && (
+                    <motion.button 
+                      onClick={addToCart}
+                      disabled={isAddingToCart}
+                      className={`flex-1 px-6 py-4 rounded-2xl transition-all duration-300 font-outfit font-semibold text-lg shadow-md ${
+                        isAddingToCart 
+                          ? 'bg-green-600 text-white' 
+                          : 'bg-neutral-900 text-white hover:bg-neutral-800'
+                      } ${isAddingToCart ? 'opacity-70' : 'hover:scale-[1.02]'} flex items-center justify-center space-x-2`}
+                      whileHover={{ scale: isAddingToCart ? 1 : 1.02 }}
+                      whileTap={{ scale: isAddingToCart ? 1 : 0.98 }}
+                    >
+                      {isAddingToCart ? (
+                        <>
+                          <span className="text-xl">✅</span>
+                          <span>Adicionado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-xl">🛒</span>
+                          <span>Adicionar ao Carrinho</span>
+                        </>
+                      )}
+                    </motion.button>
+                  )}
+
+                  {/* Botão Favoritar */}
+                  <motion.button
+                    onClick={toggleFavorite}
+                    className="px-6 py-4 bg-white border-2 border-neutral-200 rounded-2xl hover:border-red-300 hover:bg-red-50 transition-all duration-300 shadow-md flex items-center justify-center"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span className={`text-2xl ${isFavorite ? '❤️' : '🤍'}`}>
+                      {isFavorite ? '❤️' : '🤍'}
+                    </span>
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Status Esgotado */}
               {isProductSoldOut && (
-                <div className="text-center py-3 px-4 bg-red-50 border border-red-200 rounded-xl">
-                  <span className="text-red-600 font-medium">Produto esgotado</span>
+                <div className="text-center py-4 px-6 bg-red-50 border-2 border-red-200 rounded-2xl">
+                  <span className="text-red-600 font-semibold text-lg">❌ Produto Esgotado</span>
                 </div>
               )}
             </motion.div>
-
-            {/* CORREÇÃO 5: Remover seção fixa "Garantia, Entrega, Qualidade" - já existe sistema editável */}
           </div>
         </div>
 
-        {/* Product Specifications */}
+        {/* Product Specifications - MANTÉM A SEÇÃO EDITÁVEL */}
         {product?.specifications && (
           <ProductSpecs specifications={product.specifications} />
         )}

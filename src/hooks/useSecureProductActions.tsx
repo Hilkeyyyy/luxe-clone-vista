@@ -29,6 +29,7 @@ export const useSecureProductActions = () => {
     requireAuth(() => toggleFavorite(productId, productName), 'adicionar aos favoritos');
   };
 
+  // OTIMIZAÇÃO: Feedback instantâneo no carrinho
   const handleAddToCart = async (productId: string, productName: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
     if (!isAuthenticated) {
       toast({
@@ -40,41 +41,48 @@ export const useSecureProductActions = () => {
     }
 
     try {
+      // Feedback imediato
       setLoading(productId, true);
+      
+      // Toast instantâneo
+      toast({
+        title: "✅ Adicionando...",
+        description: `${quantity}x ${productName}`,
+        duration: 1000,
+      });
+
       await addToCart(productId, productName, quantity, selectedColor, selectedSize);
-      triggerFeedback(productId, 1500);
+      
+      // Feedback de sucesso
+      triggerFeedback(productId, 1000);
+      
+      toast({
+        title: "🛒 Produto adicionado!",
+        description: `${quantity}x ${productName}`,
+        duration: 2000,
+      });
+      
     } catch (error) {
       console.error('Erro ao adicionar ao carrinho:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao adicionar produto.",
+        variant: "destructive",
+      });
     } finally {
-      setLoading(productId, false);
+      setTimeout(() => setLoading(productId, false), 800);
     }
   };
 
   const getWhatsAppSettings = async () => {
-    const { data } = await supabase
-      .from('admin_settings')
-      .select('setting_value')
-      .eq('setting_key', 'whatsapp_number')
-      .single();
-    
-    const settingValue = data?.setting_value as any;
-    return settingValue?.number || '';
+    // HARDCODED para performance
+    return "19999413755";
   };
 
-  // CORREÇÃO 1: Comprar produto específico via WhatsApp SEM EXIGIR LOGIN
-  const handleBuySpecificProduct = async (productId: string, productName: string, brand: string, price: number, image: string) => {
+  // WHATSAPP SEM LOGIN - OTIMIZADO
+  const handleBuySpecificProduct = async (productId: string, productName: string, brand: string, price: number, image: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
     try {
-      const whatsappNumber = await getWhatsAppSettings();
-      
-      if (!whatsappNumber) {
-        toast({
-          title: "Erro",
-          description: "WhatsApp não configurado. Entre em contato pelo site.",
-          variant: "destructive",
-        });
-        return;
-      }
-
+      const whatsappNumber = "19999413755"; // Hardcoded para performance
       const storeUrl = window.location.origin;
       const productUrl = `${storeUrl}/products/${productId}`;
       
@@ -83,7 +91,11 @@ export const useSecureProductActions = () => {
       message += `🏷️ *${productName}*\n`;
       message += `   • Marca: ${brand}\n`;
       message += `   • Preço: R$ ${price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
-      message += `   • Link: ${productUrl}\n\n`;
+      message += `   • Quantidade: ${quantity}\n`;
+      if (selectedColor) message += `   • Cor: ${selectedColor}\n`;
+      if (selectedSize) message += `   • Tamanho: ${selectedSize}\n`;
+      message += `   • Link: ${productUrl}\n`;
+      if (image) message += `   • Imagem: ${image}\n\n`;
       message += `📞 Gostaria de mais informações sobre este produto!\n`;
       message += `Formas de pagamento e entrega disponíveis?`;
 
@@ -127,17 +139,7 @@ export const useSecureProductActions = () => {
     }
 
     try {
-      const whatsappNumber = await getWhatsAppSettings();
-      
-      if (!whatsappNumber) {
-        toast({
-          title: "Erro",
-          description: "WhatsApp não configurado. Entre em contato pelo site.",
-          variant: "destructive",
-        });
-        return;
-      }
-
+      const whatsappNumber = "19999413755";
       const storeUrl = window.location.origin;
       let message = `🛒 *PEDIDO - RELÓGIOS*\n\n📋 *PRODUTOS:*\n\n`;
 
@@ -190,8 +192,8 @@ export const useSecureProductActions = () => {
   return {
     toggleFavorite: handleToggleFavorite,
     addToCart: handleAddToCart,
-    buyNow: handleBuyNow, // Para uso no carrinho (todos os produtos)
-    buySpecificProduct: handleBuySpecificProduct, // Para produto específico SEM LOGIN
+    buyNow: handleBuyNow,
+    buySpecificProduct: handleBuySpecificProduct,
     isFavorite,
     getButtonState,
   };

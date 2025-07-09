@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Heart, ShoppingCart, CreditCard, Check } from 'lucide-react';
+import { Heart, ShoppingCart, MessageCircle, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ProductActionsProps {
@@ -31,60 +31,64 @@ const ProductActions: React.FC<ProductActionsProps> = ({
   productId = '',
 }) => {
   return (
-    <div className="flex flex-col space-y-2">
-      {/* Botão Comprar - CORREÇÃO: Agora envia todo o carrinho via WhatsApp */}
+    <div className="flex flex-col space-y-3">
+      {/* Botão Comprar via WhatsApp - DESIGN ELEGANTE */}
       {showBuyButton && !isSoldOut && (
         <motion.button
           onClick={onBuyNow}
-          className="flex items-center justify-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-sm font-medium text-sm"
+          className="flex items-center justify-center space-x-3 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3.5 rounded-2xl hover:from-green-700 hover:to-green-800 transition-all duration-300 shadow-lg font-outfit font-semibold text-sm transform hover:scale-[1.02]"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          <CreditCard size={16} />
+          <MessageCircle size={18} />
           <span>COMPRAR VIA WHATSAPP</span>
         </motion.button>
       )}
 
-      {/* Linha com Carrinho e Favoritos */}
-      <div className="flex space-x-2">
+      {/* Linha com Carrinho e Favoritos - DESIGN MELHORADO */}
+      <div className="flex space-x-3">
         {/* Botão Adicionar ao Carrinho */}
         {!isSoldOut && (
           <motion.button 
             onClick={onAddToCart}
             disabled={isCartLoading}
-            className={`flex-1 flex items-center justify-center space-x-1 px-3 py-2 rounded-lg transition-colors shadow-sm text-xs ${
+            className={`flex-1 flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl transition-all duration-300 shadow-md font-outfit font-semibold text-sm ${
               isCartAdded 
-                ? 'bg-green-600 text-white' 
-                : 'bg-neutral-900 text-white hover:bg-neutral-800'
+                ? 'bg-green-600 text-white transform scale-[1.02]' 
+                : 'bg-neutral-900 text-white hover:bg-neutral-800 hover:scale-[1.02]'
             } ${isCartLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             whileHover={{ scale: isCartLoading ? 1 : 1.02 }}
             whileTap={{ scale: isCartLoading ? 1 : 0.98 }}
           >
             {isCartAdded ? (
               <>
-                <Check size={14} />
-                {showCartText && <span>Adicionado</span>}
+                <Check size={16} />
+                {showCartText && <span>Adicionado!</span>}
               </>
             ) : (
               <>
-                <ShoppingCart size={14} />
+                <ShoppingCart size={16} />
                 {showCartText && <span>{isCartLoading ? 'Adicionando...' : 'Carrinho'}</span>}
               </>
             )}
           </motion.button>
         )}
 
-        {/* Botão Favoritar */}
+        {/* Botão Favoritar - DESIGN ELEGANTE */}
         <motion.button
           onClick={onToggleFavorite}
-          className="flex items-center justify-center bg-white/90 backdrop-blur-sm border border-neutral-200 px-3 py-2 rounded-lg hover:bg-white transition-colors shadow-sm"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          className={`flex items-center justify-center px-4 py-3 rounded-2xl border-2 transition-all duration-300 shadow-md ${
+            isFavorite 
+              ? 'bg-red-50 border-red-300 text-red-600 hover:bg-red-100' 
+              : 'bg-white border-neutral-200 text-neutral-600 hover:border-red-300 hover:bg-red-50 hover:text-red-600'
+          }`}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           <Heart
-            size={14}
-            className={`transition-colors ${
-              isFavorite ? 'text-red-600 fill-red-600' : 'text-neutral-600 hover:text-red-600'
+            size={16}
+            className={`transition-all duration-300 ${
+              isFavorite ? 'text-red-600 fill-red-600' : 'text-neutral-600'
             }`}
           />
         </motion.button>
