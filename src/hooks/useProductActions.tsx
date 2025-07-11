@@ -11,61 +11,98 @@ export const useProductActions = () => {
 
   const toggleFavorite = (productId: string, productName: string) => {
     return requireAuth(() => {
-      const isFavorite = favorites.includes(productId);
-      
-      if (isFavorite) {
-        setFavorites(favorites.filter(id => id !== productId));
+      try {
+        const currentFavorites = Array.isArray(favorites) ? favorites : [];
+        const isFavorite = currentFavorites.includes(productId);
+        
+        let newFavorites;
+        if (isFavorite) {
+          newFavorites = currentFavorites.filter(id => id !== productId);
+          setFavorites(newFavorites);
+          toast({
+            title: "❤️ Removido dos favoritos",
+            description: `${productName} foi removido dos seus favoritos.`,
+            duration: 2000,
+          });
+        } else {
+          newFavorites = [...currentFavorites, productId];
+          setFavorites(newFavorites);
+          toast({
+            title: "❤️ Adicionado aos favoritos",
+            description: `${productName} foi adicionado aos seus favoritos.`,
+            duration: 2000,
+          });
+        }
+        
+        // Força atualização do localStorage
+        localStorage.setItem('favorites', JSON.stringify(newFavorites));
+        
+        // Disparar evento customizado para atualizar contadores
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('favoritesUpdated'));
+        }, 100);
+        
+      } catch (error) {
+        console.error('Erro ao alterar favorito:', error);
         toast({
-          title: "❤️ Removido dos favoritos",
-          description: `${productName} foi removido dos seus favoritos.`,
-          duration: 3000,
-        });
-      } else {
-        setFavorites([...favorites, productId]);
-        toast({
-          title: "❤️ Adicionado aos favoritos",
-          description: `${productName} foi adicionado aos seus favoritos.`,
-          duration: 3000,
+          title: "Erro",
+          description: "Erro ao alterar favorito.",
+          variant: "destructive",
         });
       }
-      
-      // Disparar evento customizado para atualizar contadores
-      window.dispatchEvent(new Event('favoritesUpdated'));
     });
   };
 
   const addToCart = (productId: string, productName: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
     return requireAuth(() => {
-      const existingItemIndex = cart.findIndex(
-        (item: any) => 
-          item.productId === productId && 
-          item.selectedColor === selectedColor && 
-          item.selectedSize === selectedSize
-      );
+      try {
+        const currentCart = Array.isArray(cart) ? cart : [];
+        const existingItemIndex = currentCart.findIndex(
+          (item: any) => 
+            item.productId === productId && 
+            item.selectedColor === (selectedColor || '') && 
+            item.selectedSize === (selectedSize || '')
+        );
 
-      let newCart;
-      if (existingItemIndex >= 0) {
-        newCart = [...cart];
-        newCart[existingItemIndex].quantity += quantity;
+        let newCart;
+        if (existingItemIndex >= 0) {
+          newCart = [...currentCart];
+          newCart[existingItemIndex].quantity = (newCart[existingItemIndex].quantity || 1) + quantity;
+        } else {
+          const newItem = {
+            productId,
+            quantity,
+            selectedColor: selectedColor || '',
+            selectedSize: selectedSize || '',
+            addedAt: new Date().toISOString(),
+          };
+          newCart = [...currentCart, newItem];
+        }
+        
         setCart(newCart);
-      } else {
-        newCart = [...cart, {
-          productId,
-          quantity,
-          selectedColor: selectedColor || '',
-          selectedSize: selectedSize || '',
-        }];
-        setCart(newCart);
+        
+        // Força atualização do localStorage
+        localStorage.setItem('cart', JSON.stringify(newCart));
+
+        toast({
+          title: "🛒 Produto adicionado ao carrinho!",
+          description: `${quantity}x ${productName} foi adicionado ao seu carrinho.`,
+          duration: 2000,
+        });
+        
+        // Disparar evento customizado para atualizar contadores
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('cartUpdated'));
+        }, 100);
+        
+      } catch (error) {
+        console.error('Erro ao adicionar ao carrinho:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao adicionar produto ao carrinho.",
+          variant: "destructive",
+        });
       }
-
-      toast({
-        title: "🛒 Produto adicionado ao carrinho!",
-        description: `${quantity}x ${productName} foi adicionado ao seu carrinho.`,
-        duration: 3000,
-      });
-      
-      // Disparar evento customizado para atualizar contadores
-      window.dispatchEvent(new Event('cartUpdated'));
     });
   };
 
@@ -77,24 +114,33 @@ export const useProductActions = () => {
       // Depois redireciona para o carrinho
       setTimeout(() => {
         window.location.href = '/cart';
-      }, 500);
+      }, 1000);
       
       toast({
         title: "🚀 Redirecionando para finalizar compra",
         description: `${productName} foi adicionado ao carrinho. Redirecionando...`,
-        duration: 2000,
+        duration: 3000,
       });
     });
   };
 
-  const isFavorite = (productId: string) => favorites.includes(productId);
+  const isFavorite = (productId: string) => {
+    const currentFavorites = Array.isArray(favorites) ? favorites : [];
+    return currentFavorites.includes(productId);
+  };
+
+  const isInCart = (productId: string) => {
+    const currentCart = Array.isArray(cart) ? cart : [];
+    return currentCart.some((item: any) => item.productId === productId);
+  };
 
   return {
     toggleFavorite,
     addToCart,
     buyNow,
     isFavorite,
-    favorites,
-    cart,
+    isInCart,
+    favorites: Array.isArray(favorites) ? favorites : [],
+    cart: Array.isArray(cart) ? cart : [],
   };
 };

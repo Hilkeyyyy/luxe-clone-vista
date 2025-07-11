@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import ProductImage from '@/components/product/ProductImage';
 import ProductActions from '@/components/product/ProductActions';
 import PriceDisplay from '@/components/ui/PriceDisplay';
-import { useSecureProductActions } from '@/hooks/useSecureProductActions';
+import { useProductActions } from '@/hooks/useProductActions';
 
 interface ProductCardProps {
   id: string;
@@ -41,8 +42,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   delay = 0,
   simplified = false,
 }) => {
-  const { toggleFavorite, addToCart, buySpecificProduct, isFavorite, getButtonState } = useSecureProductActions();
-  const buttonState = getButtonState(id);
+  const { toggleFavorite, addToCart, isFavorite, isInCart } = useProductActions();
 
   const numericPrice = parseFloat(price.replace(/[^\d,]/g, '').replace(',', '.'));
   const numericOriginalPrice = originalPrice ? parseFloat(originalPrice.replace(/[^\d,]/g, '').replace(',', '.')) : undefined;
@@ -62,16 +62,40 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    buySpecificProduct(id, name, brand, numericPrice, image);
+    
+    const whatsappNumber = "19999413755";
+    const storeUrl = window.location.origin;
+    const productUrl = `${storeUrl}/products/${id}`;
+    
+    let message = `🛒 *INTERESSE EM PRODUTO*\n\n`;
+    message += `📋 *PRODUTO SELECIONADO:*\n\n`;
+    message += `🏷️ *${name}*\n`;
+    message += `   • Marca: ${brand}\n`;
+    message += `   • Preço: R$ ${numericPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+    message += `   • Link: ${productUrl}\n`;
+    if (image) message += `   • Imagem: ${image}\n\n`;
+    message += `📞 Gostaria de mais informações sobre este produto!\n`;
+    message += `Formas de pagamento e entrega disponíveis?`;
+
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   return (
     <motion.div
-      className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-neutral-100"
+      className="group relative rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-white/20"
+      style={{
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.8) 100%)',
+        backdropFilter: 'blur(20px)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+      }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay }}
-      whileHover={{ y: -4 }}
+      whileHover={{ 
+        y: -8,
+        boxShadow: "0 20px 40px rgba(0, 0, 0, 0.12)"
+      }}
     >
       <Link to={`/products/${id}`}>
         <ProductImage
@@ -121,8 +145,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
       </Link>
 
-      {/* Botões de ação sempre visíveis no mobile e no hover no desktop */}
-      <div className="absolute bottom-4 right-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300">
+      {/* Botões de ação SEMPRE visíveis com glassmorphism */}
+      <div className="absolute bottom-4 right-4 opacity-100 transition-all duration-300">
         <ProductActions
           isFavorite={isFavorite(id)}
           isSoldOut={!!is_sold_out}
@@ -132,8 +156,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
           customBadge={custom_badge}
           showBuyButton={false}
           showCartText={false}
-          isCartLoading={buttonState.isLoading}
-          isCartAdded={buttonState.isSuccess}
+          isCartLoading={false}
+          isCartAdded={isInCart(id)}
           productId={id}
         />
       </div>

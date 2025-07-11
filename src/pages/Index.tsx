@@ -1,90 +1,196 @@
 
-import React, { useMemo } from 'react';
-import Header from '../components/Header';
-import HeroSection from '../components/HeroSection';
-import ProductCarousel from '../components/ProductCarousel';
-import FeaturedProductsGrid from '../components/FeaturedProductsGrid';
-import BrandCategoryCarousel from '../components/BrandCategoryCarousel';
-import Footer from '../components/Footer';
-import ErrorBoundary from '../components/ErrorBoundary';
-import SecurityWrapper from '../components/security/SecurityWrapper';
-import { useProductsByType } from '../hooks/useProductsByType';
+import React, { Suspense, lazy } from 'react';
+import { motion } from 'framer-motion';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import HeroSection from '@/components/HeroSection';
+import CarouselSkeleton from '@/components/ui/CarouselSkeleton';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
-// Memoizar componentes estáticos
-const MemoizedHeroSection = React.memo(HeroSection);
-const MemoizedBrandCarousel = React.memo(BrandCategoryCarousel);
-const MemoizedHeader = React.memo(Header);
-const MemoizedFooter = React.memo(Footer);
+// Lazy loading dos componentes pesados
+const BrandCategoryCarousel = lazy(() => import('@/components/BrandCategoryCarousel'));
+const ProductCarousel = lazy(() => import('@/components/ProductCarousel'));
+const FeaturedProductsGrid = lazy(() => import('@/components/FeaturedProductsGrid'));
+const VerticalBrandCarousel = lazy(() => import('@/components/VerticalBrandCarousel'));
 
 const Index = () => {
-  const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
-
-  // Memoizar produtos quando carregados
-  const memoizedProducts = useMemo(() => ({
-    newProducts,
-    featuredProducts,
-    offerProducts
-  }), [newProducts, featuredProducts, offerProducts]);
-
   return (
-    <SecurityWrapper>
-      <ErrorBoundary>
-        <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-100 font-outfit">
-          <MemoizedHeader />
+    <div className="min-h-screen font-outfit" style={{
+      background: 'linear-gradient(135deg, rgba(249, 250, 251, 0.95) 0%, rgba(243, 244, 246, 0.9) 50%, rgba(249, 250, 251, 0.95) 100%)',
+    }}>
+      <Header />
+      
+      {/* Hero Section com Glassmorphism */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+      >
+        <HeroSection />
+      </motion.div>
+
+      {/* Brand Categories com Glassmorphism */}
+      <motion.section 
+        className="py-8 sm:py-12 lg:py-16"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            className="text-center mb-8 sm:mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-4 bg-gradient-to-r from-neutral-900 via-neutral-700 to-neutral-900 bg-clip-text text-transparent">
+              Explore Nossas Categorias
+            </h2>
+            <p className="text-neutral-600 text-base sm:text-lg max-w-2xl mx-auto">
+              Descubra nossa seleção curada de relógios premium das melhores marcas do mundo
+            </p>
+          </motion.div>
           
-          <MemoizedHeroSection />
-          
-          {/* CARROSSEL DE CATEGORIAS NO TOPO */}
-          <ErrorBoundary fallback={
-            <div className="py-4 sm:py-8 text-center">
-              <p className="text-neutral-500 text-sm sm:text-base">Erro ao carregar categorias</p>
-            </div>
-          }>
-            <MemoizedBrandCarousel />
-          </ErrorBoundary>
-          
-          {/* NOVIDADES */}
-          <ErrorBoundary fallback={
-            <div className="py-4 sm:py-8 text-center">
-              <p className="text-neutral-500 text-sm sm:text-base">Erro ao carregar novidades</p>
-            </div>
-          }>
-            <ProductCarousel 
-              title="NOVIDADES" 
-              products={memoizedProducts.newProducts} 
-              loading={loading}
-            />
-          </ErrorBoundary>
-          
-          {/* OFERTAS */}
-          <ErrorBoundary fallback={
-            <div className="py-4 sm:py-8 text-center">
-              <p className="text-neutral-500 text-sm sm:text-base">Erro ao carregar ofertas</p>
-            </div>
-          }>
-            <ProductCarousel 
-              title="OFERTAS" 
-              products={memoizedProducts.offerProducts} 
-              loading={loading}
-            />
-          </ErrorBoundary>
-          
-          {/* DESTAQUES */}
-          <ErrorBoundary fallback={
-            <div className="py-4 sm:py-8 text-center">
-              <p className="text-neutral-500 text-sm sm:text-base">Erro ao carregar produtos em destaque</p>
-            </div>
-          }>
-            <FeaturedProductsGrid 
-              products={memoizedProducts.featuredProducts} 
-              loading={loading}
-            />
-          </ErrorBoundary>
-          
-          <MemoizedFooter />
+          <Suspense fallback={<CarouselSkeleton />}>
+            <BrandCategoryCarousel />
+          </Suspense>
         </div>
-      </ErrorBoundary>
-    </SecurityWrapper>
+      </motion.section>
+
+      {/* Featured Products */}
+      <motion.section 
+        className="py-8 sm:py-12 lg:py-16"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.4 }}
+        style={{
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(249, 250, 251, 0.6) 100%)',
+          backdropFilter: 'blur(10px)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            className="text-center mb-8 sm:mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-4 bg-gradient-to-r from-neutral-900 via-neutral-700 to-neutral-900 bg-clip-text text-transparent">
+              Produtos em Destaque
+            </h2>
+            <p className="text-neutral-600 text-base sm:text-lg max-w-2xl mx-auto">
+              Os relógios mais procurados e admirados da nossa coleção
+            </p>
+          </motion.div>
+          
+          <Suspense fallback={<LoadingSpinner />}>
+            <FeaturedProductsGrid />
+          </Suspense>
+        </div>
+      </motion.section>
+
+      {/* New Arrivals */}
+      <motion.section 
+        className="py-8 sm:py-12 lg:py-16"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.6 }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            className="text-center mb-8 sm:mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+          >
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-4 bg-gradient-to-r from-neutral-900 via-neutral-700 to-neutral-900 bg-clip-text text-transparent">
+              Novidades
+            </h2>
+            <p className="text-neutral-600 text-base sm:text-lg max-w-2xl mx-auto">
+              Os lançamentos mais recentes que acabaram de chegar
+            </p>
+          </motion.div>
+          
+          <Suspense fallback={<CarouselSkeleton />}>
+            <ProductCarousel 
+              title="Novos Lançamentos"
+              type="new"
+              showTitle={false}
+            />
+          </Suspense>
+        </div>
+      </motion.section>
+
+      {/* Bestsellers */}
+      <motion.section 
+        className="py-8 sm:py-12 lg:py-16"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.8 }}
+        style={{
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(249, 250, 251, 0.6) 100%)',
+          backdropFilter: 'blur(10px)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            className="text-center mb-8 sm:mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.9 }}
+          >
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-4 bg-gradient-to-r from-neutral-900 via-neutral-700 to-neutral-900 bg-clip-text text-transparent">
+              Mais Vendidos
+            </h2>
+            <p className="text-neutral-600 text-base sm:text-lg max-w-2xl mx-auto">
+              Os relógios preferidos dos nossos clientes
+            </p>
+          </motion.div>
+          
+          <Suspense fallback={<CarouselSkeleton />}>
+            <ProductCarousel 
+              title="Best Sellers"
+              type="bestseller"
+              showTitle={false}
+            />
+          </Suspense>
+        </div>
+      </motion.section>
+
+      {/* Vertical Brand Carousel */}
+      <motion.section 
+        className="py-8 sm:py-12 lg:py-16"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 1.0 }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            className="text-center mb-8 sm:mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 1.1 }}
+          >
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-4 bg-gradient-to-r from-neutral-900 via-neutral-700 to-neutral-900 bg-clip-text text-transparent">
+              Marcas Premium
+            </h2>
+            <p className="text-neutral-600 text-base sm:text-lg max-w-2xl mx-auto">
+              Explore nossa seleção exclusiva das melhores marcas
+            </p>
+          </motion.div>
+          
+          <Suspense fallback={<LoadingSpinner />}>
+            <VerticalBrandCarousel />
+          </Suspense>
+        </div>
+      </motion.section>
+
+      <Footer />
+    </div>
   );
 };
 

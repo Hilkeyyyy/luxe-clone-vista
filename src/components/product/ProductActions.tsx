@@ -32,19 +32,25 @@ const ProductActions: React.FC<ProductActionsProps> = ({
 }) => {
   return (
     <div className="flex flex-col space-y-4">
-      {/* Botão Comprar via WhatsApp - DESIGN GLASSMORPHISM ELEGANTE */}
+      {/* Botão Comprar via WhatsApp - GLASSMORPHISM PREMIUM */}
       {showBuyButton && !isSoldOut && (
         <motion.button
           onClick={onBuyNow}
-          className="group relative overflow-hidden flex items-center justify-center space-x-3 bg-gradient-to-r from-green-500/90 to-emerald-600/90 text-white px-8 py-4 rounded-2xl font-outfit font-semibold text-sm shadow-xl hover:shadow-2xl transition-all duration-500 backdrop-blur-sm border border-white/20"
+          className="group relative overflow-hidden flex items-center justify-center space-x-3 px-8 py-4 rounded-2xl font-outfit font-semibold text-sm shadow-xl hover:shadow-2xl transition-all duration-500 text-white"
+          style={{
+            background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.9) 0%, rgba(16, 185, 129, 0.9) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 8px 32px rgba(34, 197, 94, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+          }}
           whileHover={{ 
             scale: 1.02,
-            boxShadow: "0 25px 50px -12px rgba(34, 197, 94, 0.25)"
+            boxShadow: "0 12px 40px rgba(34, 197, 94, 0.4)"
           }}
           whileTap={{ scale: 0.98 }}
         >
           {/* Liquid Glass Effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
           
           <MessageCircle size={20} className="relative z-10" />
@@ -52,28 +58,38 @@ const ProductActions: React.FC<ProductActionsProps> = ({
         </motion.button>
       )}
 
-      {/* Linha com Carrinho e Favoritos - DESIGN GLASSMORPHISM */}
+      {/* Linha com Carrinho e Favoritos - GLASSMORPHISM PREMIUM */}
       <div className="flex space-x-3">
         {/* Botão Adicionar ao Carrinho */}
         {!isSoldOut && (
           <motion.button 
             onClick={onAddToCart}
             disabled={isCartLoading}
-            className={`group relative overflow-hidden flex-1 flex items-center justify-center space-x-2 px-6 py-3.5 rounded-2xl transition-all duration-500 font-outfit font-semibold text-sm shadow-lg hover:shadow-xl backdrop-blur-sm border ${
+            className={`group relative overflow-hidden flex-1 flex items-center justify-center space-x-2 px-6 py-3.5 rounded-2xl transition-all duration-500 font-outfit font-semibold text-sm shadow-lg hover:shadow-xl ${
               isCartAdded 
-                ? 'bg-gradient-to-r from-green-500/90 to-emerald-600/90 text-white border-white/20 shadow-green-500/25' 
-                : 'bg-gradient-to-r from-neutral-900/90 to-neutral-800/90 text-white hover:from-neutral-800/90 hover:to-neutral-700/90 border-white/10'
+                ? 'text-white' 
+                : 'text-white hover:text-white'
             } ${isCartLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            style={{
+              background: isCartAdded 
+                ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.9) 0%, rgba(16, 185, 129, 0.9) 100%)'
+                : 'linear-gradient(135deg, rgba(23, 23, 23, 0.9) 0%, rgba(38, 38, 38, 0.9) 100%)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: isCartAdded 
+                ? '0 8px 32px rgba(34, 197, 94, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                : '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            }}
             whileHover={{ 
               scale: isCartLoading ? 1 : 1.02,
               boxShadow: isCartAdded 
-                ? "0 20px 40px -12px rgba(34, 197, 94, 0.3)" 
-                : "0 20px 40px -12px rgba(0, 0, 0, 0.25)"
+                ? "0 12px 40px rgba(34, 197, 94, 0.4)" 
+                : "0 12px 40px rgba(0, 0, 0, 0.3)"
             }}
             whileTap={{ scale: isCartLoading ? 1 : 0.98 }}
           >
             {/* Liquid Glass Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
             
             {isCartAdded ? (
@@ -90,17 +106,32 @@ const ProductActions: React.FC<ProductActionsProps> = ({
           </motion.button>
         )}
 
-        {/* Botão Favoritar - DESIGN GLASSMORPHISM ELEGANTE */}
+        {/* Botão Favoritar - GLASSMORPHISM PREMIUM */}
         <motion.button
           onClick={onToggleFavorite}
-          className={`group relative overflow-hidden flex items-center justify-center px-4 py-3.5 rounded-2xl transition-all duration-500 shadow-lg hover:shadow-xl backdrop-blur-sm border-2 ${
+          className={`group relative overflow-hidden flex items-center justify-center px-4 py-3.5 rounded-2xl transition-all duration-500 shadow-lg hover:shadow-xl ${
             isFavorite 
-              ? 'bg-gradient-to-r from-red-50/90 to-pink-50/90 border-red-300/50 text-red-600 hover:shadow-red-500/20' 
-              : 'bg-white/80 border-neutral-200/50 text-neutral-600 hover:border-red-300/50 hover:bg-red-50/80 hover:text-red-600 hover:shadow-red-500/10'
+              ? 'text-red-600' 
+              : 'text-neutral-600 hover:text-red-600'
           }`}
+          style={{
+            background: isFavorite 
+              ? 'linear-gradient(135deg, rgba(254, 226, 226, 0.9) 0%, rgba(252, 165, 165, 0.8) 100%)'
+              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(249, 250, 251, 0.9) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: isFavorite 
+              ? '1px solid rgba(239, 68, 68, 0.3)'
+              : '1px solid rgba(229, 231, 235, 0.5)',
+            boxShadow: isFavorite 
+              ? '0 8px 32px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+              : '0 8px 32px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+          }}
           whileHover={{ 
             scale: 1.05,
-            rotate: isFavorite ? 0 : 5
+            rotate: isFavorite ? 0 : 5,
+            boxShadow: isFavorite 
+              ? "0 12px 40px rgba(239, 68, 68, 0.3)" 
+              : "0 12px 40px rgba(239, 68, 68, 0.15)"
           }}
           whileTap={{ scale: 0.95 }}
         >

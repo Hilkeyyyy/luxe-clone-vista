@@ -25,14 +25,23 @@ export const useSecureProductActions = () => {
   };
 
   const handleToggleFavorite = (productId: string, productName: string) => {
-    requireAuth(() => {
-      toggleFavorite(productId, productName);
-      // Disparar evento para atualizar contadores
-      setTimeout(() => window.dispatchEvent(new Event('favoritesUpdated')), 100);
+    requireAuth(async () => {
+      try {
+        await toggleFavorite(productId, productName);
+        // Disparar eventos para atualizar contadores
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('favoritesUpdated'));
+          // Força atualização do localStorage também
+          const updatedFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+          localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+        }, 100);
+      } catch (error) {
+        console.error('Erro ao alterar favorito:', error);
+      }
     }, 'adicionar aos favoritos');
   };
 
-  // OTIMIZAÇÃO: Feedback instantâneo no carrinho
+  // FEEDBACK INSTANTÂNEO NO CARRINHO - OTIMIZADO
   const handleAddToCart = async (productId: string, productName: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
     if (!isAuthenticated) {
       toast({
@@ -49,7 +58,7 @@ export const useSecureProductActions = () => {
       
       // Toast instantâneo
       toast({
-        title: "Adicionando ao carrinho...",
+        title: "🛒 Adicionando ao carrinho...",
         description: `${quantity}x ${productName}`,
         duration: 1000,
       });
@@ -57,14 +66,19 @@ export const useSecureProductActions = () => {
       await addToCart(productId, productName, quantity, selectedColor, selectedSize);
       
       // Feedback de sucesso
-      triggerFeedback(productId, 1000);
+      triggerFeedback(productId, 1500);
       
-      // Disparar evento para atualizar contadores
-      setTimeout(() => window.dispatchEvent(new Event('cartUpdated')), 100);
+      // Disparar eventos para atualizar contadores
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+        // Força atualização do localStorage também
+        const updatedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+      }, 100);
       
       toast({
-        title: "Produto adicionado!",
-        description: `${quantity}x ${productName}`,
+        title: "✅ Produto adicionado!",
+        description: `${quantity}x ${productName} foi adicionado ao carrinho.`,
         duration: 2000,
       });
       
@@ -72,15 +86,15 @@ export const useSecureProductActions = () => {
       console.error('Erro ao adicionar ao carrinho:', error);
       toast({
         title: "Erro",
-        description: "Erro ao adicionar produto.",
+        description: "Erro ao adicionar produto ao carrinho.",
         variant: "destructive",
       });
     } finally {
-      setTimeout(() => setLoading(productId, false), 800);
+      setTimeout(() => setLoading(productId, false), 1000);
     }
   };
 
-  // WHATSAPP SEM LOGIN - OTIMIZADO
+  // WHATSAPP PRODUTO ESPECÍFICO - OTIMIZADO
   const handleBuySpecificProduct = async (productId: string, productName: string, brand: string, price: number, image: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
     try {
       const whatsappNumber = "19999413755";
@@ -105,7 +119,7 @@ export const useSecureProductActions = () => {
       window.open(whatsappUrl, '_blank');
       
       toast({
-        title: "Redirecionando para WhatsApp",
+        title: "📱 Redirecionando para WhatsApp",
         description: `Enviando informações do produto ${productName}.`,
         duration: 3000,
       });
