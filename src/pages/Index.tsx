@@ -6,7 +6,6 @@ import Footer from '@/components/Footer';
 import HeroSection from '@/components/HeroSection';
 import CarouselSkeleton from '@/components/ui/CarouselSkeleton';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { useProductsByType } from '@/hooks/useProductsByType';
 
 // Lazy loading dos componentes pesados
 const BrandCategoryCarousel = lazy(() => import('@/components/BrandCategoryCarousel'));
@@ -15,8 +14,6 @@ const FeaturedProductsGrid = lazy(() => import('@/components/FeaturedProductsGri
 const VerticalBrandCarousel = lazy(() => import('@/components/VerticalBrandCarousel'));
 
 const Index = () => {
-  const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
-
   return (
     <div className="min-h-screen font-outfit" style={{
       background: 'linear-gradient(135deg, rgba(249, 250, 251, 0.95) 0%, rgba(243, 244, 246, 0.9) 50%, rgba(249, 250, 251, 0.95) 100%)',
@@ -89,7 +86,7 @@ const Index = () => {
           </motion.div>
           
           <Suspense fallback={<LoadingSpinner />}>
-            <FeaturedProductsGrid products={featuredProducts} loading={loading} />
+            <FeaturedProductsGrid />
           </Suspense>
         </div>
       </motion.section>
@@ -119,8 +116,8 @@ const Index = () => {
           <Suspense fallback={<CarouselSkeleton />}>
             <ProductCarousel 
               title="Novos Lançamentos"
-              products={newProducts}
-              loading={loading}
+              type="new"
+              showTitle={false}
             />
           </Suspense>
         </div>
@@ -147,18 +144,18 @@ const Index = () => {
             transition={{ duration: 0.6, delay: 0.9 }}
           >
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-4 bg-gradient-to-r from-neutral-900 via-neutral-700 to-neutral-900 bg-clip-text text-transparent">
-              Ofertas Especiais
+              Mais Vendidos
             </h2>
             <p className="text-neutral-600 text-base sm:text-lg max-w-2xl mx-auto">
-              Descontos imperdíveis por tempo limitado
+              Os relógios preferidos dos nossos clientes
             </p>
           </motion.div>
           
           <Suspense fallback={<CarouselSkeleton />}>
             <ProductCarousel 
-              title="Ofertas"
-              products={offerProducts}
-              loading={loading}
+              title="Best Sellers"
+              type="bestseller"
+              showTitle={false}
             />
           </Suspense>
         </div>
