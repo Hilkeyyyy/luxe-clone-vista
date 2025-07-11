@@ -1,141 +1,215 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useBrandCategories } from '@/hooks/useBrandCategories';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BrandCategory {
   id: string;
   name: string;
   slug: string;
-  description: string;
-  image_url: string;
-  order_position: number;
-  is_active: boolean;
+  image_url?: string;
   products_count: number;
+  is_active: boolean;
 }
 
-const BrandCategoryCarousel: React.FC = () => {
-  const { categories, loading } = useBrandCategories(true);
+const BrandCategoryCarousel = () => {
   const navigate = useNavigate();
+  const [categories, setCategories] = useState<BrandCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('brand_categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_position', { ascending: true });
+
+      if (error) throw error;
+
+      // Contar produtos para cada categoria
+      const categoriesWithCount = await Promise.all(
+        (data || []).map(async (category) => {
+          const { count } = await supabase
+            .from('products')
+            .select('*', { count: 'exact', head: true })
+            .eq('clone_category', category.name);
+          
+          return {
+            ...category,
+            products_count: count || 0
+          };
+        })
+      );
+
+      setCategories(categoriesWithCount.filter(cat => cat.products_count > 0));
+    } catch (error) {
+      console.error('Erro ao buscar categorias:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = 280;
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   const handleCategoryClick = (category: BrandCategory) => {
-    console.log('🔗 Navegando para categoria:', category.slug);
-    navigate(`/brand/${category.slug}`);
+    navigate(`/produtos?categoria=${encodeURIComponent(category.name)}`);
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center py-8">
-        <div className="w-8 h-8 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin"></div>
+      <div className="py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-neutral-200 rounded w-48 mb-8"></div>
+            <div className="flex space-x-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex-none w-64 h-32 bg-neutral-200 rounded-2xl"></div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (!categories.length) return null;
+  if (categories.length === 0) {
+    return null;
+  }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 mb-12">
-      <div className="flex items-center justify-between mb-8">
-        {/* CORREÇÃO 9: Título mais elegante */}
-        <h2 className="text-3xl font-light text-neutral-900 font-outfit tracking-wide">
-          Marcas em Destaque
-        </h2>
-      </div>
+    <motion.section 
+      className="py-12 sm:py-16 bg-gradient-to-b from-white via-neutral-50/30 to-white"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <div className="flex items-center justify-between mb-8">
+          <motion.div 
+            className="text-center sm:text-left"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <h2 className="text-3xl sm:text-4xl font-outfit font-light text-neutral-900 mb-2 tracking-wide">
+              CATEGORIAS
+            </h2>
+            <p className="text-neutral-600 font-light">
+              Explore nossa coleção por marcas
+            </p>
+          </motion.div>
+          
+          {/* Navigation Controls */}
+          <div className="hidden sm:flex items-center space-x-2">
+            <motion.button
+              onClick={() => scroll('left')}
+              className="p-3 rounded-2xl bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 text-neutral-600 hover:text-neutral-900 border border-neutral-200/50"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <ChevronLeft size={20} />
+            </motion.button>
+            <motion.button
+              onClick={() => scroll('right')}
+              className="p-3 rounded-2xl bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 text-neutral-600 hover:text-neutral-900 border border-neutral-200/50"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <ChevronRight size={20} />
+            </motion.button>
+          </div>
+        </div>
 
-      <Carousel
-        opts={{
-          align: "start",
-          loop: true,
-        }}
-        className="w-full"
-      >
-        <CarouselContent className="-ml-2 md:-ml-4">
+        {/* Categories Carousel */}
+        <div 
+          ref={scrollRef}
+          className="flex overflow-x-auto space-x-6 pb-4 scrollbar-hide"
+        >
           {categories.map((category, index) => (
-            <CarouselItem key={category.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
-              <motion.div
-                className="group cursor-pointer h-full"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -2 }}
-                onClick={() => handleCategoryClick(category)}
-              >
-                {/* CORREÇÃO 9: Design mais elegante e limpo */}
-                <div className="relative w-full h-80 bg-neutral-50 rounded-none overflow-hidden shadow-sm group-hover:shadow-md transition-all duration-300 border border-neutral-100">
-                  {/* Background Image */}
-                  {category.image_url ? (
-                    <img
-                      src={category.image_url}
+            <motion.button
+              key={category.id}
+              onClick={() => handleCategoryClick(category)}
+              className="group flex-none relative overflow-hidden bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 border border-neutral-200/50 p-6 min-w-[280px]"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              whileHover={{ 
+                scale: 1.02,
+                y: -4
+              }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {/* Liquid Glass Effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              
+              <div className="relative z-10">
+                {category.image_url && (
+                  <div className="w-full h-20 mb-4 rounded-xl overflow-hidden">
+                    <img 
+                      src={category.image_url} 
                       alt={category.name}
-                      className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
-                  ) : (
-                    <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
-                      <span className="text-4xl font-light text-neutral-400 font-outfit">
-                        {category.name.charAt(0)}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Overlay - mais sutil */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-
-                  {/* Content */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <div className="text-center">
-                      <h3 className="text-xl font-light text-white mb-2 font-outfit tracking-wide">
-                        {category.name}
-                      </h3>
-                      
-                      {/* CORREÇÃO 4: Contador de produtos em todas as categorias */}
-                      {category.products_count > 0 && (
-                        <p className="text-white/80 mb-4 text-sm font-outfit font-light">
-                          {category.products_count} produtos disponíveis
-                        </p>
-                      )}
-
-                      {/* CORREÇÃO 9: Botão mais elegante */}
-                      <motion.button
-                        className="bg-white text-neutral-900 px-6 py-2 rounded-none font-light text-sm font-outfit hover:bg-neutral-100 transition-colors shadow-sm border border-white"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCategoryClick(category);
-                        }}
-                      >
-                        EXPLORAR
-                      </motion.button>
+                  </div>
+                )}
+                
+                <div className="text-left">
+                  <h3 className="font-outfit font-semibold text-lg text-neutral-900 mb-2 group-hover:text-neutral-800 transition-colors">
+                    {category.name}
+                  </h3>
+                  
+                  {/* Contador de Produtos */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-neutral-600 group-hover:text-neutral-700 transition-colors">
+                      {category.products_count} {category.products_count === 1 ? 'produto' : 'produtos'}
+                    </span>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-neutral-100 to-neutral-200 flex items-center justify-center text-xs font-semibold text-neutral-700 group-hover:from-neutral-200 group-hover:to-neutral-300 transition-all duration-300">
+                      {category.products_count}
                     </div>
                   </div>
-
-                  {/* Badge - CORREÇÃO 4: Contador sempre visível */}
-                  {category.products_count > 0 && (
-                    <div className="absolute top-4 right-4">
-                      <span className="bg-white/90 text-neutral-900 px-3 py-1 rounded-full text-xs font-medium shadow-sm">
-                        {category.products_count}
-                      </span>
-                    </div>
-                  )}
                 </div>
-              </motion.div>
-            </CarouselItem>
+              </div>
+            </motion.button>
           ))}
-        </CarouselContent>
-        
-        {/* CORREÇÃO 9: Navegação mais elegante */}
-        <CarouselPrevious className="hidden sm:flex -left-12 w-10 h-10 border border-neutral-300 hover:border-neutral-400 bg-white/95 hover:bg-white shadow-sm rounded-none" />
-        <CarouselNext className="hidden sm:flex -right-12 w-10 h-10 border border-neutral-300 hover:border-neutral-400 bg-white/95 hover:bg-white shadow-sm rounded-none" />
-      </Carousel>
-    </div>
+        </div>
+
+        {/* Mobile scroll indicators */}
+        <div className="flex justify-center mt-6 sm:hidden">
+          <div className="flex space-x-2">
+            <button
+              onClick={() => scroll('left')}
+              className="p-2 rounded-xl bg-white/80 backdrop-blur-sm text-neutral-600 hover:bg-neutral-100/80 transition-colors border border-neutral-200/50 shadow-md"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              className="p-2 rounded-xl bg-white/80 backdrop-blur-sm text-neutral-600 hover:bg-neutral-100/80 transition-colors border border-neutral-200/50 shadow-md"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.section>
   );
 };
 

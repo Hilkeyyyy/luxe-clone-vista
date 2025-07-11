@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 
 interface ButtonState {
@@ -8,34 +9,43 @@ interface ButtonState {
 export const useButtonFeedback = () => {
   const [buttonStates, setButtonStates] = useState<Record<string, ButtonState>>({});
 
-  const triggerFeedback = useCallback((buttonId: string, duration: number = 1500) => {
+  const setLoading = useCallback((productId: string, loading: boolean) => {
     setButtonStates(prev => ({
       ...prev,
-      [buttonId]: { isLoading: false, isSuccess: true }
+      [productId]: {
+        ...prev[productId],
+        isLoading: loading
+      }
+    }));
+  }, []);
+
+  const triggerFeedback = useCallback((productId: string, duration: number = 1000) => {
+    setButtonStates(prev => ({
+      ...prev,
+      [productId]: {
+        ...prev[productId],
+        isSuccess: true
+      }
     }));
 
     setTimeout(() => {
       setButtonStates(prev => ({
         ...prev,
-        [buttonId]: { isLoading: false, isSuccess: false }
+        [productId]: {
+          ...prev[productId],
+          isSuccess: false
+        }
       }));
     }, duration);
   }, []);
 
-  const setLoading = useCallback((buttonId: string, loading: boolean) => {
-    setButtonStates(prev => ({
-      ...prev,
-      [buttonId]: { ...prev[buttonId], isLoading: loading }
-    }));
-  }, []);
-
-  const getButtonState = useCallback((buttonId: string): ButtonState => {
-    return buttonStates[buttonId] || { isLoading: false, isSuccess: false };
+  const getButtonState = useCallback((productId: string): ButtonState => {
+    return buttonStates[productId] || { isLoading: false, isSuccess: false };
   }, [buttonStates]);
 
   return {
-    triggerFeedback,
     setLoading,
+    triggerFeedback,
     getButtonState
   };
 };

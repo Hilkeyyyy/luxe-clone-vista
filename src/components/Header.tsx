@@ -4,15 +4,13 @@ import { motion } from 'framer-motion';
 import { Search, ShoppingBag, Heart, User, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useSecureFavorites } from '@/hooks/useSecureFavorites';
-import { useSecureCart } from '@/hooks/useSecureCart';
+import { useRealtimeCounters } from '@/hooks/useRealtimeCounters';
 import NavigationMenu from './NavigationMenu';
 
 const Header = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, isAdmin, loading: authLoading } = useAuth();
-  const { favoriteIds, initialized: favoritesInitialized } = useSecureFavorites();
-  const { cartItems, initialized: cartInitialized } = useSecureCart();
+  const { favoritesCount, cartCount } = useRealtimeCounters();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNavigationMenu, setShowNavigationMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -29,15 +27,10 @@ const Header = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Contadores seguros com fallbacks e proteção contra loading
-  const favoritesCount = !authLoading && favoritesInitialized ? favoriteIds.length : 0;
-  const cartItemsCount = !authLoading && cartInitialized ? 
-    cartItems.reduce((total, item) => total + item.quantity, 0) : 0;
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/busca?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/search-results?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
     }
   };
@@ -45,7 +38,7 @@ const Header = () => {
   // Loading state otimizado para mobile
   if (authLoading) {
     return (
-      <header className="bg-white shadow-sm border-b border-neutral-100 sticky top-0 z-50">
+      <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-neutral-200/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
             <div className="flex items-center">
@@ -66,7 +59,7 @@ const Header = () => {
 
   return (
     <motion.header 
-      className="bg-white shadow-sm border-b border-neutral-100 sticky top-0 z-50"
+      className="bg-white/80 backdrop-blur-md shadow-sm border-b border-neutral-200/50 sticky top-0 z-50"
       initial={false}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -96,7 +89,7 @@ const Header = () => {
                   placeholder="Buscar produtos..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:border-transparent text-sm"
+                  className="w-full pl-11 pr-4 py-2.5 border border-neutral-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:border-transparent text-sm bg-white/70 backdrop-blur-sm"
                 />
               </div>
             </form>
@@ -111,7 +104,7 @@ const Header = () => {
                   const searchInput = document.getElementById('mobile-search');
                   if (searchInput) searchInput.focus();
                 }}
-                className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
+                className="p-2.5 text-neutral-700 hover:text-neutral-900 transition-colors rounded-xl hover:bg-neutral-100/70 backdrop-blur-sm"
                 whileTap={{ scale: 0.95 }}
               >
                 <Search size={18} />
@@ -121,36 +114,46 @@ const Header = () => {
             {/* Favorites */}
             <motion.button 
               onClick={() => navigate('/favorites')}
-              className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors relative"
+              className="p-2.5 text-neutral-700 hover:text-neutral-900 transition-colors relative rounded-xl hover:bg-neutral-100/70 backdrop-blur-sm"
               whileTap={{ scale: 0.95 }}
             >
               <Heart size={18} />
               {favoritesCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center text-[10px] sm:text-xs">
+                <motion.span 
+                  className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center text-[10px] sm:text-xs shadow-lg"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                >
                   {favoritesCount > 99 ? '99+' : favoritesCount}
-                </span>
+                </motion.span>
               )}
             </motion.button>
 
             {/* Cart */}
             <motion.button 
               onClick={() => navigate('/cart')}
-              className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors relative"
+              className="p-2.5 text-neutral-700 hover:text-neutral-900 transition-colors relative rounded-xl hover:bg-neutral-100/70 backdrop-blur-sm"
               whileTap={{ scale: 0.95 }}
             >
               <ShoppingBag size={18} />
-              {cartItemsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-neutral-900 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center text-[10px] sm:text-xs">
-                  {cartItemsCount > 99 ? '99+' : cartItemsCount}
-                </span>
+              {cartCount > 0 && (
+                <motion.span 
+                  className="absolute -top-1 -right-1 bg-neutral-900 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center text-[10px] sm:text-xs shadow-lg"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                >
+                  {cartCount > 99 ? '99+' : cartCount}
+                </motion.span>
               )}
             </motion.button>
 
-            {/* Admin Settings - Verificação via database */}
+            {/* Admin Settings */}
             {isAdmin && (
               <motion.button 
                 onClick={() => navigate('/admin')}
-                className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
+                className="p-2.5 text-neutral-700 hover:text-neutral-900 transition-colors rounded-xl hover:bg-neutral-100/70 backdrop-blur-sm"
                 whileTap={{ scale: 0.95 }}
                 title="Painel Administrativo"
               >
@@ -162,7 +165,7 @@ const Header = () => {
             <div className="relative">
               <motion.button 
                 onClick={() => setShowNavigationMenu(!showNavigationMenu)}
-                className="p-2 text-neutral-700 hover:text-neutral-900 transition-colors"
+                className="p-2.5 text-neutral-700 hover:text-neutral-900 transition-colors rounded-xl hover:bg-neutral-100/70 backdrop-blur-sm"
                 whileTap={{ scale: 0.95 }}
               >
                 <User size={18} />
@@ -189,7 +192,7 @@ const Header = () => {
                 placeholder="Buscar produtos..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:border-transparent text-sm"
+                className="w-full pl-11 pr-4 py-2.5 border border-neutral-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:border-transparent text-sm bg-white/70 backdrop-blur-sm"
               />
             </div>
           </form>

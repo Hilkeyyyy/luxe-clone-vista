@@ -10,33 +10,37 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import SecurityWrapper from '../components/security/SecurityWrapper';
 import { useProductsByType } from '../hooks/useProductsByType';
 
+// Memoizar componentes estáticos
+const MemoizedHeroSection = React.memo(HeroSection);
+const MemoizedBrandCarousel = React.memo(BrandCategoryCarousel);
+const MemoizedHeader = React.memo(Header);
+const MemoizedFooter = React.memo(Footer);
+
 const Index = () => {
   const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
 
-  // OTIMIZAÇÃO: Memoizar componentes para evitar re-renders desnecessários
-  const memoizedHeroSection = useMemo(() => <HeroSection />, []);
-  const memoizedBrandCarousel = useMemo(() => <BrandCategoryCarousel />, []);
-
-  // OTIMIZAÇÃO: Memoizar produtos quando carregados
-  const memoizedNewProducts = useMemo(() => newProducts, [newProducts]);
-  const memoizedFeaturedProducts = useMemo(() => featuredProducts, [featuredProducts]);
-  const memoizedOfferProducts = useMemo(() => offerProducts, [offerProducts]);
+  // Memoizar produtos quando carregados
+  const memoizedProducts = useMemo(() => ({
+    newProducts,
+    featuredProducts,
+    offerProducts
+  }), [newProducts, featuredProducts, offerProducts]);
 
   return (
     <SecurityWrapper>
       <ErrorBoundary>
-        <div className="min-h-screen bg-white font-outfit">
-          <Header />
+        <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-100 font-outfit">
+          <MemoizedHeader />
           
-          {memoizedHeroSection}
+          <MemoizedHeroSection />
           
-          {/* CARROSSEL DE CATEGORIAS NO TOPO - Acima de NOVIDADES */}
+          {/* CARROSSEL DE CATEGORIAS NO TOPO */}
           <ErrorBoundary fallback={
             <div className="py-4 sm:py-8 text-center">
               <p className="text-neutral-500 text-sm sm:text-base">Erro ao carregar categorias</p>
             </div>
           }>
-            {memoizedBrandCarousel}
+            <MemoizedBrandCarousel />
           </ErrorBoundary>
           
           {/* NOVIDADES */}
@@ -47,7 +51,7 @@ const Index = () => {
           }>
             <ProductCarousel 
               title="NOVIDADES" 
-              products={memoizedNewProducts} 
+              products={memoizedProducts.newProducts} 
               loading={loading}
             />
           </ErrorBoundary>
@@ -60,7 +64,7 @@ const Index = () => {
           }>
             <ProductCarousel 
               title="OFERTAS" 
-              products={memoizedOfferProducts} 
+              products={memoizedProducts.offerProducts} 
               loading={loading}
             />
           </ErrorBoundary>
@@ -72,12 +76,12 @@ const Index = () => {
             </div>
           }>
             <FeaturedProductsGrid 
-              products={memoizedFeaturedProducts} 
+              products={memoizedProducts.featuredProducts} 
               loading={loading}
             />
           </ErrorBoundary>
           
-          <Footer />
+          <MemoizedFooter />
         </div>
       </ErrorBoundary>
     </SecurityWrapper>

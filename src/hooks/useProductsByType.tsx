@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { secureLog } from '@/utils/secureLogger';
 import { Product } from '@/types/product';
@@ -12,6 +12,10 @@ export const useProductsByType = () => {
   
   const mounted = useRef(true);
   const initialized = useRef(false);
+  const cacheRef = useRef<{
+    data: Product[],
+    timestamp: number
+  } | null>(null);
 
   const fetchProductsByType = useCallback(async () => {
     if (!mounted.current || initialized.current) return;
@@ -20,14 +24,30 @@ export const useProductsByType = () => {
       setLoading(true);
       initialized.current = true;
       
+      // Cache por 30 segundos
+      const now = Date.now();
+      if (cacheRef.current && (now - cacheRef.current.timestamp) < 30000) {
+        const cached = cacheRef.current.data;
+        
+        const novos = cached.filter(p => p.is_new).slice(0, 8);
+        const destaques = cached.filter(p => p.is_featured).slice(0, 8);
+        const ofertas = cached.filter(p => p.original_price && p.original_price > p.price).slice(0, 8);
+
+        setNewProducts(novos);
+        setFeaturedProducts(destaques);
+        setOfferProducts(ofertas);
+        setLoading(false);
+        return;
+      }
+
       console.log('🚀 Buscando produtos...');
 
-      // Query otimizada com timeout de 3s
+      // Query otimizada com timeout de 2s
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-        console.warn('⏰ Query cancelada por timeout (3s)');
-      }, 3000);
+        console.warn('⏰ Query cancelada por timeout (2s)');
+      }, 2000);
 
       const { data: allProducts, error } = await supabase
         .from('products')
@@ -45,9 +65,10 @@ export const useProductsByType = () => {
           colors,
           sizes,
           stock_status,
+          is_sold_out,
           created_at
         `)
-        .limit(15) // Reduzido para carregamento mais rápido
+        .limit(20)
         .abortSignal(controller.signal);
 
       clearTimeout(timeoutId);
@@ -86,17 +107,23 @@ export const useProductsByType = () => {
         stock_status: p.stock_status || 'in_stock',
         created_at: p.created_at,
         is_bestseller: false,
-        is_sold_out: false,
+        is_sold_out: Boolean(p.is_sold_out),
         is_coming_soon: false,
         in_stock: true
       }));
 
+      // Cache dos dados
+      cacheRef.current = {
+        data: mappedProducts,
+        timestamp: now
+      };
+
       // Filtrar produtos de forma mais eficiente
-      const novos = mappedProducts.filter(p => p.is_new).slice(0, 6);
-      const destaques = mappedProducts.filter(p => p.is_featured).slice(0, 6);
+      const novos = mappedProducts.filter(p => p.is_new).slice(0, 8);
+      const destaques = mappedProducts.filter(p => p.is_featured).slice(0, 8);
       const ofertas = mappedProducts.filter(p => {
         return p.original_price && p.original_price > 0 && p.original_price > p.price;
-      }).slice(0, 6);
+      }).slice(0, 8);
 
       console.log('📊 Produtos filtrados:', {
         total: mappedProducts.length,
@@ -135,13 +162,22 @@ export const useProductsByType = () => {
   const refetch = useCallback(() => {
     console.log('🔄 Refetch produtos');
     initialized.current = false;
+    cacheRef.current = null;
     fetchProductsByType();
   }, [fetchProductsByType]);
+
+  // Memoizar resultados
+  const memoizedResults = useMemo(() => ({
+    newProducts,
+    featuredProducts,
+    offerProducts,
+    loading
+  }), [newProducts, featuredProducts, offerProducts, loading]);
 
   useEffect(() => {
     mounted.current = true;
     
-    // Executar imediatamente sem delay
+    // Executar imediatamente
     fetchProductsByType();
 
     return () => {
@@ -150,10 +186,7 @@ export const useProductsByType = () => {
   }, [fetchProductsByType]);
 
   return {
-    newProducts,
-    featuredProducts,
-    offerProducts,
-    loading,
+    ...memoizedResults,
     refetch
   };
 };

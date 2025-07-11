@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, MessageCircle, ShoppingCart, Heart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
@@ -10,7 +10,6 @@ import Footer from '@/components/Footer';
 import ImageGallery from '@/components/product/ImageGallery';
 import ProductInfo from '@/components/product/ProductInfo';
 import ProductSpecs from '@/components/product/ProductSpecs';
-import ProductActions from '@/components/product/ProductActions';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
 import AuthModal from '@/components/auth/AuthModal';
@@ -119,6 +118,9 @@ const ProductDetail = () => {
     
     localStorage.setItem('favorites', JSON.stringify(newFavorites));
     setIsFavorite(!isFavorite);
+    
+    // Disparar evento para atualizar contadores
+    window.dispatchEvent(new Event('favoritesUpdated'));
   };
 
   const addToCart = async () => {
@@ -153,6 +155,9 @@ const ProductDetail = () => {
       }
 
       localStorage.setItem('cart', JSON.stringify(cartItems));
+      
+      // Disparar evento para atualizar contadores
+      window.dispatchEvent(new Event('cartUpdated'));
       
       toast({
         title: "✅ Produto adicionado!",
@@ -253,7 +258,7 @@ const ProductDetail = () => {
   const isProductSoldOut = product.is_sold_out || product.stock_status === 'out_of_stock' || !product.in_stock;
 
   return (
-    <div className="min-h-screen bg-white font-outfit">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-100 font-outfit">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -310,18 +315,18 @@ const ProductDetail = () => {
               {!isProductSoldOut && (
                 <div className="flex items-center space-x-4">
                   <span className="font-outfit font-medium text-neutral-900">Quantidade:</span>
-                  <div className="flex items-center border-2 border-neutral-200 rounded-xl overflow-hidden">
+                  <div className="flex items-center bg-white/80 backdrop-blur-sm border-2 border-neutral-200/50 rounded-2xl overflow-hidden shadow-lg">
                     <button
                       onClick={() => updateQuantity(false)}
-                      className="px-4 py-3 hover:bg-neutral-50 transition-colors text-neutral-700 font-medium"
+                      className="px-4 py-3 hover:bg-neutral-50/80 transition-colors text-neutral-700 font-medium"
                       disabled={quantity <= 1}
                     >
                       <Minus size={16} />
                     </button>
-                    <span className="px-6 py-3 font-semibold text-lg bg-neutral-50">{quantity}</span>
+                    <span className="px-6 py-3 font-semibold text-lg bg-neutral-50/80">{quantity}</span>
                     <button
                       onClick={() => updateQuantity(true)}
-                      className="px-4 py-3 hover:bg-neutral-50 transition-colors text-neutral-700 font-medium"
+                      className="px-4 py-3 hover:bg-neutral-50/80 transition-colors text-neutral-700 font-medium"
                     >
                       <Plus size={16} />
                     </button>
@@ -329,18 +334,25 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* BOTÕES ELEGANTES */}
+              {/* BOTÕES GLASSMORPHISM ELEGANTES */}
               <div className="space-y-4">
                 {/* Botão Comprar via WhatsApp */}
                 {!isProductSoldOut && (
                   <motion.button
                     onClick={buyViaWhatsApp}
-                    className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-4 rounded-2xl font-outfit font-semibold text-lg shadow-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center space-x-3"
-                    whileHover={{ scale: 1.02 }}
+                    className="group relative overflow-hidden w-full bg-gradient-to-r from-green-500/90 to-emerald-600/90 text-white px-8 py-4 rounded-2xl font-outfit font-semibold text-lg shadow-xl hover:shadow-2xl transition-all duration-500 backdrop-blur-sm border border-white/20 flex items-center justify-center space-x-3"
+                    whileHover={{ 
+                      scale: 1.02,
+                      boxShadow: "0 25px 50px -12px rgba(34, 197, 94, 0.25)"
+                    }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <span className="text-2xl">💬</span>
-                    <span>COMPRAR VIA WHATSAPP</span>
+                    {/* Liquid Glass Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    
+                    <MessageCircle size={24} className="relative z-10" />
+                    <span className="relative z-10">COMPRAR VIA WHATSAPP</span>
                   </motion.button>
                 )}
 
@@ -351,23 +363,32 @@ const ProductDetail = () => {
                     <motion.button 
                       onClick={addToCart}
                       disabled={isAddingToCart}
-                      className={`flex-1 px-6 py-4 rounded-2xl transition-all duration-300 font-outfit font-semibold text-lg shadow-md ${
+                      className={`group relative overflow-hidden flex-1 px-6 py-4 rounded-2xl transition-all duration-500 font-outfit font-semibold text-lg shadow-lg hover:shadow-xl backdrop-blur-sm border flex items-center justify-center space-x-2 ${
                         isAddingToCart 
-                          ? 'bg-green-600 text-white' 
-                          : 'bg-neutral-900 text-white hover:bg-neutral-800'
-                      } ${isAddingToCart ? 'opacity-70' : 'hover:scale-[1.02]'} flex items-center justify-center space-x-2`}
-                      whileHover={{ scale: isAddingToCart ? 1 : 1.02 }}
+                          ? 'bg-gradient-to-r from-green-500/90 to-emerald-600/90 text-white border-white/20 shadow-green-500/25' 
+                          : 'bg-gradient-to-r from-neutral-900/90 to-neutral-800/90 text-white hover:from-neutral-800/90 hover:to-neutral-700/90 border-white/10'
+                      } ${isAddingToCart ? 'opacity-70' : ''}`}
+                      whileHover={{ 
+                        scale: isAddingToCart ? 1 : 1.02,
+                        boxShadow: isAddingToCart 
+                          ? "0 20px 40px -12px rgba(34, 197, 94, 0.3)" 
+                          : "0 20px 40px -12px rgba(0, 0, 0, 0.25)"
+                      }}
                       whileTap={{ scale: isAddingToCart ? 1 : 0.98 }}
                     >
+                      {/* Liquid Glass Effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                      
                       {isAddingToCart ? (
                         <>
-                          <span className="text-xl">✅</span>
-                          <span>Adicionado!</span>
+                          <div className="relative z-10 w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <span className="relative z-10">Adicionando...</span>
                         </>
                       ) : (
                         <>
-                          <span className="text-xl">🛒</span>
-                          <span>Adicionar ao Carrinho</span>
+                          <ShoppingCart size={20} className="relative z-10" />
+                          <span className="relative z-10">Adicionar ao Carrinho</span>
                         </>
                       )}
                     </motion.button>
@@ -376,28 +397,42 @@ const ProductDetail = () => {
                   {/* Botão Favoritar */}
                   <motion.button
                     onClick={toggleFavorite}
-                    className="px-6 py-4 bg-white border-2 border-neutral-200 rounded-2xl hover:border-red-300 hover:bg-red-50 transition-all duration-300 shadow-md flex items-center justify-center"
-                    whileHover={{ scale: 1.05 }}
+                    className={`group relative overflow-hidden px-6 py-4 rounded-2xl transition-all duration-500 shadow-lg hover:shadow-xl backdrop-blur-sm border-2 flex items-center justify-center ${
+                      isFavorite 
+                        ? 'bg-gradient-to-r from-red-50/90 to-pink-50/90 border-red-300/50 text-red-600 hover:shadow-red-500/20' 
+                        : 'bg-white/80 border-neutral-200/50 text-neutral-600 hover:border-red-300/50 hover:bg-red-50/80 hover:text-red-600 hover:shadow-red-500/10'
+                    }`}
+                    whileHover={{ 
+                      scale: 1.05,
+                      rotate: isFavorite ? 0 : 5
+                    }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <span className={`text-2xl ${isFavorite ? '❤️' : '🤍'}`}>
-                      {isFavorite ? '❤️' : '🤍'}
-                    </span>
+                    {/* Liquid Glass Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    
+                    <Heart
+                      size={24}
+                      className={`relative z-10 transition-all duration-300 ${
+                        isFavorite ? 'text-red-600 fill-red-600' : 'text-neutral-600'
+                      }`}
+                    />
                   </motion.button>
                 </div>
               </div>
 
               {/* Status Esgotado */}
               {isProductSoldOut && (
-                <div className="text-center py-4 px-6 bg-red-50 border-2 border-red-200 rounded-2xl">
-                  <span className="text-red-600 font-semibold text-lg">❌ Produto Esgotado</span>
+                <div className="text-center py-4 px-6 bg-red-50/90 backdrop-blur-sm border-2 border-red-200/50 rounded-2xl shadow-lg">
+                  <span className="text-red-600 font-semibold text-lg">Produto Esgotado</span>
                 </div>
               )}
             </motion.div>
           </div>
         </div>
 
-        {/* Product Specifications - MANTÉM A SEÇÃO EDITÁVEL */}
+        {/* Product Specifications */}
         {product?.specifications && (
           <ProductSpecs specifications={product.specifications} />
         )}

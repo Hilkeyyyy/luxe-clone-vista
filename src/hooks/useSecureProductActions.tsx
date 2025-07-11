@@ -4,7 +4,6 @@ import { useSecureFavorites } from '@/hooks/useSecureFavorites';
 import { useSecureCart } from '@/hooks/useSecureCart';
 import { useAuth } from '@/hooks/useAuth';
 import { useButtonFeedback } from '@/hooks/useButtonFeedback';
-import { supabase } from '@/integrations/supabase/client';
 
 export const useSecureProductActions = () => {
   const { toast } = useToast();
@@ -26,7 +25,11 @@ export const useSecureProductActions = () => {
   };
 
   const handleToggleFavorite = (productId: string, productName: string) => {
-    requireAuth(() => toggleFavorite(productId, productName), 'adicionar aos favoritos');
+    requireAuth(() => {
+      toggleFavorite(productId, productName);
+      // Disparar evento para atualizar contadores
+      setTimeout(() => window.dispatchEvent(new Event('favoritesUpdated')), 100);
+    }, 'adicionar aos favoritos');
   };
 
   // OTIMIZAÇÃO: Feedback instantâneo no carrinho
@@ -46,7 +49,7 @@ export const useSecureProductActions = () => {
       
       // Toast instantâneo
       toast({
-        title: "✅ Adicionando...",
+        title: "Adicionando ao carrinho...",
         description: `${quantity}x ${productName}`,
         duration: 1000,
       });
@@ -56,8 +59,11 @@ export const useSecureProductActions = () => {
       // Feedback de sucesso
       triggerFeedback(productId, 1000);
       
+      // Disparar evento para atualizar contadores
+      setTimeout(() => window.dispatchEvent(new Event('cartUpdated')), 100);
+      
       toast({
-        title: "🛒 Produto adicionado!",
+        title: "Produto adicionado!",
         description: `${quantity}x ${productName}`,
         duration: 2000,
       });
@@ -74,15 +80,10 @@ export const useSecureProductActions = () => {
     }
   };
 
-  const getWhatsAppSettings = async () => {
-    // HARDCODED para performance
-    return "19999413755";
-  };
-
   // WHATSAPP SEM LOGIN - OTIMIZADO
   const handleBuySpecificProduct = async (productId: string, productName: string, brand: string, price: number, image: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
     try {
-      const whatsappNumber = "19999413755"; // Hardcoded para performance
+      const whatsappNumber = "19999413755";
       const storeUrl = window.location.origin;
       const productUrl = `${storeUrl}/products/${productId}`;
       
@@ -104,7 +105,7 @@ export const useSecureProductActions = () => {
       window.open(whatsappUrl, '_blank');
       
       toast({
-        title: "📱 Redirecionando para WhatsApp",
+        title: "Redirecionando para WhatsApp",
         description: `Enviando informações do produto ${productName}.`,
         duration: 3000,
       });
