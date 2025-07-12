@@ -118,7 +118,7 @@ const Index = () => {
           
           <Suspense fallback={<CarouselSkeleton />}>
             <ProductCarousel 
-              title="Novos Lançamentos"
+              title="NOVIDADES"
               products={newProducts}
               loading={loading}
             />
@@ -156,7 +156,7 @@ const Index = () => {
           
           <Suspense fallback={<CarouselSkeleton />}>
             <ProductCarousel 
-              title="Best Sellers"
+              title="OFERTAS"
               products={offerProducts}
               loading={loading}
             />
