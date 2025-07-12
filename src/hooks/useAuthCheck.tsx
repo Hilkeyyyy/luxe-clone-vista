@@ -8,6 +8,8 @@ export const useAuthCheck = () => {
   return {
     ...authState,
     // Verificação adicional de segurança para admin
-    isAdminVerified: authState.isAuthenticated && authState.user?.isAdmin === true
+    isAdminVerified: authState.isAuthenticated && authState.user?.isAdmin === true,
+    // Garantir que initialized seja incluído (baseado no loading state)
+    initialized: !authState.loading
   };
 };
