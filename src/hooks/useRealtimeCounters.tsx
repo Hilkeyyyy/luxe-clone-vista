@@ -18,15 +18,15 @@ export const useRealtimeCounters = () => {
     }
 
     try {
-      // Buscar favoritos do Supabase
-      const { data: favoritesData, error: favError } = await supabase
+      // Contar favoritos no Supabase
+      const { count: favCount, error: favError } = await supabase
         .from('favorites')
-        .select('id', { count: 'exact', head: true })
+        .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
       if (favError) throw favError;
 
-      // Buscar itens do carrinho do Supabase
+      // Contar itens do carrinho no Supabase  
       const { data: cartData, error: cartError } = await supabase
         .from('cart_items')
         .select('quantity')
@@ -36,10 +36,12 @@ export const useRealtimeCounters = () => {
 
       const totalCartItems = cartData?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
 
-      setFavoritesCount(favoritesData?.length || 0);
+      setFavoritesCount(favCount || 0);
       setCartCount(totalCartItems);
+
+      console.log('📊 Contadores atualizados:', { favoritos: favCount, carrinho: totalCartItems });
     } catch (error) {
-      console.error('Erro ao atualizar contadores:', error);
+      console.error('❌ Erro ao atualizar contadores:', error);
       setFavoritesCount(0);
       setCartCount(0);
     } finally {
@@ -49,27 +51,55 @@ export const useRealtimeCounters = () => {
 
   // Listeners para atualizações em tempo real
   useEffect(() => {
-    // Atualização inicial
     updateCounters();
 
-    // Event listeners para mudanças
     const handleUpdate = () => {
-      setTimeout(updateCounters, 100); // Pequeno delay para garantir sincronização
+      console.log('🔄 Evento de atualização recebido');
+      setTimeout(updateCounters, 200);
     };
 
-    // Adicionar listeners
+    // Event listeners
     window.addEventListener('favoritesUpdated', handleUpdate);
     window.addEventListener('cartUpdated', handleUpdate);
 
-    // Polling periódico para garantir sincronização
-    const interval = setInterval(updateCounters, 5000);
+    // Polling para garantir sincronização
+    const interval = setInterval(updateCounters, 10000);
+
+    // Realtime subscriptions do Supabase
+    const favoritesChannel = supabase
+      .channel('favorites-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'favorites',
+        filter: `user_id=eq.${user?.id}`
+      }, () => {
+        console.log('🔔 Mudança nos favoritos detectada');
+        handleUpdate();
+      })
+      .subscribe();
+
+    const cartChannel = supabase
+      .channel('cart-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'cart_items',
+        filter: `user_id=eq.${user?.id}`
+      }, () => {
+        console.log('🔔 Mudança no carrinho detectada');
+        handleUpdate();
+      })
+      .subscribe();
 
     return () => {
       window.removeEventListener('favoritesUpdated', handleUpdate);
       window.removeEventListener('cartUpdated', handleUpdate);
       clearInterval(interval);
+      supabase.removeChannel(favoritesChannel);
+      supabase.removeChannel(cartChannel);
     };
-  }, [updateCounters]);
+  }, [updateCounters, user?.id]);
 
   return { 
     favoritesCount, 

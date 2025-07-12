@@ -55,21 +55,32 @@ export const useProductsFilter = () => {
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
 
-    if (searchTerm) {
+    // CORREÇÃO: Busca por marca específica (case-insensitive)
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
       filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.brand.toLowerCase().includes(searchTerm.toLowerCase())
+        product.name.toLowerCase().includes(searchLower) ||
+        product.brand.toLowerCase().includes(searchLower) ||
+        product.brand.toLowerCase() === searchLower // Match exato para marcas
       );
     }
 
+    // Filtro por marca/categoria
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(product => product.category === selectedCategory);
+      filtered = filtered.filter(product => 
+        product.brand.toLowerCase() === selectedCategory.toLowerCase() ||
+        product.category.toLowerCase() === selectedCategory.toLowerCase()
+      );
     }
 
+    // Filtro por tipo de relógio (ETA Base, Clone, Super Clone)
     if (selectedCloneCategory !== 'all') {
-      filtered = filtered.filter(product => product.clone_category === selectedCloneCategory);
+      filtered = filtered.filter(product => 
+        product.clone_category === selectedCloneCategory
+      );
     }
 
+    // Filtro por faixa de preço
     if (priceRange !== 'all') {
       filtered = filtered.filter(product => {
         const price = product.price;
@@ -88,6 +99,7 @@ export const useProductsFilter = () => {
       });
     }
 
+    // Ordenação
     switch (sortBy) {
       case 'price-asc':
         filtered.sort((a, b) => a.price - b.price);
@@ -99,17 +111,33 @@ export const useProductsFilter = () => {
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
       case 'featured':
-        filtered.sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0));
+        filtered.sort((a, b) => {
+          if (a.is_featured && !b.is_featured) return -1;
+          if (!a.is_featured && b.is_featured) return 1;
+          return 0;
+        });
         break;
-      default:
+      default: // newest
         filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
 
     return filtered;
   }, [products, searchTerm, selectedCategory, selectedCloneCategory, priceRange, sortBy]);
 
-  const categories = useMemo(() => [...new Set(products.map(p => p.category))], [products]);
-  const cloneCategories = useMemo(() => [...new Set(products.map(p => p.clone_category))], [products]);
+  // Extrair categorias únicas dos produtos
+  const categories = useMemo(() => {
+    const brandSet = new Set<string>();
+    products.forEach(product => {
+      if (product.brand) brandSet.add(product.brand);
+      if (product.category) brandSet.add(product.category);
+    });
+    return Array.from(brandSet).sort();
+  }, [products]);
+
+  const cloneCategories = useMemo(() => 
+    [...new Set(products.map(p => p.clone_category))].filter(Boolean), 
+    [products]
+  );
 
   const clearFilters = () => {
     setSearchTerm('');
