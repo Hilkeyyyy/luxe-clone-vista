@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import HeroSection from '@/components/HeroSection';
 import CarouselSkeleton from '@/components/ui/CarouselSkeleton';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useProductsByType } from '@/hooks/useProductsByType';
 
 // Lazy loading dos componentes pesados
 const BrandCategoryCarousel = lazy(() => import('@/components/BrandCategoryCarousel'));
@@ -14,6 +15,8 @@ const FeaturedProductsGrid = lazy(() => import('@/components/FeaturedProductsGri
 const VerticalBrandCarousel = lazy(() => import('@/components/VerticalBrandCarousel'));
 
 const Index = () => {
+  const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
+
   return (
     <div className="min-h-screen font-outfit" style={{
       background: 'linear-gradient(135deg, rgba(249, 250, 251, 0.95) 0%, rgba(243, 244, 246, 0.9) 50%, rgba(249, 250, 251, 0.95) 100%)',
@@ -86,7 +89,7 @@ const Index = () => {
           </motion.div>
           
           <Suspense fallback={<LoadingSpinner />}>
-            <FeaturedProductsGrid />
+            <FeaturedProductsGrid products={featuredProducts} loading={loading} />
           </Suspense>
         </div>
       </motion.section>
@@ -116,8 +119,8 @@ const Index = () => {
           <Suspense fallback={<CarouselSkeleton />}>
             <ProductCarousel 
               title="Novos Lançamentos"
-              type="new"
-              showTitle={false}
+              products={newProducts}
+              loading={loading}
             />
           </Suspense>
         </div>
@@ -154,8 +157,8 @@ const Index = () => {
           <Suspense fallback={<CarouselSkeleton />}>
             <ProductCarousel 
               title="Best Sellers"
-              type="bestseller"
-              showTitle={false}
+              products={offerProducts}
+              loading={loading}
             />
           </Suspense>
         </div>
