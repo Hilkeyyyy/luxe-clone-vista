@@ -1,122 +1,169 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, PanInfo } from 'framer-motion';
-import { useBrandCategories } from '@/hooks/useBrandCategories';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+
+interface BrandCategory {
+  id: string;
+  name: string;
+  slug: string;
+  image_url?: string;
+  products_count: number;
+  description?: string;
+}
 
 const VerticalBrandCarousel = () => {
-  const { categories, loading } = useBrandCategories(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const [categories, setCategories] = useState<BrandCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
 
-  // Auto-rotate every 4 seconds
   useEffect(() => {
-    if (categories.length === 0) return;
-    
-    const interval = setInterval(() => {
-      if (!isDragging) {
-        setCurrentIndex((prev) => (prev + 1) % categories.length);
-      }
-    }, 4000);
+    fetchCategories();
+  }, []);
 
-    return () => clearInterval(interval);
-  }, [categories.length, isDragging]);
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('brand_categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_position', { ascending: true });
 
-  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    setIsDragging(false);
-    
-    if (Math.abs(info.offset.y) > 50) {
-      if (info.offset.y > 0) {
-        // Dragged down - go to previous
-        setCurrentIndex((prev) => (prev - 1 + categories.length) % categories.length);
-      } else {
-        // Dragged up - go to next
-        setCurrentIndex((prev) => (prev + 1) % categories.length);
-      }
+      if (error) throw error;
+
+      // Contar produtos para cada categoria
+      const categoriesWithCount = await Promise.all(
+        (data || []).map(async (category) => {
+          const { count } = await supabase
+            .from('products')
+            .select('*', { count: 'exact', head: true })
+            .or(`brand.ilike.%${category.name}%,clone_category.eq.${category.name}`);
+          
+          return {
+            ...category,
+            products_count: count || 0
+          };
+        })
+      );
+
+      setCategories(categoriesWithCount.filter(cat => cat.products_count > 0));
+    } catch (error) {
+      console.error('Erro ao buscar categorias:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDragStart = () => {
-    setIsDragging(true);
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = 320;
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
   };
 
-  if (loading || !categories.length) {
+  const handleBrandClick = (brand: BrandCategory) => {
+    navigate(`/produtos?marca=${encodeURIComponent(brand.name)}`);
+  };
+
+  if (loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin"></div>
+      <div className="animate-pulse">
+        <div className="flex space-x-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex-none w-80 h-40 bg-neutral-200 rounded-lg"></div>
+          ))}
+        </div>
       </div>
     );
   }
 
+  if (categories.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="w-full h-full relative overflow-hidden" ref={containerRef}>
-      <motion.div
-        className="flex flex-col h-full"
-        animate={{ y: -currentIndex * 100 + '%' }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        dragElastic={0.1}
-      >
-        {categories.map((category, index) => (
-          <motion.div
-            key={category.id}
-            className="w-full h-full flex-shrink-0 relative"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
+    <div className="relative">
+      {/* Navigation Controls - Flat Premium */}
+      <div className="flex justify-center mb-6">
+        <div className="flex items-center space-x-2">
+          <motion.button
+            onClick={() => scroll('left')}
+            className="p-3 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-300 text-neutral-600 hover:text-neutral-900 border border-neutral-200"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            {category.image_url ? (
-              <img
-                src={category.image_url}
-                alt={category.name}
-                className="w-full h-full object-cover"
-                draggable={false}
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-neutral-200 to-neutral-400 flex items-center justify-center">
-                <span className="text-8xl font-bold text-neutral-600 font-outfit opacity-50">
-                  {category.name.charAt(0)}
-                </span>
+            <ChevronLeft size={20} />
+          </motion.button>
+          <motion.button
+            onClick={() => scroll('right')}
+            className="p-3 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-300 text-neutral-600 hover:text-neutral-900 border border-neutral-200"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <ChevronRight size={20} />
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Brands Carousel - Flat Premium */}
+      <div 
+        ref={scrollRef}
+        className="flex overflow-x-auto space-x-6 pb-4 scrollbar-hide"
+      >
+        {categories.map((brand, index) => (
+          <motion.button
+            key={brand.id}
+            onClick={() => handleBrandClick(brand)}
+            className="group flex-none relative overflow-hidden bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-neutral-200 min-w-[320px] h-40"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: index * 0.1 }}
+            whileHover={{ scale: 1.01, y: -2 }}
+            whileTap={{ scale: 0.99 }}
+          >
+            {/* Background Image with Glassmorphism Overlay */}
+            {brand.image_url && (
+              <div className="absolute inset-0">
+                <img 
+                  src={brand.image_url} 
+                  alt={brand.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent"></div>
               </div>
             )}
             
-            {/* Subtle overlay for better visibility */}
-            <div className="absolute inset-0 bg-black/10" />
-          </motion.div>
-        ))}
-      </motion.div>
+            {/* Content Overlay - Glassmorphism */}
+            <div className="relative z-10 h-full flex flex-col justify-center p-6">
+              <div className="mb-2">
+                <h3 className="text-2xl font-outfit font-bold text-white mb-1 group-hover:text-white/90 transition-colors">
+                  {brand.name}
+                </h3>
+                
+                {brand.description && (
+                  <p className="text-sm text-white/80 mb-3 line-clamp-2 group-hover:text-white/70 transition-colors">
+                    {brand.description}
+                  </p>
+                )}
+                
+                {/* Product Count Badge - Glassmorphism */}
+                <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white text-sm font-medium">
+                  {brand.products_count} {brand.products_count === 1 ? 'produto' : 'produtos'}
+                </div>
+              </div>
+            </div>
 
-      {/* Navigation Dots */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
-        {categories.map((_, index) => (
-          <button
-            key={index}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              index === currentIndex 
-                ? 'bg-white scale-125 shadow-lg' 
-                : 'bg-white/50 hover:bg-white/70'
-            }`}
-            onClick={() => setCurrentIndex(index)}
-          />
+            {/* Hover Accent */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+          </motion.button>
         ))}
       </div>
-
-      {/* Drag Indicator */}
-      {categories.length > 1 && (
-        <div className="absolute top-1/2 right-4 transform -translate-y-1/2 flex flex-col items-center space-y-2 text-white/70 z-10">
-          <motion.div
-            className="w-1 h-8 bg-white/30 rounded-full"
-            animate={{ height: isDragging ? 12 : 32 }}
-            transition={{ duration: 0.2 }}
-          />
-          <div className="text-xs font-outfit rotate-90 whitespace-nowrap">
-            Arraste
-          </div>
-        </div>
-      )}
     </div>
   );
 };
