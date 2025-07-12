@@ -35,46 +35,46 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products, load
 
   return (
     <motion.section 
-      className="py-12 sm:py-16"
+      className="py-8"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header - CORREÇÃO 9: Design mais elegante */}
-        <div className="flex items-center justify-between mb-8">
+        {/* Section Header - Flat Premium */}
+        <div className="flex items-center justify-between mb-6">
           <motion.div 
-            className="text-center sm:text-left"
+            className="text-left"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h2 className="text-3xl sm:text-4xl font-outfit font-light text-neutral-900 mb-2 tracking-wide">
+            <h2 className="text-2xl sm:text-3xl font-outfit font-light text-neutral-900 mb-1 tracking-wide">
               {title}
             </h2>
-            <p className="text-neutral-600 font-light">
+            <p className="text-neutral-600 font-light text-sm">
               {title === 'NOVIDADES' && 'Os lançamentos mais recentes da nossa coleção'}
-              {title === 'OFERTAS' && 'Descontos especiais por tempo limitado'}
+              {title === 'OFERTAS' && 'Preços especiais por tempo limitado'}
             </p>
           </motion.div>
           
-          {/* CORREÇÃO 9: Navegação mais elegante */}
+          {/* Navigation - Flat Premium */}
           <div className="hidden sm:flex items-center space-x-2">
             <motion.button
               onClick={() => scroll('left')}
-              className="p-3 rounded-none bg-white shadow-sm hover:shadow-md transition-shadow text-neutral-600 hover:text-neutral-900 border border-neutral-200 hover:border-neutral-300"
+              className="p-2.5 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-300 text-neutral-600 hover:text-neutral-900 border border-neutral-200"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={18} />
             </motion.button>
             <motion.button
               onClick={() => scroll('right')}
-              className="p-3 rounded-none bg-white shadow-sm hover:shadow-md transition-shadow text-neutral-600 hover:text-neutral-900 border border-neutral-200 hover:border-neutral-300"
+              className="p-2.5 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-300 text-neutral-600 hover:text-neutral-900 border border-neutral-200"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={18} />
             </motion.button>
           </div>
         </div>
@@ -82,12 +82,12 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products, load
         {/* Carousel */}
         <div 
           ref={scrollRef}
-          className="flex overflow-x-auto space-x-6 pb-4 scrollbar-hide"
+          className="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide"
         >
           {products.map((product, index) => (
             <motion.div
               key={product.id}
-              className="flex-none w-72 sm:w-80"
+              className="flex-none w-72"
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -110,18 +110,18 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products, load
           ))}
         </div>
 
-        {/* Mobile scroll indicators - CORREÇÃO 9: Mais elegantes */}
-        <div className="flex justify-center mt-6 sm:hidden">
+        {/* Mobile scroll indicators - Flat */}
+        <div className="flex justify-center mt-4 sm:hidden">
           <div className="flex space-x-2">
             <button
               onClick={() => scroll('left')}
-              className="p-2 rounded-none bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors border border-neutral-200"
+              className="p-2 rounded-lg bg-white text-neutral-600 hover:bg-neutral-50 transition-colors border border-neutral-200 shadow-sm"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => scroll('right')}
-              className="p-2 rounded-none bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors border border-neutral-200"
+              className="p-2 rounded-lg bg-white text-neutral-600 hover:bg-neutral-50 transition-colors border border-neutral-200 shadow-sm"
             >
               <ChevronRight size={16} />
             </button>

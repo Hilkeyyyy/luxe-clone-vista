@@ -13,76 +13,48 @@ interface FeaturedProductsGridProps {
 const FeaturedProductsGrid: React.FC<FeaturedProductsGridProps> = ({ products, loading }) => {
   if (loading) {
     return (
-      <div className="px-4 sm:px-6 lg:px-8 mb-16">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold text-neutral-900 font-outfit">
-            PRODUTOS EM DESTAQUE
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <ProductSkeleton key={index} />
-          ))}
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <ProductSkeleton key={index} />
+        ))}
       </div>
     );
   }
 
   if (products.length === 0) {
-    return null;
+    return (
+      <div className="text-center py-12">
+        <p className="text-neutral-600">Nenhum produto em destaque encontrado.</p>
+      </div>
+    );
   }
 
   return (
-    <motion.section 
-      className="py-12 sm:py-16"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header - CORREÇÃO 9: Design mais elegante */}
-        <motion.div 
-          className="text-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {products.map((product, index) => (
+        <motion.div
+          key={product.id}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          transition={{ duration: 0.6, delay: index * 0.1 }}
         >
-          <h2 className="text-3xl sm:text-4xl font-outfit font-light text-neutral-900 mb-4 tracking-wide">
-            DESTAQUES
-          </h2>
-          <p className="text-neutral-600 text-lg max-w-2xl mx-auto font-light">
-            Os relógios mais procurados da nossa coleção
-          </p>
+          <ProductCard
+            id={product.id}
+            name={product.name}
+            brand={product.brand}
+            price={`R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+            originalPrice={product.original_price 
+              ? `R$ ${product.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+              : undefined}
+            image={product.images[0]}
+            isNew={product.is_new || false}
+            clone_category={product.clone_category}
+            is_sold_out={product.is_sold_out}
+            delay={0}
+          />
         </motion.div>
-
-        {/* Products Grid - Vertical Layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-            >
-              <ProductCard
-                id={product.id}
-                name={product.name}
-                brand={product.brand}
-                price={`R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                originalPrice={product.original_price 
-                  ? `R$ ${product.original_price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
-                  : undefined}
-                image={product.images[0]}
-                isNew={product.is_new || false}
-                clone_category={product.clone_category}
-                is_sold_out={product.is_sold_out}
-                delay={0}
-              />
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </motion.section>
+      ))}
+    </div>
   );
 };
 

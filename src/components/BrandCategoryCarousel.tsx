@@ -73,13 +73,13 @@ const BrandCategoryCarousel = () => {
 
   if (loading) {
     return (
-      <div className="py-12 sm:py-16">
+      <div className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-neutral-200 rounded w-48 mb-8"></div>
+            <div className="h-6 bg-neutral-200 rounded w-32 mb-6"></div>
             <div className="flex space-x-4">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex-none w-64 h-32 bg-neutral-200 rounded-2xl"></div>
+                <div key={i} className="flex-none w-56 h-20 bg-neutral-200 rounded-lg"></div>
               ))}
             </div>
           </div>
@@ -94,94 +94,87 @@ const BrandCategoryCarousel = () => {
 
   return (
     <motion.section 
-      className="py-12 sm:py-16 bg-gradient-to-b from-white via-neutral-50/30 to-white"
+      className="py-8"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className="flex items-center justify-between mb-8">
+        {/* Section Header - Flat Premium */}
+        <div className="flex items-center justify-between mb-6">
           <motion.div 
-            className="text-center sm:text-left"
+            className="text-left"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h2 className="text-3xl sm:text-4xl font-outfit font-light text-neutral-900 mb-2 tracking-wide">
-              CATEGORIAS
+            <h2 className="text-2xl sm:text-3xl font-outfit font-light text-neutral-900 mb-1 tracking-wide">
+              EXPLORAR CATEGORIAS
             </h2>
-            <p className="text-neutral-600 font-light">
-              Explore nossa coleção por marcas
+            <p className="text-neutral-600 font-light text-sm">
+              Navegue por nossa coleção de marcas premium
             </p>
           </motion.div>
           
-          {/* Navigation Controls */}
+          {/* Navigation Controls - Flat */}
           <div className="hidden sm:flex items-center space-x-2">
             <motion.button
               onClick={() => scroll('left')}
-              className="p-3 rounded-2xl bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 text-neutral-600 hover:text-neutral-900 border border-neutral-200/50"
+              className="p-2.5 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-300 text-neutral-600 hover:text-neutral-900 border border-neutral-200"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={18} />
             </motion.button>
             <motion.button
               onClick={() => scroll('right')}
-              className="p-3 rounded-2xl bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 text-neutral-600 hover:text-neutral-900 border border-neutral-200/50"
+              className="p-2.5 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-300 text-neutral-600 hover:text-neutral-900 border border-neutral-200"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={18} />
             </motion.button>
           </div>
         </div>
 
-        {/* Categories Carousel */}
+        {/* Categories Carousel - Flat Premium */}
         <div 
           ref={scrollRef}
-          className="flex overflow-x-auto space-x-6 pb-4 scrollbar-hide"
+          className="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide"
         >
           {categories.map((category, index) => (
             <motion.button
               key={category.id}
               onClick={() => handleCategoryClick(category)}
-              className="group flex-none relative overflow-hidden bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 border border-neutral-200/50 p-6 min-w-[280px]"
+              className="group flex-none relative overflow-hidden bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-neutral-200 p-4 min-w-[240px]"
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ 
-                scale: 1.02,
-                y: -4
-              }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.01, y: -2 }}
+              whileTap={{ scale: 0.99 }}
             >
-              {/* Liquid Glass Effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-              
               <div className="relative z-10">
                 {category.image_url && (
-                  <div className="w-full h-20 mb-4 rounded-xl overflow-hidden">
+                  <div className="w-full h-12 mb-3 rounded-md overflow-hidden">
                     <img 
                       src={category.image_url} 
                       alt={category.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
                 )}
                 
                 <div className="text-left">
-                  <h3 className="font-outfit font-semibold text-lg text-neutral-900 mb-2 group-hover:text-neutral-800 transition-colors">
+                  <h3 className="font-outfit font-semibold text-base text-neutral-900 mb-1 group-hover:text-neutral-700 transition-colors">
                     {category.name}
                   </h3>
                   
                   {/* Contador de Produtos */}
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-600 group-hover:text-neutral-700 transition-colors">
+                    <span className="text-xs text-neutral-600 group-hover:text-neutral-700 transition-colors">
                       {category.products_count} {category.products_count === 1 ? 'produto' : 'produtos'}
                     </span>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-neutral-100 to-neutral-200 flex items-center justify-center text-xs font-semibold text-neutral-700 group-hover:from-neutral-200 group-hover:to-neutral-300 transition-all duration-300">
+                    <div className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-xs font-semibold text-neutral-700 group-hover:bg-neutral-200 transition-colors">
                       {category.products_count}
                     </div>
                   </div>
@@ -191,18 +184,18 @@ const BrandCategoryCarousel = () => {
           ))}
         </div>
 
-        {/* Mobile scroll indicators */}
-        <div className="flex justify-center mt-6 sm:hidden">
+        {/* Mobile scroll indicators - Flat */}
+        <div className="flex justify-center mt-4 sm:hidden">
           <div className="flex space-x-2">
             <button
               onClick={() => scroll('left')}
-              className="p-2 rounded-xl bg-white/80 backdrop-blur-sm text-neutral-600 hover:bg-neutral-100/80 transition-colors border border-neutral-200/50 shadow-md"
+              className="p-2 rounded-lg bg-white text-neutral-600 hover:bg-neutral-50 transition-colors border border-neutral-200 shadow-sm"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => scroll('right')}
-              className="p-2 rounded-xl bg-white/80 backdrop-blur-sm text-neutral-600 hover:bg-neutral-100/80 transition-colors border border-neutral-200/50 shadow-md"
+              className="p-2 rounded-lg bg-white text-neutral-600 hover:bg-neutral-50 transition-colors border border-neutral-200 shadow-sm"
             >
               <ChevronRight size={16} />
             </button>

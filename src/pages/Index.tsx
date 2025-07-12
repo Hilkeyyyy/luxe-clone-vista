@@ -18,12 +18,10 @@ const Index = () => {
   const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
 
   return (
-    <div className="min-h-screen font-outfit" style={{
-      background: 'linear-gradient(135deg, rgba(249, 250, 251, 0.95) 0%, rgba(243, 244, 246, 0.9) 50%, rgba(249, 250, 251, 0.95) 100%)',
-    }}>
+    <div className="min-h-screen font-outfit bg-neutral-50">
       <Header />
       
-      {/* Hero Section com Glassmorphism */}
+      {/* Hero Section Premium */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -32,58 +30,36 @@ const Index = () => {
         <HeroSection />
       </motion.div>
 
-      {/* Brand Categories com Glassmorphism */}
+      {/* Brand Categories - Restaurado */}
       <motion.section 
-        className="py-8 sm:py-12 lg:py-16"
+        className="py-8 sm:py-12"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            className="text-center mb-8 sm:mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-4 bg-gradient-to-r from-neutral-900 via-neutral-700 to-neutral-900 bg-clip-text text-transparent">
-              Explore Nossas Categorias
-            </h2>
-            <p className="text-neutral-600 text-base sm:text-lg max-w-2xl mx-auto">
-              Descubra nossa seleção curada de relógios premium das melhores marcas do mundo
-            </p>
-          </motion.div>
-          
-          <Suspense fallback={<CarouselSkeleton />}>
-            <BrandCategoryCarousel />
-          </Suspense>
-        </div>
+        <Suspense fallback={<CarouselSkeleton />}>
+          <BrandCategoryCarousel />
+        </Suspense>
       </motion.section>
 
       {/* Featured Products */}
       <motion.section 
-        className="py-8 sm:py-12 lg:py-16"
+        className="py-8 sm:py-12 bg-white"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.4 }}
-        style={{
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(249, 250, 251, 0.6) 100%)',
-          backdropFilter: 'blur(10px)',
-          borderTop: '1px solid rgba(255, 255, 255, 0.2)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-        }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
-            className="text-center mb-8 sm:mb-12"
+            className="text-center mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
           >
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-4 bg-gradient-to-r from-neutral-900 via-neutral-700 to-neutral-900 bg-clip-text text-transparent">
-              Produtos em Destaque
+            <h2 className="text-2xl sm:text-3xl font-outfit font-light text-neutral-900 mb-2 tracking-wide">
+              PRODUTOS EM DESTAQUE
             </h2>
-            <p className="text-neutral-600 text-base sm:text-lg max-w-2xl mx-auto">
+            <p className="text-neutral-600 text-sm max-w-2xl mx-auto font-light">
               Os relógios mais procurados e admirados da nossa coleção
             </p>
           </motion.div>
@@ -94,94 +70,56 @@ const Index = () => {
         </div>
       </motion.section>
 
-      {/* New Arrivals */}
+      {/* New Arrivals - Hierarquia Corrigida */}
       <motion.section 
-        className="py-8 sm:py-12 lg:py-16"
+        className="py-8 sm:py-12"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.6 }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            className="text-center mb-8 sm:mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.7 }}
-          >
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-4 bg-gradient-to-r from-neutral-900 via-neutral-700 to-neutral-900 bg-clip-text text-transparent">
-              Novidades
-            </h2>
-            <p className="text-neutral-600 text-base sm:text-lg max-w-2xl mx-auto">
-              Os lançamentos mais recentes que acabaram de chegar
-            </p>
-          </motion.div>
-          
-          <Suspense fallback={<CarouselSkeleton />}>
-            <ProductCarousel 
-              title="NOVIDADES"
-              products={newProducts}
-              loading={loading}
-            />
-          </Suspense>
-        </div>
+        <Suspense fallback={<CarouselSkeleton />}>
+          <ProductCarousel 
+            title="NOVIDADES"
+            products={newProducts}
+            loading={loading}
+          />
+        </Suspense>
       </motion.section>
 
-      {/* Bestsellers */}
+      {/* Offers - Hierarquia Corrigida */}
       <motion.section 
-        className="py-8 sm:py-12 lg:py-16"
+        className="py-8 sm:py-12 bg-white"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.8 }}
-        style={{
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(249, 250, 251, 0.6) 100%)',
-          backdropFilter: 'blur(10px)',
-          borderTop: '1px solid rgba(255, 255, 255, 0.2)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-        }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            className="text-center mb-8 sm:mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.9 }}
-          >
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-4 bg-gradient-to-r from-neutral-900 via-neutral-700 to-neutral-900 bg-clip-text text-transparent">
-              Mais Vendidos
-            </h2>
-            <p className="text-neutral-600 text-base sm:text-lg max-w-2xl mx-auto">
-              Os relógios preferidos dos nossos clientes
-            </p>
-          </motion.div>
-          
-          <Suspense fallback={<CarouselSkeleton />}>
-            <ProductCarousel 
-              title="OFERTAS"
-              products={offerProducts}
-              loading={loading}
-            />
-          </Suspense>
-        </div>
+        <Suspense fallback={<CarouselSkeleton />}>
+          <ProductCarousel 
+            title="OFERTAS"
+            products={offerProducts}
+            loading={loading}
+          />
+        </Suspense>
       </motion.section>
 
       {/* Vertical Brand Carousel */}
       <motion.section 
-        className="py-8 sm:py-12 lg:py-16"
+        className="py-8 sm:py-12"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 1.0 }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
-            className="text-center mb-8 sm:mb-12"
+            className="text-center mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 1.1 }}
           >
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 mb-4 bg-gradient-to-r from-neutral-900 via-neutral-700 to-neutral-900 bg-clip-text text-transparent">
-              Marcas Premium
+            <h2 className="text-2xl sm:text-3xl font-outfit font-light text-neutral-900 mb-2 tracking-wide">
+              MARCAS PREMIUM
             </h2>
-            <p className="text-neutral-600 text-base sm:text-lg max-w-2xl mx-auto">
+            <p className="text-neutral-600 text-sm max-w-2xl mx-auto font-light">
               Explore nossa seleção exclusiva das melhores marcas
             </p>
           </motion.div>

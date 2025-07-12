@@ -1,89 +1,80 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useRealtimeCounters = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const updateFavoritesCount = useCallback(() => {
-    if (!isAuthenticated) {
+  const updateCounters = useCallback(async () => {
+    if (!isAuthenticated || !user) {
       setFavoritesCount(0);
+      setCartCount(0);
+      setLoading(false);
       return;
     }
-    
+
     try {
-      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-      const validFavorites = Array.isArray(favorites) ? favorites : [];
-      setFavoritesCount(validFavorites.length);
+      // Buscar favoritos do Supabase
+      const { data: favoritesData, error: favError } = await supabase
+        .from('favorites')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      if (favError) throw favError;
+
+      // Buscar itens do carrinho do Supabase
+      const { data: cartData, error: cartError } = await supabase
+        .from('cart_items')
+        .select('quantity')
+        .eq('user_id', user.id);
+
+      if (cartError) throw cartError;
+
+      const totalCartItems = cartData?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
+
+      setFavoritesCount(favoritesData?.length || 0);
+      setCartCount(totalCartItems);
     } catch (error) {
-      console.error('Erro ao contar favoritos:', error);
+      console.error('Erro ao atualizar contadores:', error);
       setFavoritesCount(0);
-    }
-  }, [isAuthenticated]);
-
-  const updateCartCount = useCallback(() => {
-    if (!isAuthenticated) {
       setCartCount(0);
-      return;
+    } finally {
+      setLoading(false);
     }
-    
-    try {
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      const validCart = Array.isArray(cart) ? cart : [];
-      const totalItems = validCart.reduce((sum: number, item: any) => {
-        return sum + (typeof item.quantity === 'number' ? item.quantity : 1);
-      }, 0);
-      setCartCount(totalItems);
-    } catch (error) {
-      console.error('Erro ao contar carrinho:', error);
-      setCartCount(0);
-    }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
-  // Listeners para atualizações instantâneas
+  // Listeners para atualizações em tempo real
   useEffect(() => {
     // Atualização inicial
-    updateFavoritesCount();
-    updateCartCount();
+    updateCounters();
 
     // Event listeners para mudanças
-    const handleFavoritesUpdate = () => {
-      setTimeout(updateFavoritesCount, 50); // Pequeno delay para garantir sincronização
-    };
-    
-    const handleCartUpdate = () => {
-      setTimeout(updateCartCount, 50);
-    };
-    
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'favorites') {
-        setTimeout(updateFavoritesCount, 50);
-      }
-      if (e.key === 'cart') {
-        setTimeout(updateCartCount, 50);
-      }
+    const handleUpdate = () => {
+      setTimeout(updateCounters, 100); // Pequeno delay para garantir sincronização
     };
 
     // Adicionar listeners
-    window.addEventListener('favoritesUpdated', handleFavoritesUpdate);
-    window.addEventListener('cartUpdated', handleCartUpdate);
-    window.addEventListener('storage', handleStorage);
+    window.addEventListener('favoritesUpdated', handleUpdate);
+    window.addEventListener('cartUpdated', handleUpdate);
 
-    // Polling para garantir sincronização (fallback)
-    const interval = setInterval(() => {
-      updateFavoritesCount();
-      updateCartCount();
-    }, 2000);
+    // Polling periódico para garantir sincronização
+    const interval = setInterval(updateCounters, 5000);
 
     return () => {
-      window.removeEventListener('favoritesUpdated', handleFavoritesUpdate);
-      window.removeEventListener('cartUpdated', handleCartUpdate);
-      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('favoritesUpdated', handleUpdate);
+      window.removeEventListener('cartUpdated', handleUpdate);
       clearInterval(interval);
     };
-  }, [updateFavoritesCount, updateCartCount]);
+  }, [updateCounters]);
 
-  return { favoritesCount, cartCount };
+  return { 
+    favoritesCount, 
+    cartCount, 
+    loading,
+    refresh: updateCounters 
+  };
 };

@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import ProductImage from '@/components/product/ProductImage';
 import ProductActions from '@/components/product/ProductActions';
 import PriceDisplay from '@/components/ui/PriceDisplay';
-import { useProductActions } from '@/hooks/useProductActions';
+import { useSecureProductActions } from '@/hooks/useSecureProductActions';
 
 interface ProductCardProps {
   id: string;
@@ -42,10 +42,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
   delay = 0,
   simplified = false,
 }) => {
-  const { toggleFavorite, addToCart, isFavorite, isInCart } = useProductActions();
+  const { toggleFavorite, addToCart, buySpecificProduct, isFavorite, getButtonState } = useSecureProductActions();
 
   const numericPrice = parseFloat(price.replace(/[^\d,]/g, '').replace(',', '.'));
   const numericOriginalPrice = originalPrice ? parseFloat(originalPrice.replace(/[^\d,]/g, '').replace(',', '.')) : undefined;
+
+  const buttonState = getButtonState(id);
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -62,40 +64,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    const whatsappNumber = "19999413755";
-    const storeUrl = window.location.origin;
-    const productUrl = `${storeUrl}/products/${id}`;
-    
-    let message = `🛒 *INTERESSE EM PRODUTO*\n\n`;
-    message += `📋 *PRODUTO SELECIONADO:*\n\n`;
-    message += `🏷️ *${name}*\n`;
-    message += `   • Marca: ${brand}\n`;
-    message += `   • Preço: R$ ${numericPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
-    message += `   • Link: ${productUrl}\n`;
-    if (image) message += `   • Imagem: ${image}\n\n`;
-    message += `📞 Gostaria de mais informações sobre este produto!\n`;
-    message += `Formas de pagamento e entrega disponíveis?`;
-
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    buySpecificProduct(id, name, brand, numericPrice, image);
   };
 
   return (
     <motion.div
-      className="group relative rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-white/20"
-      style={{
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 250, 251, 0.8) 100%)',
-        backdropFilter: 'blur(20px)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-      }}
+      className="group relative rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-neutral-200 bg-white"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay }}
-      whileHover={{ 
-        y: -8,
-        boxShadow: "0 20px 40px rgba(0, 0, 0, 0.12)"
-      }}
+      whileHover={{ y: -2 }}
     >
       <Link to={`/products/${id}`}>
         <ProductImage
@@ -113,16 +91,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
         />
 
         <div className="p-4">
-          <div className="mb-2">
+          <div className="mb-3">
             <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1">
               {brand}
             </p>
-            <h3 className="font-semibold text-neutral-900 line-clamp-2 leading-snug">
+            <h3 className="font-semibold text-neutral-900 line-clamp-2 leading-snug mb-2">
               {name}
             </h3>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-3">
             <PriceDisplay 
               price={numericPrice}
               originalPrice={numericOriginalPrice}
@@ -130,7 +108,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </div>
 
           {stock_status && stock_status !== 'in_stock' && (
-            <div className="mt-2">
+            <div className="mb-3">
               <span
                 className={`text-xs px-2 py-1 rounded-full ${
                   stock_status === 'low_stock'
@@ -145,8 +123,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
       </Link>
 
-      {/* Botões de ação SEMPRE visíveis com glassmorphism */}
-      <div className="absolute bottom-4 right-4 opacity-100 transition-all duration-300">
+      {/* Botões de ação sempre visíveis - Flat Premium */}
+      <div className="absolute bottom-4 right-4 opacity-100 transition-opacity duration-300">
         <ProductActions
           isFavorite={isFavorite(id)}
           isSoldOut={!!is_sold_out}
@@ -156,8 +134,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
           customBadge={custom_badge}
           showBuyButton={false}
           showCartText={false}
-          isCartLoading={false}
-          isCartAdded={isInCart(id)}
+          isCartLoading={buttonState.isLoading}
+          isCartAdded={buttonState.isSuccess}
           productId={id}
         />
       </div>
