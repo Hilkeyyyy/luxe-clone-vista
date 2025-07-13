@@ -8,11 +8,12 @@ import { ProductDisplay } from '@/types/product';
 
 interface ProductCarouselProps {
   title: string;
+  subtitle?: string;
   products: ProductDisplay[];
   loading?: boolean;
 }
 
-const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products, loading = false }) => {
+const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, subtitle, products, loading = false }) => {
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -52,10 +53,11 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, products, load
             <h2 className="text-2xl sm:text-3xl font-outfit font-light text-neutral-900 mb-1 tracking-wide">
               {title}
             </h2>
-            <p className="text-neutral-600 font-light text-sm">
-              {title === 'NOVIDADES' && 'Os lançamentos mais recentes da nossa coleção'}
-              {title === 'OFERTAS' && 'Preços especiais por tempo limitado'}
-            </p>
+            {subtitle && (
+              <p className="text-neutral-600 font-light text-sm">
+                {subtitle}
+              </p>
+            )}
           </motion.div>
           
           {/* Navigation - Flat Premium */}
