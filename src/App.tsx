@@ -74,7 +74,7 @@ function App() {
                   <Route path="/buscar" element={<SearchResults />} />
                   <Route path="/login" element={<Login />} />
                   
-                  {/* Admin Routes - Corrigidas */}
+                  {/* CORREÇÃO CRÍTICA: Admin Routes - todas as rotas funcionais */}
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="/admin/dashboard" element={<AdminDashboard />} />
                   <Route path="/admin/login" element={<AdminLogin />} />

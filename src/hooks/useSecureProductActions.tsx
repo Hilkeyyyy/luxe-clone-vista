@@ -24,24 +24,38 @@ export const useSecureProductActions = () => {
     action();
   };
 
-  const handleToggleFavorite = (productId: string, productName: string) => {
-    requireAuth(async () => {
-      try {
-        await toggleFavorite(productId, productName);
-        // Disparar eventos para atualizar contadores
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('favoritesUpdated'));
-          // Força atualização do localStorage também
-          const updatedFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-          localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-        }, 100);
-      } catch (error) {
-        console.error('Erro ao alterar favorito:', error);
-      }
-    }, 'adicionar aos favoritos');
+  const handleToggleFavorite = async (productId: string, productName: string) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login necessário",
+        description: "Faça login para adicionar aos favoritos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await toggleFavorite(productId, productName);
+      
+      // Disparar eventos para atualizar contadores IMEDIATAMENTE
+      window.dispatchEvent(new CustomEvent('favoritesUpdated'));
+      
+      // Força atualização do localStorage também
+      setTimeout(() => {
+        const event = new CustomEvent('favoritesUpdated');
+        window.dispatchEvent(event);
+      }, 100);
+    } catch (error) {
+      console.error('Erro ao alterar favorito:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao alterar favorito.",
+        variant: "destructive",
+      });
+    }
   };
 
-  // FEEDBACK INSTANTÂNEO NO CARRINHO - OTIMIZADO
+  // CORREÇÃO CRÍTICA: Feedback instantâneo no carrinho
   const handleAddToCart = async (productId: string, productName: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
     if (!isAuthenticated) {
       toast({
@@ -68,12 +82,13 @@ export const useSecureProductActions = () => {
       // Feedback de sucesso
       triggerFeedback(productId, 1500);
       
-      // Disparar eventos para atualizar contadores
+      // Disparar eventos para atualizar contadores IMEDIATAMENTE
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      
+      // Força atualização do localStorage também
       setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('cartUpdated'));
-        // Força atualização do localStorage também
-        const updatedCart = JSON.parse(localStorage.getItem('cart') || '[]');
-        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        const event = new CustomEvent('cartUpdated');
+        window.dispatchEvent(event);
       }, 100);
       
       toast({

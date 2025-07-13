@@ -40,7 +40,7 @@ const BrandCategoryCarousel = () => {
           const { count } = await supabase
             .from('products')
             .select('*', { count: 'exact', head: true })
-            .or(`brand.ilike.%${category.name}%,clone_category.eq.${category.name}`);
+            .eq('brand', category.name);
           
           return {
             ...category,
@@ -68,8 +68,8 @@ const BrandCategoryCarousel = () => {
   };
 
   const handleBrandClick = (brand: BrandCategory) => {
-    // CORREÇÃO: Navegar para produtos filtrando por marca específica
-    navigate(`/produtos?brand=${encodeURIComponent(brand.name)}`);
+    // CORREÇÃO CRÍTICA: Navegar com filtro exato por marca
+    navigate(`/produtos?selectedCategory=${encodeURIComponent(brand.name)}`);
   };
 
   if (loading) {
@@ -163,7 +163,7 @@ const BrandCategoryCarousel = () => {
             </div>
 
             {/* Hover Accent Line */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-neutral-500 to-neutral-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
           </motion.button>
         ))}
       </div>

@@ -18,27 +18,26 @@ export const useRealtimeCounters = () => {
     }
 
     try {
-      // Contar favoritos no Supabase com timeout
+      // CORREÇÃO CRÍTICA: Contar favoritos e carrinho com timeout otimizado
       const favoritesPromise = supabase
         .from('favorites')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
-      // Contar itens do carrinho no Supabase com timeout  
       const cartPromise = supabase
         .from('cart_items')
         .select('quantity')
         .eq('user_id', user.id);
 
-      // Executar consultas em paralelo com timeout de 5 segundos
+      // Executar consultas em paralelo com timeout de 3 segundos (otimizado)
       const [favoritesResult, cartResult] = await Promise.allSettled([
         Promise.race([
           favoritesPromise,
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
         ]),
         Promise.race([
           cartPromise,
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
         ])
       ]);
 
@@ -71,21 +70,21 @@ export const useRealtimeCounters = () => {
     }
   }, [isAuthenticated, user]);
 
-  // Listeners para atualizações em tempo real
+  // CORREÇÃO CRÍTICA: Listeners para atualizações em tempo real
   useEffect(() => {
     updateCounters();
 
     const handleUpdate = () => {
-      console.log('🔄 Evento de atualização recebido');
-      setTimeout(updateCounters, 200);
+      console.log('🔄 Evento de atualização recebido - atualizando imediatamente');
+      updateCounters();
     };
 
-    // Event listeners
+    // Event listeners - IMEDIATOS
     window.addEventListener('favoritesUpdated', handleUpdate);
     window.addEventListener('cartUpdated', handleUpdate);
 
-    // Polling mais frequente para garantir sincronização
-    const interval = setInterval(updateCounters, 5000);
+    // Polling menos frequente para economizar recursos (10 segundos)
+    const interval = setInterval(updateCounters, 10000);
 
     // Realtime subscriptions do Supabase (se user existir)
     let favoritesChannel: any;
@@ -100,7 +99,7 @@ export const useRealtimeCounters = () => {
           table: 'favorites',
           filter: `user_id=eq.${user.id}`
         }, () => {
-          console.log('🔔 Mudança nos favoritos detectada');
+          console.log('🔔 Mudança nos favoritos detectada - atualizando');
           handleUpdate();
         })
         .subscribe();
@@ -113,7 +112,7 @@ export const useRealtimeCounters = () => {
           table: 'cart_items',
           filter: `user_id=eq.${user.id}`
         }, () => {
-          console.log('🔔 Mudança no carrinho detectada');
+          console.log('🔔 Mudança no carrinho detectada - atualizando');
           handleUpdate();
         })
         .subscribe();

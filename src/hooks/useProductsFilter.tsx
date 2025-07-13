@@ -55,19 +55,27 @@ export const useProductsFilter = () => {
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
 
-    // CORREÇÃO: Busca exata por marca (case-insensitive)
+    // CORREÇÃO CRÍTICA: Filtro exato por marca
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase().trim();
       filtered = filtered.filter(product => {
-        const brandMatch = product.brand.toLowerCase() === searchLower;
+        // Primeiro tenta match exato da marca
+        const exactBrandMatch = product.brand.toLowerCase() === searchLower;
+        if (exactBrandMatch) return true;
+        
+        // Se não encontrou match exato da marca, busca no nome do produto
         const nameMatch = product.name.toLowerCase().includes(searchLower);
         
-        // Priorizar match exato da marca, senão buscar no nome
-        return brandMatch || (!brandMatch && nameMatch);
+        // Retorna apenas se não houver produtos com match exato de marca
+        const hasExactBrandProducts = products.some(p => 
+          p.brand.toLowerCase() === searchLower
+        );
+        
+        return !hasExactBrandProducts && nameMatch;
       });
     }
 
-    // Filtro por marca/categoria (busca exata)
+    // Filtro por marca/categoria - EXATO
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(product => 
         product.brand.toLowerCase() === selectedCategory.toLowerCase()
