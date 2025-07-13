@@ -55,34 +55,25 @@ export const useProductsFilter = () => {
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
 
-    // CORREÇÃO CRÍTICA: Filtro exato por marca
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(product => {
-        // Primeiro tenta match exato da marca
-        const exactBrandMatch = product.brand.toLowerCase() === searchLower;
-        if (exactBrandMatch) return true;
-        
-        // Se não encontrou match exato da marca, busca no nome do produto
-        const nameMatch = product.name.toLowerCase().includes(searchLower);
-        
-        // Retorna apenas se não houver produtos com match exato de marca
-        const hasExactBrandProducts = products.some(p => 
-          p.brand.toLowerCase() === searchLower
-        );
-        
-        return !hasExactBrandProducts && nameMatch;
-      });
-    }
-
-    // Filtro por marca/categoria - EXATO
+    // CORREÇÃO CRÍTICA: Filtro por marca EXATO primeiro
     if (selectedCategory !== 'all') {
+      console.log('Filtrando por marca:', selectedCategory);
       filtered = filtered.filter(product => 
         product.brand.toLowerCase() === selectedCategory.toLowerCase()
       );
+      console.log('Produtos filtrados por marca:', filtered.length);
     }
 
-    // Filtro por tipo de relógio (ETA Base, Clone, Super Clone)
+    // Filtro por busca - só aplica se não há categoria selecionada
+    if (searchTerm.trim() && selectedCategory === 'all') {
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(searchLower) ||
+        product.brand.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Filtro por tipo de relógio
     if (selectedCloneCategory !== 'all') {
       filtered = filtered.filter(product => 
         product.clone_category === selectedCloneCategory
@@ -133,7 +124,6 @@ export const useProductsFilter = () => {
     return filtered;
   }, [products, searchTerm, selectedCategory, selectedCloneCategory, priceRange, sortBy]);
 
-  // Extrair categorias únicas dos produtos
   const categories = useMemo(() => {
     const brandSet = new Set<string>();
     products.forEach(product => {

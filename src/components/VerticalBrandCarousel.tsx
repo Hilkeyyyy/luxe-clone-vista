@@ -1,167 +1,56 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { ChevronRight } from 'lucide-react';
 
-interface BrandCategory {
-  id: string;
+interface Brand {
   name: string;
-  slug: string;
-  image_url?: string;
-  products_count: number;
-  description?: string;
+  count: number;
 }
 
-const VerticalBrandCarousel = () => {
+interface VerticalBrandCarouselProps {
+  brands: Brand[];
+}
+
+const VerticalBrandCarousel: React.FC<VerticalBrandCarouselProps> = ({ brands }) => {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<BrandCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const scrollRef = React.useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('brand_categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('order_position', { ascending: true });
-
-      if (error) throw error;
-
-      // Contar produtos para cada categoria
-      const categoriesWithCount = await Promise.all(
-        (data || []).map(async (category) => {
-          const { count } = await supabase
-            .from('products')
-            .select('*', { count: 'exact', head: true })
-            .eq('brand', category.name);
-          
-          return {
-            ...category,
-            products_count: count || 0
-          };
-        })
-      );
-
-      setCategories(categoriesWithCount.filter(cat => cat.products_count > 0));
-    } catch (error) {
-      console.error('Erro ao buscar categorias:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleBrandClick = (brandName: string) => {
+    console.log('Clicado na marca:', brandName);
+    // CORREÇÃO CRÍTICA: Navegação correta para filtrar por marca específica
+    navigate(`/produtos?selectedCategory=${encodeURIComponent(brandName.toLowerCase())}`);
   };
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const scrollAmount = 320;
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const handleBrandClick = (brand: BrandCategory) => {
-    // CORREÇÃO: Navegar com parâmetro de marca específica
-    navigate(`/produtos?searchTerm=${encodeURIComponent(brand.name)}`);
-  };
-
-  if (loading) {
-    return (
-      <div className="animate-pulse">
-        <div className="flex space-x-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex-none w-80 h-40 bg-neutral-200 rounded-lg"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (categories.length === 0) {
-    return null;
-  }
 
   return (
-    <div className="relative">
-      {/* Navigation Controls */}
-      <div className="flex justify-center mb-6">
-        <div className="flex items-center space-x-2">
+    <div className="w-full">
+      <h3 className="text-xl font-bold text-black mb-6">Marcas Populares</h3>
+      
+      <div className="space-y-3">
+        {brands.map((brand, index) => (
           <motion.button
-            onClick={() => scroll('left')}
-            className="p-3 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-300 text-neutral-600 hover:text-neutral-900 border border-neutral-200"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <ChevronLeft size={20} />
-          </motion.button>
-          <motion.button
-            onClick={() => scroll('right')}
-            className="p-3 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-300 text-neutral-600 hover:text-neutral-900 border border-neutral-200"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <ChevronRight size={20} />
-          </motion.button>
-        </div>
-      </div>
-
-      {/* Brands Carousel */}
-      <div 
-        ref={scrollRef}
-        className="flex overflow-x-auto space-x-6 pb-4 scrollbar-hide"
-      >
-        {categories.map((brand, index) => (
-          <motion.button
-            key={brand.id}
-            onClick={() => handleBrandClick(brand)}
-            className="group flex-none relative overflow-hidden bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-neutral-200 min-w-[320px] h-40"
-            initial={{ opacity: 0, x: 50 }}
+            key={brand.name}
+            onClick={() => handleBrandClick(brand.name)}
+            className="group w-full flex items-center justify-between p-4 bg-white border-2 border-neutral-200 rounded-lg hover:border-black hover:shadow-md transition-all duration-300"
+            initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: index * 0.1 }}
-            whileHover={{ scale: 1.01, y: -2 }}
-            whileTap={{ scale: 0.99 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            {/* Background Image */}
-            {brand.image_url && (
-              <div className="absolute inset-0">
-                <img 
-                  src={brand.image_url} 
-                  alt={brand.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-transparent"></div>
-              </div>
-            )}
-            
-            {/* Content Overlay */}
-            <div className="relative z-10 h-full flex flex-col justify-center p-6">
-              <div className="mb-2">
-                <h3 className="text-2xl font-outfit font-bold text-white mb-1 group-hover:text-white/90 transition-colors">
-                  {brand.name}
-                </h3>
-                
-                {brand.description && (
-                  <p className="text-sm text-white/80 mb-3 line-clamp-2 group-hover:text-white/70 transition-colors">
-                    {brand.description}
-                  </p>
-                )}
-                
-                {/* Product Count Badge */}
-                <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-neutral-900 text-sm font-medium">
-                  {brand.products_count} {brand.products_count === 1 ? 'produto' : 'produtos'}
-                </div>
-              </div>
+            <div className="flex flex-col items-start">
+              <span className="font-semibold text-black group-hover:text-neutral-700 transition-colors">
+                {brand.name}
+              </span>
+              <span className="text-sm text-neutral-500">
+                {brand.count} {brand.count === 1 ? 'produto' : 'produtos'}
+              </span>
             </div>
-
-            {/* Hover Accent */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+            
+            <ChevronRight 
+              size={18} 
+              className="text-neutral-400 group-hover:text-black transition-colors"
+            />
           </motion.button>
         ))}
       </div>

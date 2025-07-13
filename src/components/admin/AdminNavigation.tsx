@@ -46,11 +46,11 @@ const AdminNavigation = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-neutral-900/95 backdrop-blur-md">
-      <div className="bg-white/95 backdrop-blur-md shadow-lg border-b border-neutral-200">
+    <div className="min-h-screen bg-white">
+      <div className="bg-white shadow-lg border-b border-neutral-200">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <motion.h1 
-            className="text-3xl font-bold text-neutral-900 mb-2"
+            className="text-3xl font-bold text-black mb-2"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -79,20 +79,18 @@ const AdminNavigation = () => {
             <motion.button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className="group bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-neutral-200/50 hover:shadow-xl hover:border-neutral-300/50 transition-all duration-300 text-left"
+              className="group bg-white rounded-2xl p-8 shadow-lg border-2 border-neutral-200 hover:shadow-xl hover:border-neutral-400 transition-all duration-300 text-left"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 * index }}
               whileHover={{ scale: 1.02, y: -4 }}
               whileTap={{ scale: 0.98 }}
             >
-              {/* Icon */}
               <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-md`}>
                 <item.icon className="text-white" size={28} />
               </div>
               
-              {/* Content */}
-              <h3 className="text-xl font-semibold text-neutral-900 mb-3 group-hover:text-neutral-700 transition-colors">
+              <h3 className="text-xl font-semibold text-black mb-3 group-hover:text-neutral-700 transition-colors">
                 {item.title}
               </h3>
               <p className="text-neutral-600 leading-relaxed group-hover:text-neutral-500 transition-colors">

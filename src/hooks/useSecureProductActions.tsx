@@ -12,18 +12,7 @@ export const useSecureProductActions = () => {
   const { addToCart, cartItems, getTotalPrice } = useSecureCart();
   const { triggerFeedback, setLoading, getButtonState } = useButtonFeedback();
 
-  const requireAuth = (action: () => void, actionName: string = 'esta ação') => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Login necessário",
-        description: `Faça login para ${actionName}.`,
-        variant: "destructive",
-      });
-      return;
-    }
-    action();
-  };
-
+  // CORREÇÃO CRÍTICA: Feedback instantâneo para favoritos
   const handleToggleFavorite = async (productId: string, productName: string) => {
     if (!isAuthenticated) {
       toast({
@@ -35,16 +24,25 @@ export const useSecureProductActions = () => {
     }
 
     try {
+      // Feedback imediato
+      toast({
+        title: isFavorite(productId) ? "💔 Removendo dos favoritos..." : "❤️ Adicionando aos favoritos...",
+        description: productName,
+        duration: 1000,
+      });
+
       await toggleFavorite(productId, productName);
       
       // Disparar eventos para atualizar contadores IMEDIATAMENTE
       window.dispatchEvent(new CustomEvent('favoritesUpdated'));
       
-      // Força atualização do localStorage também
-      setTimeout(() => {
-        const event = new CustomEvent('favoritesUpdated');
-        window.dispatchEvent(event);
-      }, 100);
+      // Toast de confirmação
+      toast({
+        title: isFavorite(productId) ? "❤️ Adicionado aos favoritos!" : "💔 Removido dos favoritos!",
+        description: productName,
+        duration: 2000,
+      });
+      
     } catch (error) {
       console.error('Erro ao alterar favorito:', error);
       toast({
@@ -84,12 +82,6 @@ export const useSecureProductActions = () => {
       
       // Disparar eventos para atualizar contadores IMEDIATAMENTE
       window.dispatchEvent(new CustomEvent('cartUpdated'));
-      
-      // Força atualização do localStorage também
-      setTimeout(() => {
-        const event = new CustomEvent('cartUpdated');
-        window.dispatchEvent(event);
-      }, 100);
       
       toast({
         title: "✅ Produto adicionado!",
