@@ -26,6 +26,7 @@ const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminProducts = lazy(() => import("./pages/AdminProducts"));
 const AdminSettings = lazy(() => import("./pages/AdminSettings"));
+const AdminLanding = lazy(() => import("./pages/AdminLanding"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,6 +80,8 @@ function App() {
                   <Route path="/admin/login" element={<AdminLogin />} />
                   <Route path="/admin/produtos" element={<AdminProducts />} />
                   <Route path="/admin/products" element={<AdminProducts />} />
+                  <Route path="/admin/landing" element={<AdminLanding />} />
+                  <Route path="/admin/categorias" element={<AdminLanding />} />
                   <Route path="/admin/configuracoes" element={<AdminSettings />} />
                   <Route path="/admin/settings" element={<AdminSettings />} />
                   

@@ -40,7 +40,7 @@ const VerticalBrandCarousel = () => {
           const { count } = await supabase
             .from('products')
             .select('*', { count: 'exact', head: true })
-            .or(`brand.ilike.%${category.name}%,clone_category.eq.${category.name}`);
+            .eq('brand', category.name);
           
           return {
             ...category,
@@ -68,7 +68,8 @@ const VerticalBrandCarousel = () => {
   };
 
   const handleBrandClick = (brand: BrandCategory) => {
-    navigate(`/produtos?marca=${encodeURIComponent(brand.name)}`);
+    // CORREÇÃO: Navegar com parâmetro de marca específica
+    navigate(`/produtos?searchTerm=${encodeURIComponent(brand.name)}`);
   };
 
   if (loading) {
@@ -89,7 +90,7 @@ const VerticalBrandCarousel = () => {
 
   return (
     <div className="relative">
-      {/* Navigation Controls - Flat Premium */}
+      {/* Navigation Controls */}
       <div className="flex justify-center mb-6">
         <div className="flex items-center space-x-2">
           <motion.button
@@ -111,7 +112,7 @@ const VerticalBrandCarousel = () => {
         </div>
       </div>
 
-      {/* Brands Carousel - Flat Premium */}
+      {/* Brands Carousel */}
       <div 
         ref={scrollRef}
         className="flex overflow-x-auto space-x-6 pb-4 scrollbar-hide"
@@ -127,7 +128,7 @@ const VerticalBrandCarousel = () => {
             whileHover={{ scale: 1.01, y: -2 }}
             whileTap={{ scale: 0.99 }}
           >
-            {/* Background Image with Glassmorphism Overlay */}
+            {/* Background Image */}
             {brand.image_url && (
               <div className="absolute inset-0">
                 <img 
@@ -135,11 +136,11 @@ const VerticalBrandCarousel = () => {
                   alt={brand.name}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-transparent"></div>
               </div>
             )}
             
-            {/* Content Overlay - Glassmorphism */}
+            {/* Content Overlay */}
             <div className="relative z-10 h-full flex flex-col justify-center p-6">
               <div className="mb-2">
                 <h3 className="text-2xl font-outfit font-bold text-white mb-1 group-hover:text-white/90 transition-colors">
@@ -152,15 +153,15 @@ const VerticalBrandCarousel = () => {
                   </p>
                 )}
                 
-                {/* Product Count Badge - Glassmorphism */}
-                <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white text-sm font-medium">
+                {/* Product Count Badge */}
+                <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-neutral-900 text-sm font-medium">
                   {brand.products_count} {brand.products_count === 1 ? 'produto' : 'produtos'}
                 </div>
               </div>
             </div>
 
             {/* Hover Accent */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
           </motion.button>
         ))}
       </div>

@@ -55,21 +55,22 @@ export const useProductsFilter = () => {
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
 
-    // CORREÇÃO: Busca por marca específica (case-insensitive)
+    // CORREÇÃO: Busca exata por marca (case-insensitive)
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchLower) ||
-        product.brand.toLowerCase().includes(searchLower) ||
-        product.brand.toLowerCase() === searchLower // Match exato para marcas
-      );
+      filtered = filtered.filter(product => {
+        const brandMatch = product.brand.toLowerCase() === searchLower;
+        const nameMatch = product.name.toLowerCase().includes(searchLower);
+        
+        // Priorizar match exato da marca, senão buscar no nome
+        return brandMatch || (!brandMatch && nameMatch);
+      });
     }
 
-    // Filtro por marca/categoria
+    // Filtro por marca/categoria (busca exata)
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(product => 
-        product.brand.toLowerCase() === selectedCategory.toLowerCase() ||
-        product.category.toLowerCase() === selectedCategory.toLowerCase()
+        product.brand.toLowerCase() === selectedCategory.toLowerCase()
       );
     }
 
@@ -129,7 +130,6 @@ export const useProductsFilter = () => {
     const brandSet = new Set<string>();
     products.forEach(product => {
       if (product.brand) brandSet.add(product.brand);
-      if (product.category) brandSet.add(product.category);
     });
     return Array.from(brandSet).sort();
   }, [products]);
