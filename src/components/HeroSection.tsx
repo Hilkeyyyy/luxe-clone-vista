@@ -9,7 +9,7 @@ const HeroSection = () => {
     <section className="relative overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="7" cy="7" r="1"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] bg-repeat"></div>
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.1\"%3E%3Ccircle cx=\"7\" cy=\"7\" r=\"1\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] bg-repeat"></div>
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
@@ -107,32 +107,6 @@ const HeroSection = () => {
             </motion.div>
           </motion.div>
         </div>
-
-        {/* Features */}
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-        >
-          {[
-            { icon: Shield, title: 'Garantia Premium', desc: '12 meses de garantia completa' },
-            { icon: Clock, title: 'Entrega Rápida', desc: 'Envio em até 24h úteis' },
-            { icon: Star, title: 'Qualidade Superior', desc: 'Materials premium certificados' }
-          ].map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300"
-              whileHover={{ scale: 1.05, y: -5 }}
-            >
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <feature.icon className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
-              <p className="text-neutral-400 text-sm">{feature.desc}</p>
-            </motion.div>
-          ))}
-        </motion.div>
       </div>
     </section>
   );
