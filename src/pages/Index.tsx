@@ -7,6 +7,7 @@ import HeroSection from '@/components/HeroSection';
 import CarouselSkeleton from '@/components/ui/CarouselSkeleton';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useProductsByType } from '@/hooks/useProductsByType';
+import { useBrandCategories } from '@/hooks/useBrandCategories';
 
 // Lazy loading dos componentes pesados
 const BrandCategoryCarousel = lazy(() => import('@/components/BrandCategoryCarousel'));
@@ -15,6 +16,13 @@ const FeaturedProductsGrid = lazy(() => import('@/components/FeaturedProductsGri
 
 const Index = () => {
   const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
+  const { categories, loading: categoriesLoading } = useBrandCategories(true);
+
+  // Transformar categorias em formato esperado pelo componente
+  const brands = categories.map(category => ({
+    name: category.name,
+    count: category.products_count || 0
+  }));
 
   return (
     <div className="min-h-screen font-outfit bg-neutral-50">
@@ -29,7 +37,7 @@ const Index = () => {
         <HeroSection />
       </motion.div>
 
-      {/* CORREÇÃO: MARCAS PREMIUM no topo (logo após hero) */}
+      {/* MARCAS PREMIUM no topo (logo após hero) */}
       <motion.section 
         className="py-12 sm:py-16 bg-white"
         initial={{ opacity: 0, y: 20 }}
@@ -52,7 +60,7 @@ const Index = () => {
           </motion.div>
           
           <Suspense fallback={<CarouselSkeleton />}>
-            <BrandCategoryCarousel />
+            <BrandCategoryCarousel brands={brands} />
           </Suspense>
         </div>
       </motion.section>
