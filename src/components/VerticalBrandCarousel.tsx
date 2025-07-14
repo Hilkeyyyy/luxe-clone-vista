@@ -17,10 +17,22 @@ const VerticalBrandCarousel: React.FC<VerticalBrandCarouselProps> = ({ brands })
   const navigate = useNavigate();
 
   const handleBrandClick = (brandName: string) => {
-    console.log('Clicado na marca:', brandName);
+    console.log('🔗 Clicado na marca:', brandName);
     // CORREÇÃO CRÍTICA: Navegação correta para filtrar por marca específica
-    navigate(`/produtos?selectedCategory=${encodeURIComponent(brandName.toLowerCase())}`);
+    const cleanBrandName = brandName.toLowerCase().trim();
+    navigate(`/produtos?selectedCategory=${encodeURIComponent(cleanBrandName)}`);
   };
+
+  if (!brands || brands.length === 0) {
+    return (
+      <div className="w-full">
+        <h3 className="text-xl font-bold text-black mb-6">Marcas Populares</h3>
+        <div className="text-center py-8">
+          <p className="text-neutral-500">Nenhuma marca disponível</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">

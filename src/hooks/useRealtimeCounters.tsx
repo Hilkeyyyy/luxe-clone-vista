@@ -8,8 +8,9 @@ export const useRealtimeCounters = () => {
   const updateFavoritesCount = () => {
     try {
       const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-      setFavoritesCount(favorites.length);
-      console.log('Favoritos atualizados:', favorites.length);
+      const newCount = favorites.length;
+      console.log('❤️ Contador de favoritos atualizado:', newCount);
+      setFavoritesCount(newCount);
     } catch (error) {
       console.error('Erro ao atualizar contador de favoritos:', error);
       setFavoritesCount(0);
@@ -20,8 +21,8 @@ export const useRealtimeCounters = () => {
     try {
       const cartItems = JSON.parse(localStorage.getItem('cart') || '[]');
       const totalItems = cartItems.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
+      console.log('🛒 Contador de carrinho atualizado:', totalItems);
       setCartCount(totalItems);
-      console.log('Carrinho atualizado:', totalItems);
     } catch (error) {
       console.error('Erro ao atualizar contador do carrinho:', error);
       setCartCount(0);
@@ -35,20 +36,20 @@ export const useRealtimeCounters = () => {
 
     // CORREÇÃO CRÍTICA: Event listeners otimizados
     const handleFavoritesUpdate = () => {
-      console.log('Evento favoritesUpdated disparado');
+      console.log('🔄 Evento favoritesUpdated disparado');
       updateFavoritesCount();
     };
 
     const handleCartUpdate = () => {
-      console.log('Evento cartUpdated disparado');
+      console.log('🔄 Evento cartUpdated disparado');
       updateCartCount();
     };
 
-    // Adicionar event listeners
+    // Adicionar event listeners personalizados
     window.addEventListener('favoritesUpdated', handleFavoritesUpdate);
     window.addEventListener('cartUpdated', handleCartUpdate);
 
-    // CORREÇÃO: Adicionar listeners também para storage events
+    // Event listeners para mudanças no localStorage (entre abas)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'favorites') {
         updateFavoritesCount();
@@ -59,16 +60,24 @@ export const useRealtimeCounters = () => {
 
     window.addEventListener('storage', handleStorageChange);
 
+    // Intervalo para atualização periódica (fallback)
+    const interval = setInterval(() => {
+      updateFavoritesCount();
+      updateCartCount();
+    }, 5000); // A cada 5 segundos
+
     // Cleanup
     return () => {
       window.removeEventListener('favoritesUpdated', handleFavoritesUpdate);
       window.removeEventListener('cartUpdated', handleCartUpdate);
       window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
     };
   }, []);
 
   // Forçar atualização manual
   const forceUpdate = () => {
+    console.log('🔄 Forçando atualização dos contadores');
     updateFavoritesCount();
     updateCartCount();
   };

@@ -38,6 +38,7 @@ export const useSecureFavorites = () => {
     }
 
     if (!isAuthenticated || !user) {
+      console.log('❤️ Usuário não autenticado, limpando favoritos');
       setFavoriteProducts([]);
       setFavoriteIds([]);
       setLoading(false);
@@ -46,14 +47,14 @@ export const useSecureFavorites = () => {
     }
 
     processing.current = true;
+    console.log('❤️ Carregando favoritos para usuário:', user.id);
     
     try {
-      // Timeout reduzido para 3s
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
         console.warn('⏰ Timeout ao carregar favoritos');
-      }, 3000);
+      }, 5000);
 
       const { data: favoritesData, error: favoritesError } = await supabase
         .from('favorites')
@@ -66,10 +67,12 @@ export const useSecureFavorites = () => {
       if (!mounted.current) return;
 
       if (favoritesError) {
+        console.error('❌ Erro ao carregar favoritos:', favoritesError);
         throw favoritesError;
       }
 
       const productIds = favoritesData?.map(f => f.product_id) || [];
+      console.log('❤️ IDs dos favoritos:', productIds.length);
       setFavoriteIds(productIds);
       
       if (productIds.length === 0) {
@@ -88,15 +91,26 @@ export const useSecureFavorites = () => {
       if (!mounted.current) return;
 
       if (productsError) {
+        console.error('❌ Erro ao carregar produtos favoritos:', productsError);
         throw productsError;
       }
 
+      console.log('✅ Produtos favoritos carregados:', productsData?.length || 0);
       setFavoriteProducts(productsData || []);
+
+      // Disparar evento para atualizar contadores
+      window.dispatchEvent(new CustomEvent('favoritesUpdated'));
+      
     } catch (error: any) {
       if (error.name !== 'AbortError' && mounted.current) {
         console.error('❌ Erro ao carregar favoritos:', error);
         setFavoriteProducts([]);
         setFavoriteIds([]);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar favoritos.",
+          variant: "destructive",
+        });
       }
     } finally {
       if (mounted.current) {
@@ -105,7 +119,7 @@ export const useSecureFavorites = () => {
       }
       processing.current = false;
     }
-  }, [user, isAuthenticated, authLoading]);
+  }, [user, isAuthenticated, authLoading, toast]);
 
   const toggleFavorite = useCallback(async (productId: string, productName: string) => {
     if (!isAuthenticated || !user) {
@@ -117,10 +131,13 @@ export const useSecureFavorites = () => {
       return;
     }
 
+    console.log('❤️ Alternando favorito:', { productId, productName });
+
     try {
       const isFavorite = favoriteIds.includes(productId);
       
       if (isFavorite) {
+        console.log('💔 Removendo dos favoritos');
         const { error } = await supabase
           .from('favorites')
           .delete()
@@ -133,11 +150,12 @@ export const useSecureFavorites = () => {
         setFavoriteProducts(prev => prev.filter(p => p.id !== productId));
         
         toast({
-          title: "❤️ Removido dos favoritos",
+          title: "💔 Removido dos favoritos",
           description: `${productName} foi removido dos seus favoritos.`,
-          duration: 3000,
+          duration: 2000,
         });
       } else {
+        console.log('❤️ Adicionando aos favoritos');
         const { error } = await supabase
           .from('favorites')
           .insert({ user_id: user.id, product_id: productId });
@@ -160,9 +178,13 @@ export const useSecureFavorites = () => {
         toast({
           title: "❤️ Adicionado aos favoritos",
           description: `${productName} foi adicionado aos seus favoritos.`,
-          duration: 3000,
+          duration: 2000,
         });
       }
+
+      // Disparar evento para atualizar contadores
+      window.dispatchEvent(new CustomEvent('favoritesUpdated'));
+      
     } catch (error) {
       console.error('❌ Erro ao alterar favorito:', error);
       toast({

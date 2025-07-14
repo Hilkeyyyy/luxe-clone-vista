@@ -17,10 +17,19 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ brands })
   const navigate = useNavigate();
 
   const handleBrandClick = (brandName: string) => {
-    console.log('Navegando para marca:', brandName);
-    // CORREÇÃO CRÍTICA: Usar URL correta para filtrar por marca
-    navigate(`/produtos?selectedCategory=${encodeURIComponent(brandName.toLowerCase())}`);
+    console.log('🔗 Navegando para marca:', brandName);
+    // CORREÇÃO CRÍTICA: Navegação correta para filtrar por marca específica
+    const cleanBrandName = brandName.toLowerCase().trim();
+    navigate(`/produtos?selectedCategory=${encodeURIComponent(cleanBrandName)}`);
   };
+
+  if (!brands || brands.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-neutral-500">Nenhuma marca disponível</p>
+      </div>
+    );
+  }
 
   return (
     <section id="featured-section" className="py-16 bg-white">

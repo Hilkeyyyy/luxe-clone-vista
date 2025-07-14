@@ -74,16 +74,16 @@ function App() {
                   <Route path="/buscar" element={<SearchResults />} />
                   <Route path="/login" element={<Login />} />
                   
-                  {/* CORREÇÃO CRÍTICA: Admin Routes - todas as rotas funcionais */}
+                  {/* CORREÇÃO CRÍTICA: Admin Routes - todas funcionando */}
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="/admin/dashboard" element={<AdminDashboard />} />
                   <Route path="/admin/login" element={<AdminLogin />} />
-                  <Route path="/admin/produtos" element={<AdminProducts />} />
                   <Route path="/admin/products" element={<AdminProducts />} />
-                  <Route path="/admin/landing" element={<AdminLanding />} />
+                  <Route path="/admin/produtos" element={<AdminProducts />} />
+                  <Route path="/admin/produtos/novo" element={<AdminProducts />} />
                   <Route path="/admin/categorias" element={<AdminLanding />} />
-                  <Route path="/admin/configuracoes" element={<AdminSettings />} />
                   <Route path="/admin/settings" element={<AdminSettings />} />
+                  <Route path="/admin/configuracoes" element={<AdminSettings />} />
                   
                   {/* 404 Route */}
                   <Route path="*" element={<NotFound />} />

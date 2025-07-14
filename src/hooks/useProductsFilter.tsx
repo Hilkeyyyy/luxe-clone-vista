@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSearchParams } from 'react-router-dom';
 
 interface Product {
   id: string;
@@ -23,6 +24,7 @@ interface Product {
 
 export const useProductsFilter = () => {
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,14 +33,31 @@ export const useProductsFilter = () => {
   const [priceRange, setPriceRange] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 
+  // CORREÇÃO CRÍTICA: Inicializar filtro da URL
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('selectedCategory');
+    if (categoryFromUrl && categoryFromUrl !== 'all') {
+      console.log('🔍 Aplicando filtro da URL:', categoryFromUrl);
+      setSelectedCategory(categoryFromUrl);
+    }
+  }, [searchParams]);
+
   const fetchProducts = async () => {
     try {
+      setLoading(true);
+      console.log('📦 Buscando produtos...');
+      
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao buscar produtos:', error);
+        throw error;
+      }
+      
+      console.log('✅ Produtos carregados:', data?.length || 0);
       setProducts(data || []);
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
@@ -54,14 +73,17 @@ export const useProductsFilter = () => {
 
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
+    console.log('🔄 Iniciando filtragem com', filtered.length, 'produtos');
 
     // CORREÇÃO CRÍTICA: Filtro por marca EXATO primeiro
     if (selectedCategory !== 'all') {
-      console.log('Filtrando por marca:', selectedCategory);
-      filtered = filtered.filter(product => 
-        product.brand.toLowerCase() === selectedCategory.toLowerCase()
-      );
-      console.log('Produtos filtrados por marca:', filtered.length);
+      console.log('🏷️ Filtrando por marca:', selectedCategory);
+      filtered = filtered.filter(product => {
+        const brandMatch = product.brand.toLowerCase() === selectedCategory.toLowerCase();
+        console.log(`Produto: ${product.name} | Marca: ${product.brand} | Match: ${brandMatch}`);
+        return brandMatch;
+      });
+      console.log('✅ Produtos filtrados por marca:', filtered.length);
     }
 
     // Filtro por busca - só aplica se não há categoria selecionada
@@ -71,6 +93,7 @@ export const useProductsFilter = () => {
         product.name.toLowerCase().includes(searchLower) ||
         product.brand.toLowerCase().includes(searchLower)
       );
+      console.log('🔍 Produtos após busca:', filtered.length);
     }
 
     // Filtro por tipo de relógio
@@ -78,6 +101,7 @@ export const useProductsFilter = () => {
       filtered = filtered.filter(product => 
         product.clone_category === selectedCloneCategory
       );
+      console.log('⌚ Produtos após filtro de categoria:', filtered.length);
     }
 
     // Filtro por faixa de preço
@@ -97,6 +121,7 @@ export const useProductsFilter = () => {
             return true;
         }
       });
+      console.log('💰 Produtos após filtro de preço:', filtered.length);
     }
 
     // Ordenação
@@ -121,6 +146,7 @@ export const useProductsFilter = () => {
         filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
 
+    console.log('🎯 Produtos finais após todos os filtros:', filtered.length);
     return filtered;
   }, [products, searchTerm, selectedCategory, selectedCloneCategory, priceRange, sortBy]);
 
@@ -129,7 +155,9 @@ export const useProductsFilter = () => {
     products.forEach(product => {
       if (product.brand) brandSet.add(product.brand);
     });
-    return Array.from(brandSet).sort();
+    const brands = Array.from(brandSet).sort();
+    console.log('🏷️ Marcas disponíveis:', brands);
+    return brands;
   }, [products]);
 
   const cloneCategories = useMemo(() => 
@@ -138,11 +166,24 @@ export const useProductsFilter = () => {
   );
 
   const clearFilters = () => {
+    console.log('🧹 Limpando todos os filtros');
     setSearchTerm('');
     setSelectedCategory('all');
     setSelectedCloneCategory('all');
     setPriceRange('all');
     setSortBy('newest');
+    setSearchParams({});
+  };
+
+  // CORREÇÃO: Atualizar URL quando categoria muda
+  const handleCategoryChange = (category: string) => {
+    console.log('🔄 Mudando categoria para:', category);
+    setSelectedCategory(category);
+    if (category !== 'all') {
+      setSearchParams({ selectedCategory: category });
+    } else {
+      setSearchParams({});
+    }
   };
 
   useEffect(() => {
@@ -155,7 +196,7 @@ export const useProductsFilter = () => {
     searchTerm,
     setSearchTerm,
     selectedCategory,
-    setSelectedCategory,
+    setSelectedCategory: handleCategoryChange,
     selectedCloneCategory,
     setSelectedCloneCategory,
     priceRange,

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import AdminGuard from '@/components/admin/AdminGuard';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -40,16 +40,28 @@ interface Product {
 
 const AdminProducts = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { products, loading, createProduct, updateProduct, deleteProduct } = useProducts();
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
+  // CORREÇÃO CRÍTICA: Verificar se deve abrir formulário automaticamente
+  React.useEffect(() => {
+    if (location.pathname === '/admin/produtos/novo' || location.pathname.includes('/novo')) {
+      console.log('🆕 Abrindo formulário de novo produto automaticamente');
+      setShowForm(true);
+    }
+  }, [location.pathname]);
+
   const handleCreateProduct = async (productData: any) => {
     setFormLoading(true);
     try {
+      console.log('➕ Criando novo produto:', productData);
       await createProduct(productData);
       setShowForm(false);
+      // Redirecionar para lista de produtos após criar
+      navigate('/admin/products');
     } catch (error) {
       console.error('Erro ao criar produto:', error);
     } finally {
@@ -62,6 +74,7 @@ const AdminProducts = () => {
     
     setFormLoading(true);
     try {
+      console.log('✏️ Atualizando produto:', editingProduct.id);
       await updateProduct(editingProduct.id, productData);
       setEditingProduct(null);
       setShowForm(false);
@@ -73,22 +86,29 @@ const AdminProducts = () => {
   };
 
   const handleEditProduct = (product: Product) => {
+    console.log('✏️ Editando produto:', product.name);
     setEditingProduct(product);
     setShowForm(true);
   };
 
   const handleViewProduct = (product: Product) => {
+    console.log('👁️ Visualizando produto:', product.name);
     // CORREÇÃO: Usar rota correta /products/ em vez de /produto/
-    navigate(`/products/${product.id}`);
+    window.open(`/products/${product.id}`, '_blank');
   };
 
   const handleDeleteProduct = async (id: string) => {
+    console.log('🗑️ Deletando produto:', id);
     await deleteProduct(id);
   };
 
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingProduct(null);
+    // Se estava na rota de novo produto, voltar para lista
+    if (location.pathname.includes('/novo')) {
+      navigate('/admin/products');
+    }
   };
 
   return (
@@ -104,13 +124,16 @@ const AdminProducts = () => {
                   className="flex items-center space-x-2 text-neutral-600 hover:text-neutral-900 transition-colors"
                 >
                   <ArrowLeft size={20} />
-                  <span>Voltar</span>
+                  <span>Voltar ao Dashboard</span>
                 </button>
                 <span className="text-neutral-500">|</span>
                 <h1 className="text-2xl font-bold text-neutral-900">Gerenciar Produtos</h1>
               </div>
               
-              <Button onClick={() => setShowForm(true)} className="flex items-center space-x-2">
+              <Button 
+                onClick={() => setShowForm(true)} 
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
+              >
                 <Plus size={20} />
                 <span>Novo Produto</span>
               </Button>
@@ -135,12 +158,12 @@ const AdminProducts = () => {
           </motion.div>
         </div>
 
-        {/* Dialog do Formulário */}
+        {/* CORREÇÃO CRÍTICA: Dialog do Formulário com tamanho otimizado */}
         <Dialog open={showForm} onOpenChange={handleCloseForm}>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>
-                {editingProduct ? 'Editar Produto' : 'Novo Produto'}
+              <DialogTitle className="text-xl font-bold">
+                {editingProduct ? `Editar Produto: ${editingProduct.name}` : 'Novo Produto'}
               </DialogTitle>
             </DialogHeader>
             

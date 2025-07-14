@@ -33,6 +33,7 @@ export const useSecureCart = () => {
     }
 
     if (!isAuthenticated || !user) {
+      console.log('🛒 Usuário não autenticado, limpando carrinho');
       setCartItems([]);
       setLoading(false);
       setInitialized(true);
@@ -40,14 +41,14 @@ export const useSecureCart = () => {
     }
 
     processing.current = true;
+    console.log('🛒 Carregando itens do carrinho para usuário:', user.id);
 
     try {
-      // Timeout reduzido para 3s
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
         console.warn('⏰ Timeout ao carregar carrinho');
-      }, 3000);
+      }, 5000);
 
       const { data: cartData, error } = await supabase
         .from('cart_items')
@@ -73,8 +74,11 @@ export const useSecureCart = () => {
       if (!mounted.current) return;
 
       if (error) {
+        console.error('❌ Erro ao carregar carrinho:', error);
         throw error;
       }
+
+      console.log('✅ Dados do carrinho carregados:', cartData?.length || 0, 'itens');
 
       if (!cartData || cartData.length === 0) {
         setCartItems([]);
@@ -83,26 +87,38 @@ export const useSecureCart = () => {
         return;
       }
 
-      const items: CartItem[] = cartData.map(item => {
-        const product = item.products as any;
-        return {
-          id: item.id,
-          productId: item.product_id,
-          name: product?.name || 'Produto',
-          brand: product?.brand || '',
-          price: parseFloat(String(product?.price)) || 0,
-          image: product?.images?.[0] || '/placeholder.svg',
-          quantity: item.quantity,
-          selectedColor: item.selected_color,
-          selectedSize: item.selected_size,
-        };
-      });
+      const items: CartItem[] = cartData
+        .filter(item => item.products) // Filtrar itens sem produto
+        .map(item => {
+          const product = item.products as any;
+          return {
+            id: item.id,
+            productId: item.product_id,
+            name: product?.name || 'Produto',
+            brand: product?.brand || '',
+            price: parseFloat(String(product?.price)) || 0,
+            image: product?.images?.[0] || '/placeholder.svg',
+            quantity: item.quantity,
+            selectedColor: item.selected_color,
+            selectedSize: item.selected_size,
+          };
+        });
 
+      console.log('🛒 Itens processados:', items.length);
       setCartItems(items);
+
+      // Disparar evento para atualizar contadores
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      
     } catch (error: any) {
       if (error.name !== 'AbortError' && mounted.current) {
         console.error('❌ Erro ao carregar carrinho:', error);
         setCartItems([]);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar carrinho.",
+          variant: "destructive",
+        });
       }
     } finally {
       if (mounted.current) {
@@ -111,7 +127,7 @@ export const useSecureCart = () => {
       }
       processing.current = false;
     }
-  }, [user, isAuthenticated, authLoading]);
+  }, [user, isAuthenticated, authLoading, toast]);
 
   const addToCart = useCallback(async (productId: string, productName: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
     if (!isAuthenticated || !user) {
@@ -122,6 +138,8 @@ export const useSecureCart = () => {
       });
       return;
     }
+
+    console.log('🛒 Adicionando ao carrinho:', { productId, productName, quantity });
 
     try {
       const { data: existingItem, error: searchError } = await supabase
@@ -136,6 +154,7 @@ export const useSecureCart = () => {
       if (searchError) throw searchError;
 
       if (existingItem) {
+        console.log('🔄 Item já existe, atualizando quantidade');
         const { error: updateError } = await supabase
           .from('cart_items')
           .update({ quantity: existingItem.quantity + quantity })
@@ -143,6 +162,7 @@ export const useSecureCart = () => {
 
         if (updateError) throw updateError;
       } else {
+        console.log('➕ Criando novo item no carrinho');
         const { error: insertError } = await supabase
           .from('cart_items')
           .insert({
@@ -159,10 +179,14 @@ export const useSecureCart = () => {
       await loadCartItems();
       
       toast({
-        title: "🛒 Adicionado ao carrinho!",
+        title: "✅ Adicionado ao carrinho!",
         description: `${quantity}x ${productName}`,
         duration: 2000,
       });
+
+      // Disparar evento para atualizar contadores
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      
     } catch (error) {
       console.error('❌ Erro ao adicionar ao carrinho:', error);
       toast({
@@ -195,6 +219,10 @@ export const useSecureCart = () => {
             : item
         )
       );
+
+      // Disparar evento para atualizar contadores
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      
     } catch (error) {
       console.error('❌ Erro ao atualizar:', error);
       toast({
@@ -216,6 +244,9 @@ export const useSecureCart = () => {
       if (error) throw error;
 
       setCartItems(prev => prev.filter(item => item.id !== cartItemId));
+      
+      // Disparar evento para atualizar contadores
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
       
       toast({
         title: "Item removido",
@@ -243,6 +274,9 @@ export const useSecureCart = () => {
       if (error) throw error;
 
       setCartItems([]);
+      
+      // Disparar evento para atualizar contadores
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
       
       toast({
         title: "Carrinho limpo",
