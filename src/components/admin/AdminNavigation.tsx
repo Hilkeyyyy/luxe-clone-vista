@@ -91,7 +91,7 @@ const AdminNavigation = () => {
               </p>
             </motion.button>
           ))}
-        </div>
+        </motion.div>
       </div>
     </div>
   );
