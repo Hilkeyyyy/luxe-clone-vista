@@ -71,7 +71,7 @@ export const useSecureFavorites = () => {
 
       // Transformar dados para o formato esperado
       const products: FavoriteProduct[] = (favoritesData || []).map(fav => ({
-        id: fav.id,
+        id: fav.product_id, // CORREÇÃO: usar product_id ao invés de id
         name: fav.products?.name || 'Produto não encontrado',
         brand: fav.products?.brand || '',
         price: fav.products?.price || 0,
