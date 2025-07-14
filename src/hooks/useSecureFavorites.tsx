@@ -6,16 +6,18 @@ import { useToast } from '@/hooks/use-toast';
 
 interface FavoriteProduct {
   id: string;
-  productId: string;
   name: string;
   brand: string;
   price: number;
-  originalPrice?: number;
-  image: string;
-  category: string;
-  isNew?: boolean;
-  isFeatured?: boolean;
-  customBadge?: string;
+  original_price?: number;
+  images: string[];
+  clone_category: string;
+  stock_status: string;
+  is_sold_out: boolean;
+  custom_badge?: string;
+  is_bestseller: boolean;
+  is_featured: boolean;
+  is_new: boolean;
 }
 
 export const useSecureFavorites = () => {
@@ -51,10 +53,13 @@ export const useSecureFavorites = () => {
             price,
             original_price,
             images,
-            category,
-            is_new,
+            clone_category,
+            stock_status,
+            is_sold_out,
+            custom_badge,
+            is_bestseller,
             is_featured,
-            custom_badge
+            is_new
           )
         `)
         .eq('user_id', user.id);
@@ -67,16 +72,18 @@ export const useSecureFavorites = () => {
       // Transformar dados para o formato esperado
       const products: FavoriteProduct[] = (favoritesData || []).map(fav => ({
         id: fav.id,
-        productId: fav.product_id,
         name: fav.products?.name || 'Produto não encontrado',
         brand: fav.products?.brand || '',
         price: fav.products?.price || 0,
-        originalPrice: fav.products?.original_price || undefined,
-        image: fav.products?.images?.[0] || '',
-        category: fav.products?.category || '',
-        isNew: fav.products?.is_new || false,
-        isFeatured: fav.products?.is_featured || false,
-        customBadge: fav.products?.custom_badge || undefined,
+        original_price: fav.products?.original_price || undefined,
+        images: fav.products?.images || [],
+        clone_category: fav.products?.clone_category || 'Clone',
+        stock_status: fav.products?.stock_status || 'in_stock',
+        is_sold_out: fav.products?.is_sold_out || false,
+        custom_badge: fav.products?.custom_badge || undefined,
+        is_bestseller: fav.products?.is_bestseller || false,
+        is_featured: fav.products?.is_featured || false,
+        is_new: fav.products?.is_new || false,
       }));
 
       console.log('✅ Favoritos carregados:', products.length);
@@ -100,7 +107,7 @@ export const useSecureFavorites = () => {
 
   // Verificar se produto está nos favoritos
   const isFavorite = (productId: string): boolean => {
-    return favoriteProducts.some(fav => fav.productId === productId);
+    return favoriteProducts.some(fav => fav.id === productId);
   };
 
   // Adicionar/remover favorito
@@ -123,7 +130,7 @@ export const useSecureFavorites = () => {
         if (error) throw error;
 
         // Atualizar estado local
-        setFavoriteProducts(prev => prev.filter(fav => fav.productId !== productId));
+        setFavoriteProducts(prev => prev.filter(fav => fav.id !== productId));
 
         toast({
           title: "💔 Removido dos favoritos",
