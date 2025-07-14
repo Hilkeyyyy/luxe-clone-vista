@@ -18,10 +18,11 @@ const Index = () => {
   const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
   const { categories, loading: categoriesLoading } = useBrandCategories(true);
 
-  // Transformar categorias em formato esperado pelo componente
+  // Transformar categorias em formato esperado pelo componente com imagens
   const brands = categories.map(category => ({
     name: category.name,
-    count: category.products_count || 0
+    count: category.products_count || 0,
+    image: category.image_url || undefined
   }));
 
   return (

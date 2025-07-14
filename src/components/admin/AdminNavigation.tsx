@@ -33,7 +33,7 @@ const AdminNavigation = () => {
       icon: Settings,
       title: 'Configurações',
       description: 'WhatsApp, site e outras configurações',
-      path: '/admin/settings',
+      path: '/admin/settings', 
       color: 'from-neutral-600 to-neutral-700'
     }
   ];

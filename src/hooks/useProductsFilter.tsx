@@ -33,7 +33,7 @@ export const useProductsFilter = () => {
   const [priceRange, setPriceRange] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 
-  // CORREÇÃO CRÍTICA: Inicializar filtro da URL
+  // Inicializar filtro da URL
   useEffect(() => {
     const categoryFromUrl = searchParams.get('selectedCategory');
     if (categoryFromUrl && categoryFromUrl !== 'all') {
@@ -75,15 +75,17 @@ export const useProductsFilter = () => {
     let filtered = [...products];
     console.log('🔄 Iniciando filtragem com', filtered.length, 'produtos');
 
-    // CORREÇÃO CRÍTICA: Filtro por marca EXATO primeiro
+    // FILTRO POR MARCA EXATO - CORREÇÃO CRÍTICA
     if (selectedCategory !== 'all') {
       console.log('🏷️ Filtrando por marca:', selectedCategory);
       filtered = filtered.filter(product => {
-        const brandMatch = product.brand.toLowerCase() === selectedCategory.toLowerCase();
-        console.log(`Produto: ${product.name} | Marca: ${product.brand} | Match: ${brandMatch}`);
+        const productBrand = product.brand.toLowerCase().trim();
+        const filterBrand = selectedCategory.toLowerCase().trim();
+        const brandMatch = productBrand === filterBrand;
+        console.log(`Produto: ${product.name} | Marca do produto: "${productBrand}" | Filtro: "${filterBrand}" | Match: ${brandMatch}`);
         return brandMatch;
       });
-      console.log('✅ Produtos filtrados por marca:', filtered.length);
+      console.log('✅ Produtos após filtro de marca:', filtered.length);
     }
 
     // Filtro por busca - só aplica se não há categoria selecionada
@@ -175,7 +177,7 @@ export const useProductsFilter = () => {
     setSearchParams({});
   };
 
-  // CORREÇÃO: Atualizar URL quando categoria muda
+  // Atualizar URL quando categoria muda
   const handleCategoryChange = (category: string) => {
     console.log('🔄 Mudando categoria para:', category);
     setSelectedCategory(category);

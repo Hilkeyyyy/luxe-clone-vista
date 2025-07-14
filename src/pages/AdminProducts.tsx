@@ -46,7 +46,7 @@ const AdminProducts = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
-  // CORREÇÃO CRÍTICA: Verificar se deve abrir formulário automaticamente
+  // Verificar se deve abrir formulário automaticamente
   React.useEffect(() => {
     if (location.pathname === '/admin/produtos/novo' || location.pathname.includes('/novo')) {
       console.log('🆕 Abrindo formulário de novo produto automaticamente');
@@ -60,7 +60,6 @@ const AdminProducts = () => {
       console.log('➕ Criando novo produto:', productData);
       await createProduct(productData);
       setShowForm(false);
-      // Redirecionar para lista de produtos após criar
       navigate('/admin/products');
     } catch (error) {
       console.error('Erro ao criar produto:', error);
@@ -93,7 +92,6 @@ const AdminProducts = () => {
 
   const handleViewProduct = (product: Product) => {
     console.log('👁️ Visualizando produto:', product.name);
-    // CORREÇÃO: Usar rota correta /products/ em vez de /produto/
     window.open(`/products/${product.id}`, '_blank');
   };
 
@@ -105,7 +103,6 @@ const AdminProducts = () => {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingProduct(null);
-    // Se estava na rota de novo produto, voltar para lista
     if (location.pathname.includes('/novo')) {
       navigate('/admin/products');
     }
@@ -131,7 +128,10 @@ const AdminProducts = () => {
               </div>
               
               <Button 
-                onClick={() => setShowForm(true)} 
+                onClick={() => {
+                  setShowForm(true);
+                  navigate('/admin/products');
+                }} 
                 className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
               >
                 <Plus size={20} />
@@ -158,9 +158,9 @@ const AdminProducts = () => {
           </motion.div>
         </div>
 
-        {/* CORREÇÃO CRÍTICA: Dialog do Formulário com tamanho otimizado */}
+        {/* Dialog do Formulário */}
         <Dialog open={showForm} onOpenChange={handleCloseForm}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">
                 {editingProduct ? `Editar Produto: ${editingProduct.name}` : 'Novo Produto'}

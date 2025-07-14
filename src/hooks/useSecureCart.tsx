@@ -1,11 +1,12 @@
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface CartItem {
   id: string;
+  productId: string;
   name: string;
   brand: string;
   price: number;
@@ -13,51 +14,37 @@ interface CartItem {
   quantity: number;
   selectedColor?: string;
   selectedSize?: string;
-  productId: string;
 }
 
 export const useSecureCart = () => {
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
-  
-  // Flags para prevenir loops infinitos
-  const mounted = useRef(true);
-  const processing = useRef(false);
 
-  const loadCartItems = useCallback(async () => {
-    if (authLoading || processing.current || !mounted.current) {
-      return;
-    }
-
+  // Carregar produtos do carrinho
+  const loadCartItems = async () => {
     if (!isAuthenticated || !user) {
       console.log('🛒 Usuário não autenticado, limpando carrinho');
       setCartItems([]);
-      setLoading(false);
       setInitialized(true);
       return;
     }
 
-    processing.current = true;
-    console.log('🛒 Carregando itens do carrinho para usuário:', user.id);
-
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-        console.warn('⏰ Timeout ao carregar carrinho');
-      }, 5000);
+      setLoading(true);
+      console.log('🛒 Carregando itens do carrinho para usuário:', user.id);
 
-      const { data: cartData, error } = await supabase
+      // Buscar itens do carrinho com dados dos produtos
+      const { data: cartData, error: cartError } = await supabase
         .from('cart_items')
         .select(`
           id,
+          product_id,
           quantity,
           selected_color,
           selected_size,
-          product_id,
           products (
             id,
             name,
@@ -66,165 +53,122 @@ export const useSecureCart = () => {
             images
           )
         `)
-        .eq('user_id', user.id)
-        .abortSignal(controller.signal);
+        .eq('user_id', user.id);
 
-      clearTimeout(timeoutId);
-
-      if (!mounted.current) return;
-
-      if (error) {
-        console.error('❌ Erro ao carregar carrinho:', error);
-        throw error;
+      if (cartError) {
+        console.error('❌ Erro ao carregar carrinho:', cartError);
+        throw cartError;
       }
 
-      console.log('✅ Dados do carrinho carregados:', cartData?.length || 0, 'itens');
+      // Transformar dados para o formato esperado
+      const items: CartItem[] = (cartData || []).map(item => ({
+        id: item.id,
+        productId: item.product_id,
+        name: item.products?.name || 'Produto não encontrado',
+        brand: item.products?.brand || '',
+        price: item.products?.price || 0,
+        image: item.products?.images?.[0] || '',
+        quantity: item.quantity,
+        selectedColor: item.selected_color || undefined,
+        selectedSize: item.selected_size || undefined,
+      }));
 
-      if (!cartData || cartData.length === 0) {
-        setCartItems([]);
-        setLoading(false);
-        setInitialized(true);
-        return;
-      }
-
-      const items: CartItem[] = cartData
-        .filter(item => item.products) // Filtrar itens sem produto
-        .map(item => {
-          const product = item.products as any;
-          return {
-            id: item.id,
-            productId: item.product_id,
-            name: product?.name || 'Produto',
-            brand: product?.brand || '',
-            price: parseFloat(String(product?.price)) || 0,
-            image: product?.images?.[0] || '/placeholder.svg',
-            quantity: item.quantity,
-            selectedColor: item.selected_color,
-            selectedSize: item.selected_size,
-          };
-        });
-
-      console.log('🛒 Itens processados:', items.length);
+      console.log('✅ Itens do carrinho carregados:', items.length);
       setCartItems(items);
-
+      
       // Disparar evento para atualizar contadores
       window.dispatchEvent(new CustomEvent('cartUpdated'));
       
-    } catch (error: any) {
-      if (error.name !== 'AbortError' && mounted.current) {
-        console.error('❌ Erro ao carregar carrinho:', error);
-        setCartItems([]);
-        toast({
-          title: "Erro",
-          description: "Erro ao carregar carrinho.",
-          variant: "destructive",
-        });
-      }
-    } finally {
-      if (mounted.current) {
-        setLoading(false);
-        setInitialized(true);
-      }
-      processing.current = false;
-    }
-  }, [user, isAuthenticated, authLoading, toast]);
-
-  const addToCart = useCallback(async (productId: string, productName: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
-    if (!isAuthenticated || !user) {
+    } catch (error) {
+      console.error('Erro ao carregar carrinho:', error);
       toast({
-        title: "Login necessário",
-        description: "Faça login para adicionar ao carrinho.",
+        title: "Erro",
+        description: "Erro ao carregar carrinho.",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setLoading(false);
+      setInitialized(true);
+    }
+  };
+
+  // Adicionar item ao carrinho
+  const addToCart = async (
+    productId: string,
+    productName: string,
+    quantity: number = 1,
+    selectedColor?: string,
+    selectedSize?: string
+  ) => {
+    if (!isAuthenticated || !user) {
+      throw new Error('Usuário não autenticado');
     }
 
-    console.log('🛒 Adicionando ao carrinho:', { productId, productName, quantity });
-
     try {
-      const { data: existingItem, error: searchError } = await supabase
-        .from('cart_items')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('product_id', productId)
-        .eq('selected_color', selectedColor || '')
-        .eq('selected_size', selectedSize || '')
-        .maybeSingle();
+      console.log('➕ Adicionando produto ao carrinho:', { productId, quantity });
 
-      if (searchError) throw searchError;
+      // Verificar se item já existe no carrinho
+      const existingItem = cartItems.find(item => 
+        item.productId === productId && 
+        item.selectedColor === selectedColor && 
+        item.selectedSize === selectedSize
+      );
 
       if (existingItem) {
-        console.log('🔄 Item já existe, atualizando quantidade');
-        const { error: updateError } = await supabase
-          .from('cart_items')
-          .update({ quantity: existingItem.quantity + quantity })
-          .eq('id', existingItem.id);
-
-        if (updateError) throw updateError;
+        // Atualizar quantidade
+        await updateQuantity(existingItem.id, existingItem.quantity + quantity);
       } else {
-        console.log('➕ Criando novo item no carrinho');
-        const { error: insertError } = await supabase
+        // Adicionar novo item
+        const { error } = await supabase
           .from('cart_items')
           .insert({
             user_id: user.id,
             product_id: productId,
             quantity,
-            selected_color: selectedColor || null,
-            selected_size: selectedSize || null,
+            selected_color: selectedColor,
+            selected_size: selectedSize,
           });
 
-        if (insertError) throw insertError;
+        if (error) throw error;
+
+        // Recarregar carrinho
+        await loadCartItems();
       }
 
-      await loadCartItems();
-      
-      toast({
-        title: "✅ Adicionado ao carrinho!",
-        description: `${quantity}x ${productName}`,
-        duration: 2000,
-      });
-
-      // Disparar evento para atualizar contadores
-      window.dispatchEvent(new CustomEvent('cartUpdated'));
-      
     } catch (error) {
-      console.error('❌ Erro ao adicionar ao carrinho:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao adicionar produto.",
-        variant: "destructive",
-      });
+      console.error('Erro ao adicionar ao carrinho:', error);
+      throw error;
     }
-  }, [user, isAuthenticated, toast, loadCartItems]);
+  };
 
+  // Atualizar quantidade
   const updateQuantity = async (cartItemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      await removeItem(cartItemId);
-      return;
-    }
+    if (!isAuthenticated || !user) return;
 
     try {
+      if (newQuantity <= 0) {
+        await removeItem(cartItemId);
+        return;
+      }
+
       const { error } = await supabase
         .from('cart_items')
         .update({ quantity: newQuantity })
         .eq('id', cartItemId)
-        .eq('user_id', user?.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
-      setCartItems(prev => 
-        prev.map(item => 
-          item.id === cartItemId 
-            ? { ...item, quantity: newQuantity }
-            : item
-        )
-      );
+      // Atualizar estado local
+      setCartItems(prev => prev.map(item => 
+        item.id === cartItemId ? { ...item, quantity: newQuantity } : item
+      ));
 
       // Disparar evento para atualizar contadores
       window.dispatchEvent(new CustomEvent('cartUpdated'));
-      
+
     } catch (error) {
-      console.error('❌ Erro ao atualizar:', error);
+      console.error('Erro ao atualizar quantidade:', error);
       toast({
         title: "Erro",
         description: "Erro ao atualizar quantidade.",
@@ -233,37 +177,43 @@ export const useSecureCart = () => {
     }
   };
 
+  // Remover item do carrinho
   const removeItem = async (cartItemId: string) => {
+    if (!isAuthenticated || !user) return;
+
     try {
       const { error } = await supabase
         .from('cart_items')
         .delete()
         .eq('id', cartItemId)
-        .eq('user_id', user?.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
+      // Atualizar estado local
       setCartItems(prev => prev.filter(item => item.id !== cartItemId));
-      
+
       // Disparar evento para atualizar contadores
       window.dispatchEvent(new CustomEvent('cartUpdated'));
-      
+
       toast({
-        title: "Item removido",
-        description: "Produto removido do carrinho.",
+        title: "Produto removido",
+        description: "Item removido do carrinho com sucesso.",
       });
+
     } catch (error) {
-      console.error('❌ Erro ao remover:', error);
+      console.error('Erro ao remover item:', error);
       toast({
         title: "Erro",
-        description: "Erro ao remover item.",
+        description: "Erro ao remover item do carrinho.",
         variant: "destructive",
       });
     }
   };
 
+  // Limpar carrinho
   const clearCart = async () => {
-    if (!user) return;
+    if (!isAuthenticated || !user) return;
 
     try {
       const { error } = await supabase
@@ -274,16 +224,17 @@ export const useSecureCart = () => {
       if (error) throw error;
 
       setCartItems([]);
-      
+
       // Disparar evento para atualizar contadores
       window.dispatchEvent(new CustomEvent('cartUpdated'));
-      
+
       toast({
         title: "Carrinho limpo",
-        description: "Todos os itens removidos.",
+        description: "Todos os itens foram removidos do carrinho.",
       });
+
     } catch (error) {
-      console.error('❌ Erro ao limpar:', error);
+      console.error('Erro ao limpar carrinho:', error);
       toast({
         title: "Erro",
         description: "Erro ao limpar carrinho.",
@@ -292,30 +243,18 @@ export const useSecureCart = () => {
     }
   };
 
-  const getTotalPrice = useMemo(() => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  }, [cartItems]);
+  // Calcular total
+  const getTotalPrice = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const getTotalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
 
-  const getTotalItems = useMemo(() => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
-  }, [cartItems]);
-
+  // Inicializar quando usuário muda
   useEffect(() => {
-    mounted.current = true;
-    
-    // Só carregar quando auth estiver pronto e não inicializado ainda
-    if (!authLoading && !initialized && !processing.current) {
-      loadCartItems();
-    }
-
-    return () => {
-      mounted.current = false;
-    };
-  }, [loadCartItems, authLoading, initialized]);
+    loadCartItems();
+  }, [isAuthenticated, user]);
 
   return {
     cartItems,
-    loading: loading || authLoading,
+    loading,
     initialized,
     addToCart,
     updateQuantity,
