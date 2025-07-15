@@ -134,8 +134,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
           customBadge={custom_badge}
           showBuyButton={false}
           showCartText={false}
-          isCartLoading={buttonState.isLoading}
-          isCartAdded={buttonState.isSuccess}
+          isCartLoading={buttonState.isCartLoading}
+          isCartAdded={buttonState.isCartAdded}
+          isFavoriteLoading={buttonState.isFavoriteLoading}
           productId={id}
         />
       </div>
