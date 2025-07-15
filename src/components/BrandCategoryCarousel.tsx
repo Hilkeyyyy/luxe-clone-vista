@@ -20,7 +20,7 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ brands })
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = 350;
+      const scrollAmount = 300;
       scrollRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth'
@@ -48,7 +48,7 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ brands })
       <div className="absolute top-1/2 -translate-y-1/2 left-4 z-10">
         <motion.button
           onClick={() => scroll('left')}
-          className="p-3 rounded-full bg-white/90 shadow-lg hover:bg-white transition-all duration-300 text-neutral-800 hover:scale-110"
+          className="p-3 rounded-full bg-white/95 shadow-xl hover:bg-white transition-all duration-300 text-neutral-800 hover:scale-110 backdrop-blur-sm"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
         >
@@ -59,7 +59,7 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ brands })
       <div className="absolute top-1/2 -translate-y-1/2 right-4 z-10">
         <motion.button
           onClick={() => scroll('right')}
-          className="p-3 rounded-full bg-white/90 shadow-lg hover:bg-white transition-all duration-300 text-neutral-800 hover:scale-110"
+          className="p-3 rounded-full bg-white/95 shadow-xl hover:bg-white transition-all duration-300 text-neutral-800 hover:scale-110 backdrop-blur-sm"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
         >
@@ -67,17 +67,17 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ brands })
         </motion.button>
       </div>
 
-      {/* Carousel */}
+      {/* Carousel - Cards Maiores e Mais Quadrados */}
       <div 
         ref={scrollRef}
-        className="flex overflow-x-auto space-x-6 pb-4 scrollbar-hide px-8"
+        className="flex overflow-x-auto space-x-6 pb-6 scrollbar-hide px-8"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {brands.map((brand, index) => (
           <motion.button
             key={brand.name}
             onClick={() => handleBrandClick(brand.name)}
-            className="group flex-shrink-0 w-80 h-48 relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-500"
+            className="group flex-shrink-0 w-72 h-64 relative rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -98,32 +98,32 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ brands })
             </div>
 
             {/* Dark Overlay */}
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-500" />
+            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-all duration-500" />
 
             {/* Content */}
-            <div className="relative z-10 h-full flex flex-col justify-between p-6">
+            <div className="relative z-10 h-full flex flex-col justify-between p-8">
               {/* Brand Name */}
               <div className="text-left">
-                <h3 className="text-3xl font-bold text-white mb-2 tracking-wide">
+                <h3 className="text-4xl font-bold text-white mb-3 tracking-wide leading-tight">
                   {brand.name}
                 </h3>
-                <p className="text-white/80 text-lg font-light">
-                  Relógios de luxo suíços com tradição centenária
+                <p className="text-white/80 text-lg font-light leading-relaxed">
+                  Relógios premium de luxo
                 </p>
               </div>
 
               {/* Product Count Badge */}
               <div className="self-start">
-                <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 border border-white/30">
-                  <span className="text-white font-medium">
+                <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-5 py-3 border border-white/30">
+                  <span className="text-white font-semibold text-lg">
                     {brand.count} produto{brand.count !== 1 ? 's' : ''}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Hover Effect */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* Hover Effect Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           </motion.button>
         ))}
       </div>

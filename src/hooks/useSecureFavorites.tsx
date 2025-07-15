@@ -18,6 +18,17 @@ interface FavoriteProduct {
   is_bestseller: boolean;
   is_featured: boolean;
   is_new: boolean;
+  category: string;
+  description?: string;
+  colors: string[];
+  sizes: string[];
+  specifications?: any;
+  in_stock?: boolean;
+  is_coming_soon?: boolean;
+  diameter?: string;
+  material?: string;
+  movement?: string;
+  water_resistance?: string;
 }
 
 export const useSecureFavorites = () => {
@@ -27,7 +38,7 @@ export const useSecureFavorites = () => {
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // Carregar produtos favoritos
+  // Carregar produtos favoritos - OTIMIZADO
   const loadFavorites = async () => {
     if (!isAuthenticated || !user) {
       console.log('❤️ Usuário não autenticado, limpando favoritos');
@@ -40,7 +51,7 @@ export const useSecureFavorites = () => {
       setLoading(true);
       console.log('❤️ Carregando favoritos para usuário:', user.id);
 
-      // Buscar favoritos com dados dos produtos
+      // Buscar favoritos com dados completos dos produtos
       const { data: favoritesData, error: favoritesError } = await supabase
         .from('favorites')
         .select(`
@@ -59,7 +70,18 @@ export const useSecureFavorites = () => {
             custom_badge,
             is_bestseller,
             is_featured,
-            is_new
+            is_new,
+            category,
+            description,
+            colors,
+            sizes,
+            specifications,
+            in_stock,
+            is_coming_soon,
+            diameter,
+            material,
+            movement,
+            water_resistance
           )
         `)
         .eq('user_id', user.id);
@@ -69,22 +91,35 @@ export const useSecureFavorites = () => {
         throw favoritesError;
       }
 
-      // Transformar dados para o formato esperado
-      const products: FavoriteProduct[] = (favoritesData || []).map(fav => ({
-        id: fav.product_id, // CORREÇÃO: usar product_id ao invés de id
-        name: fav.products?.name || 'Produto não encontrado',
-        brand: fav.products?.brand || '',
-        price: fav.products?.price || 0,
-        original_price: fav.products?.original_price || undefined,
-        images: fav.products?.images || [],
-        clone_category: fav.products?.clone_category || 'Clone',
-        stock_status: fav.products?.stock_status || 'in_stock',
-        is_sold_out: fav.products?.is_sold_out || false,
-        custom_badge: fav.products?.custom_badge || undefined,
-        is_bestseller: fav.products?.is_bestseller || false,
-        is_featured: fav.products?.is_featured || false,
-        is_new: fav.products?.is_new || false,
-      }));
+      // Transformar dados para o formato esperado - COMPLETO
+      const products: FavoriteProduct[] = (favoritesData || [])
+        .filter(fav => fav.products) // Filtrar produtos que existem
+        .map(fav => ({
+          id: fav.product_id,
+          name: fav.products?.name || 'Produto não encontrado',
+          brand: fav.products?.brand || '',
+          price: fav.products?.price || 0,
+          original_price: fav.products?.original_price || undefined,
+          images: fav.products?.images || [],
+          clone_category: fav.products?.clone_category || 'Clone',
+          stock_status: fav.products?.stock_status || 'in_stock',
+          is_sold_out: fav.products?.is_sold_out || false,
+          custom_badge: fav.products?.custom_badge || undefined,
+          is_bestseller: fav.products?.is_bestseller || false,
+          is_featured: fav.products?.is_featured || false,
+          is_new: fav.products?.is_new || false,
+          category: fav.products?.category || '',
+          description: fav.products?.description || '',
+          colors: fav.products?.colors || [],
+          sizes: fav.products?.sizes || [],
+          specifications: fav.products?.specifications || {},
+          in_stock: fav.products?.in_stock ?? true,
+          is_coming_soon: fav.products?.is_coming_soon || false,
+          diameter: fav.products?.diameter || '',
+          material: fav.products?.material || '',
+          movement: fav.products?.movement || '',
+          water_resistance: fav.products?.water_resistance || '',
+        }));
 
       console.log('✅ Favoritos carregados:', products.length);
       setFavoriteProducts(products);
@@ -110,7 +145,7 @@ export const useSecureFavorites = () => {
     return favoriteProducts.some(fav => fav.id === productId);
   };
 
-  // Adicionar/remover favorito
+  // Adicionar/remover favorito - OTIMIZADO
   const toggleFavorite = async (productId: string, productName: string) => {
     if (!isAuthenticated || !user) {
       throw new Error('Usuário não autenticado');
@@ -129,12 +164,13 @@ export const useSecureFavorites = () => {
 
         if (error) throw error;
 
-        // Atualizar estado local
+        // Atualizar estado local IMEDIATAMENTE
         setFavoriteProducts(prev => prev.filter(fav => fav.id !== productId));
 
         toast({
           title: "💔 Removido dos favoritos",
           description: productName,
+          duration: 1500,
         });
       } else {
         // Adicionar favorito
@@ -153,6 +189,7 @@ export const useSecureFavorites = () => {
         toast({
           title: "❤️ Adicionado aos favoritos",
           description: productName,
+          duration: 1500,
         });
       }
 

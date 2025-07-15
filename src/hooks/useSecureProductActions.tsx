@@ -1,18 +1,52 @@
 
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSecureFavorites } from '@/hooks/useSecureFavorites';
 import { useSecureCart } from '@/hooks/useSecureCart';
 import { useAuth } from '@/hooks/useAuth';
-import { useButtonFeedback } from '@/hooks/useButtonFeedback';
 
 export const useSecureProductActions = () => {
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   const { toggleFavorite, isFavorite } = useSecureFavorites();
   const { addToCart, cartItems, getTotalPrice } = useSecureCart();
-  const { triggerFeedback, setLoading, getButtonState } = useButtonFeedback();
+  
+  // Estados para feedback instantâneo
+  const [loadingStates, setLoadingStates] = useState<{[key: string]: { cart: boolean; favorite: boolean }}>({});
+  const [successStates, setSuccessStates] = useState<{[key: string]: { cart: boolean; favorite: boolean }}>({});
 
-  // CORREÇÃO CRÍTICA: Feedback instantâneo para favoritos
+  const setLoading = (productId: string, type: 'cart' | 'favorite', loading: boolean) => {
+    setLoadingStates(prev => ({
+      ...prev,
+      [productId]: {
+        ...prev[productId],
+        [type]: loading
+      }
+    }));
+  };
+
+  const setSuccess = (productId: string, type: 'cart' | 'favorite', success: boolean) => {
+    setSuccessStates(prev => ({
+      ...prev,
+      [productId]: {
+        ...prev[productId],
+        [type]: success
+      }
+    }));
+    
+    // Limpar estado de sucesso após 2 segundos
+    setTimeout(() => {
+      setSuccessStates(prev => ({
+        ...prev,
+        [productId]: {
+          ...prev[productId],
+          [type]: false
+        }
+      }));
+    }, 2000);
+  };
+
+  // FEEDBACK INSTANTÂNEO PARA FAVORITOS
   const handleToggleFavorite = async (productId: string, productName: string) => {
     if (!isAuthenticated) {
       toast({
@@ -24,24 +58,13 @@ export const useSecureProductActions = () => {
     }
 
     try {
-      // Feedback imediato
-      toast({
-        title: isFavorite(productId) ? "💔 Removendo dos favoritos..." : "❤️ Adicionando aos favoritos...",
-        description: productName,
-        duration: 1000,
-      });
-
+      setLoading(productId, 'favorite', true);
+      
       await toggleFavorite(productId, productName);
+      setSuccess(productId, 'favorite', true);
       
       // Disparar eventos para atualizar contadores IMEDIATAMENTE
       window.dispatchEvent(new CustomEvent('favoritesUpdated'));
-      
-      // Toast de confirmação
-      toast({
-        title: isFavorite(productId) ? "❤️ Adicionado aos favoritos!" : "💔 Removido dos favoritos!",
-        description: productName,
-        duration: 2000,
-      });
       
     } catch (error) {
       console.error('Erro ao alterar favorito:', error);
@@ -50,10 +73,12 @@ export const useSecureProductActions = () => {
         description: "Erro ao alterar favorito.",
         variant: "destructive",
       });
+    } finally {
+      setLoading(productId, 'favorite', false);
     }
   };
 
-  // CORREÇÃO CRÍTICA: Feedback instantâneo no carrinho
+  // FEEDBACK INSTANTÂNEO NO CARRINHO
   const handleAddToCart = async (productId: string, productName: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
     if (!isAuthenticated) {
       toast({
@@ -65,20 +90,10 @@ export const useSecureProductActions = () => {
     }
 
     try {
-      // Feedback imediato
-      setLoading(productId, true);
+      setLoading(productId, 'cart', true);
       
-      // Toast instantâneo
-      toast({
-        title: "🛒 Adicionando ao carrinho...",
-        description: `${quantity}x ${productName}`,
-        duration: 1000,
-      });
-
       await addToCart(productId, productName, quantity, selectedColor, selectedSize);
-      
-      // Feedback de sucesso
-      triggerFeedback(productId, 1500);
+      setSuccess(productId, 'cart', true);
       
       // Disparar eventos para atualizar contadores IMEDIATAMENTE
       window.dispatchEvent(new CustomEvent('cartUpdated'));
@@ -97,11 +112,11 @@ export const useSecureProductActions = () => {
         variant: "destructive",
       });
     } finally {
-      setTimeout(() => setLoading(productId, false), 1000);
+      setLoading(productId, 'cart', false);
     }
   };
 
-  // WHATSAPP PRODUTO ESPECÍFICO - OTIMIZADO
+  // WHATSAPP PRODUTO ESPECÍFICO
   const handleBuySpecificProduct = async (productId: string, productName: string, brand: string, price: number, image: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
     try {
       const whatsappNumber = "19999413755";
@@ -140,7 +155,7 @@ export const useSecureProductActions = () => {
     }
   };
 
-  // Função para enviar todo o carrinho (mantida para uso no carrinho)
+  // Função para enviar todo o carrinho
   const handleBuyNow = async () => {
     if (!isAuthenticated) {
       toast({
@@ -210,6 +225,14 @@ export const useSecureProductActions = () => {
       });
     }
   };
+
+  // Getter para estados dos botões
+  const getButtonState = (productId: string) => ({
+    isCartLoading: loadingStates[productId]?.cart || false,
+    isCartAdded: successStates[productId]?.cart || false,
+    isFavoriteLoading: loadingStates[productId]?.favorite || false,
+    isFavoriteAdded: successStates[productId]?.favorite || false,
+  });
 
   return {
     toggleFavorite: handleToggleFavorite,

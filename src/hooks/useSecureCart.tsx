@@ -23,7 +23,7 @@ export const useSecureCart = () => {
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // Carregar produtos do carrinho
+  // Carregar produtos do carrinho - OTIMIZADO
   const loadCartItems = async () => {
     if (!isAuthenticated || !user) {
       console.log('🛒 Usuário não autenticado, limpando carrinho');
@@ -61,17 +61,19 @@ export const useSecureCart = () => {
       }
 
       // Transformar dados para o formato esperado
-      const items: CartItem[] = (cartData || []).map(item => ({
-        id: item.id,
-        productId: item.product_id,
-        name: item.products?.name || 'Produto não encontrado',
-        brand: item.products?.brand || '',
-        price: item.products?.price || 0,
-        image: item.products?.images?.[0] || '',
-        quantity: item.quantity,
-        selectedColor: item.selected_color || undefined,
-        selectedSize: item.selected_size || undefined,
-      }));
+      const items: CartItem[] = (cartData || [])
+        .filter(item => item.products) // Filtrar itens que têm produtos válidos
+        .map(item => ({
+          id: item.id,
+          productId: item.product_id,
+          name: item.products?.name || 'Produto não encontrado',
+          brand: item.products?.brand || '',
+          price: item.products?.price || 0,
+          image: item.products?.images?.[0] || '',
+          quantity: item.quantity,
+          selectedColor: item.selected_color || undefined,
+          selectedSize: item.selected_size || undefined,
+        }));
 
       console.log('✅ Itens do carrinho carregados:', items.length);
       setCartItems(items);
@@ -92,7 +94,7 @@ export const useSecureCart = () => {
     }
   };
 
-  // Adicionar item ao carrinho
+  // Adicionar item ao carrinho - OTIMIZADO
   const addToCart = async (
     productId: string,
     productName: string,
@@ -141,7 +143,7 @@ export const useSecureCart = () => {
     }
   };
 
-  // Atualizar quantidade
+  // Atualizar quantidade - OTIMIZADO
   const updateQuantity = async (cartItemId: string, newQuantity: number) => {
     if (!isAuthenticated || !user) return;
 
@@ -159,7 +161,7 @@ export const useSecureCart = () => {
 
       if (error) throw error;
 
-      // Atualizar estado local
+      // Atualizar estado local IMEDIATAMENTE
       setCartItems(prev => prev.map(item => 
         item.id === cartItemId ? { ...item, quantity: newQuantity } : item
       ));
@@ -190,7 +192,7 @@ export const useSecureCart = () => {
 
       if (error) throw error;
 
-      // Atualizar estado local
+      // Atualizar estado local IMEDIATAMENTE
       setCartItems(prev => prev.filter(item => item.id !== cartItemId));
 
       // Disparar evento para atualizar contadores
@@ -199,6 +201,7 @@ export const useSecureCart = () => {
       toast({
         title: "Produto removido",
         description: "Item removido do carrinho com sucesso.",
+        duration: 1500,
       });
 
     } catch (error) {
@@ -231,6 +234,7 @@ export const useSecureCart = () => {
       toast({
         title: "Carrinho limpo",
         description: "Todos os itens foram removidos do carrinho.",
+        duration: 1500,
       });
 
     } catch (error) {

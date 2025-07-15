@@ -9,7 +9,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { useProductsByType } from '@/hooks/useProductsByType';
 import { useBrandCategories } from '@/hooks/useBrandCategories';
 
-// Lazy loading dos componentes pesados
+// Lazy loading dos componentes pesados - OTIMIZADO
 const BrandCategoryCarousel = lazy(() => import('@/components/BrandCategoryCarousel'));
 const ProductCarousel = lazy(() => import('@/components/ProductCarousel'));
 const FeaturedProductsGrid = lazy(() => import('@/components/FeaturedProductsGrid'));
@@ -38,7 +38,7 @@ const Index = () => {
         <HeroSection />
       </motion.div>
 
-      {/* MARCAS PREMIUM no topo (logo após hero) */}
+      {/* MARCAS PREMIUM no topo - CARDS REDESENHADOS */}
       <motion.section 
         className="py-12 sm:py-16 bg-white"
         initial={{ opacity: 0, y: 20 }}
@@ -66,7 +66,7 @@ const Index = () => {
         </div>
       </motion.section>
 
-      {/* Featured Products */}
+      {/* Featured Products - OTIMIZADO */}
       <motion.section 
         id="featured-section"
         className="py-12 sm:py-16 bg-neutral-50"
@@ -95,7 +95,7 @@ const Index = () => {
         </div>
       </motion.section>
 
-      {/* New Arrivals */}
+      {/* New Arrivals - OTIMIZADO */}
       <motion.section 
         className="py-12 sm:py-16 bg-white"
         initial={{ opacity: 0, y: 20 }}
@@ -112,7 +112,7 @@ const Index = () => {
         </Suspense>
       </motion.section>
 
-      {/* Offers */}
+      {/* Offers - OTIMIZADO */}
       <motion.section 
         className="py-12 sm:py-16 bg-neutral-50"
         initial={{ opacity: 0, y: 20 }}

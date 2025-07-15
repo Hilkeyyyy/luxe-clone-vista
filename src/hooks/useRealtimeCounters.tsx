@@ -4,34 +4,45 @@ import { useSecureFavorites } from '@/hooks/useSecureFavorites';
 import { useSecureCart } from '@/hooks/useSecureCart';
 
 export const useRealtimeCounters = () => {
-  const { favoriteProducts } = useSecureFavorites();
-  const { cartItems } = useSecureCart();
+  const { favoriteProducts, initialized: favoritesInitialized } = useSecureFavorites();
+  const { cartItems, initialized: cartInitialized } = useSecureCart();
   
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
 
-  // Atualizar contadores baseado nos hooks seguros
+  // Atualizar contadores baseado nos hooks seguros - OTIMIZADO
   useEffect(() => {
-    const newFavoritesCount = favoriteProducts.length;
-    const newCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-    
-    console.log('🔄 Atualizando contadores:', { favoritos: newFavoritesCount, carrinho: newCartCount });
-    
-    setFavoritesCount(newFavoritesCount);
-    setCartCount(newCartCount);
-  }, [favoriteProducts, cartItems]);
+    if (favoritesInitialized) {
+      const newFavoritesCount = favoriteProducts.length;
+      setFavoritesCount(newFavoritesCount);
+      console.log('🔄 Favoritos atualizados:', newFavoritesCount);
+    }
+  }, [favoriteProducts, favoritesInitialized]);
 
-  // Event listeners para atualizações em tempo real
+  useEffect(() => {
+    if (cartInitialized) {
+      const newCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+      setCartCount(newCartCount);
+      console.log('🔄 Carrinho atualizado:', newCartCount);
+    }
+  }, [cartItems, cartInitialized]);
+
+  // Event listeners para atualizações INSTANTÂNEAS em tempo real
   useEffect(() => {
     const handleFavoritesUpdate = () => {
-      console.log('🔄 Evento favoritesUpdated disparado');
-      setFavoritesCount(favoriteProducts.length);
+      if (favoritesInitialized) {
+        const count = favoriteProducts.length;
+        setFavoritesCount(count);
+        console.log('⚡ Evento favoritesUpdated - contagem:', count);
+      }
     };
 
     const handleCartUpdate = () => {
-      console.log('🔄 Evento cartUpdated disparado');
-      const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-      setCartCount(totalItems);
+      if (cartInitialized) {
+        const count = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+        setCartCount(count);
+        console.log('⚡ Evento cartUpdated - contagem:', count);
+      }
     };
 
     // Adicionar event listeners personalizados
@@ -43,18 +54,23 @@ export const useRealtimeCounters = () => {
       window.removeEventListener('favoritesUpdated', handleFavoritesUpdate);
       window.removeEventListener('cartUpdated', handleCartUpdate);
     };
-  }, [favoriteProducts, cartItems]);
+  }, [favoriteProducts, cartItems, favoritesInitialized, cartInitialized]);
 
-  // Forçar atualização manual
+  // Forçar atualização manual - OTIMIZADO
   const forceUpdate = () => {
     console.log('🔄 Forçando atualização dos contadores');
-    setFavoritesCount(favoriteProducts.length);
-    setCartCount(cartItems.reduce((sum, item) => sum + item.quantity, 0));
+    if (favoritesInitialized) {
+      setFavoritesCount(favoriteProducts.length);
+    }
+    if (cartInitialized) {
+      setCartCount(cartItems.reduce((sum, item) => sum + item.quantity, 0));
+    }
   };
 
   return {
     favoritesCount,
     cartCount,
     forceUpdate,
+    isReady: favoritesInitialized && cartInitialized,
   };
 };
