@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -35,15 +35,28 @@ export const useSecureFavorites = () => {
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const [favoriteProducts, setFavoriteProducts] = useState<FavoriteProduct[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // Carregar produtos favoritos - OTIMIZADO
-  const loadFavorites = async () => {
+  // Cache para melhor performance
+  const [lastFetch, setLastFetch] = useState<number>(0);
+  const CACHE_DURATION = 30000; // 30 segundos
+
+  // Carregar produtos favoritos - OTIMIZADO COM CACHE
+  const loadFavorites = useCallback(async (forceRefresh = false) => {
     if (!isAuthenticated || !user) {
       console.log('❤️ Usuário não autenticado, limpando favoritos');
       setFavoriteProducts([]);
+      setFavoriteIds(new Set());
       setInitialized(true);
+      return;
+    }
+
+    // Verificar cache
+    const now = Date.now();
+    if (!forceRefresh && initialized && (now - lastFetch) < CACHE_DURATION) {
+      console.log('❤️ Usando cache de favoritos');
       return;
     }
 
@@ -121,8 +134,13 @@ export const useSecureFavorites = () => {
           water_resistance: fav.products?.water_resistance || '',
         }));
 
+      // Criar Set de IDs para verificação rápida
+      const ids = new Set(products.map(p => p.id));
+
       console.log('✅ Favoritos carregados:', products.length);
       setFavoriteProducts(products);
+      setFavoriteIds(ids);
+      setLastFetch(now);
       
       // Disparar evento para atualizar contadores
       window.dispatchEvent(new CustomEvent('favoritesUpdated'));
@@ -138,15 +156,15 @@ export const useSecureFavorites = () => {
       setLoading(false);
       setInitialized(true);
     }
-  };
+  }, [isAuthenticated, user, initialized, lastFetch]);
 
-  // Verificar se produto está nos favoritos
-  const isFavorite = (productId: string): boolean => {
-    return favoriteProducts.some(fav => fav.id === productId);
-  };
+  // Verificar se produto está nos favoritos - OTIMIZADO
+  const isFavorite = useCallback((productId: string): boolean => {
+    return favoriteIds.has(productId);
+  }, [favoriteIds]);
 
   // Adicionar/remover favorito - OTIMIZADO
-  const toggleFavorite = async (productId: string, productName: string) => {
+  const toggleFavorite = useCallback(async (productId: string, productName: string) => {
     if (!isAuthenticated || !user) {
       throw new Error('Usuário não autenticado');
     }
@@ -166,6 +184,11 @@ export const useSecureFavorites = () => {
 
         // Atualizar estado local IMEDIATAMENTE
         setFavoriteProducts(prev => prev.filter(fav => fav.id !== productId));
+        setFavoriteIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(productId);
+          return newSet;
+        });
 
         toast({
           title: "💔 Removido dos favoritos",
@@ -183,8 +206,11 @@ export const useSecureFavorites = () => {
 
         if (error) throw error;
 
+        // Atualizar IDs imediatamente
+        setFavoriteIds(prev => new Set([...prev, productId]));
+
         // Recarregar favoritos para obter dados completos
-        await loadFavorites();
+        await loadFavorites(true);
 
         toast({
           title: "❤️ Adicionado aos favoritos",
@@ -200,12 +226,38 @@ export const useSecureFavorites = () => {
       console.error('Erro ao alterar favorito:', error);
       throw error;
     }
-  };
+  }, [isAuthenticated, user, isFavorite, loadFavorites, toast]);
 
   // Inicializar quando usuário muda
   useEffect(() => {
     loadFavorites();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user?.id]);
+
+  // Listener para atualizações em tempo real
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+
+    const channel = supabase
+      .channel('favorites-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'favorites',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          console.log('❤️ Favoritos atualizados, recarregando...');
+          loadFavorites(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated, user?.id, loadFavorites]);
 
   return {
     favoriteProducts,
@@ -213,6 +265,6 @@ export const useSecureFavorites = () => {
     initialized,
     isFavorite,
     toggleFavorite,
-    refetch: loadFavorites,
+    refetch: () => loadFavorites(true),
   };
 };

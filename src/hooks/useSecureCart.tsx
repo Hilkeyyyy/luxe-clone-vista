@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -23,12 +23,23 @@ export const useSecureCart = () => {
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // Carregar produtos do carrinho - OTIMIZADO
-  const loadCartItems = async () => {
+  // Cache para melhor performance
+  const [lastFetch, setLastFetch] = useState<number>(0);
+  const CACHE_DURATION = 30000; // 30 segundos
+
+  // Carregar produtos do carrinho - OTIMIZADO COM CACHE
+  const loadCartItems = useCallback(async (forceRefresh = false) => {
     if (!isAuthenticated || !user) {
       console.log('🛒 Usuário não autenticado, limpando carrinho');
       setCartItems([]);
       setInitialized(true);
+      return;
+    }
+
+    // Verificar cache
+    const now = Date.now();
+    if (!forceRefresh && initialized && (now - lastFetch) < CACHE_DURATION) {
+      console.log('🛒 Usando cache do carrinho');
       return;
     }
 
@@ -77,6 +88,7 @@ export const useSecureCart = () => {
 
       console.log('✅ Itens do carrinho carregados:', items.length);
       setCartItems(items);
+      setLastFetch(now);
       
       // Disparar evento para atualizar contadores
       window.dispatchEvent(new CustomEvent('cartUpdated'));
@@ -92,10 +104,10 @@ export const useSecureCart = () => {
       setLoading(false);
       setInitialized(true);
     }
-  };
+  }, [isAuthenticated, user, initialized, lastFetch, toast]);
 
   // Adicionar item ao carrinho - OTIMIZADO
-  const addToCart = async (
+  const addToCart = useCallback(async (
     productId: string,
     productName: string,
     quantity: number = 1,
@@ -134,17 +146,17 @@ export const useSecureCart = () => {
         if (error) throw error;
 
         // Recarregar carrinho
-        await loadCartItems();
+        await loadCartItems(true);
       }
 
     } catch (error) {
       console.error('Erro ao adicionar ao carrinho:', error);
       throw error;
     }
-  };
+  }, [isAuthenticated, user, cartItems, loadCartItems]);
 
   // Atualizar quantidade - OTIMIZADO
-  const updateQuantity = async (cartItemId: string, newQuantity: number) => {
+  const updateQuantity = useCallback(async (cartItemId: string, newQuantity: number) => {
     if (!isAuthenticated || !user) return;
 
     try {
@@ -177,10 +189,10 @@ export const useSecureCart = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [isAuthenticated, user, toast]);
 
   // Remover item do carrinho
-  const removeItem = async (cartItemId: string) => {
+  const removeItem = useCallback(async (cartItemId: string) => {
     if (!isAuthenticated || !user) return;
 
     try {
@@ -212,10 +224,10 @@ export const useSecureCart = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [isAuthenticated, user, toast]);
 
   // Limpar carrinho
-  const clearCart = async () => {
+  const clearCart = useCallback(async () => {
     if (!isAuthenticated || !user) return;
 
     try {
@@ -245,16 +257,47 @@ export const useSecureCart = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [isAuthenticated, user, toast]);
 
-  // Calcular total
-  const getTotalPrice = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  const getTotalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+  // Calcular valores - MEMOIZADO
+  const getTotalPrice = useCallback(() => {
+    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  }, [cartItems]);
+
+  const getTotalItems = useCallback(() => {
+    return cartItems.reduce((total, item) => total + item.quantity, 0);
+  }, [cartItems]);
 
   // Inicializar quando usuário muda
   useEffect(() => {
     loadCartItems();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user?.id]);
+
+  // Listener para atualizações em tempo real
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+
+    const channel = supabase
+      .channel('cart-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'cart_items',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          console.log('🛒 Carrinho atualizado, recarregando...');
+          loadCartItems(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated, user?.id, loadCartItems]);
 
   return {
     cartItems,
@@ -264,8 +307,8 @@ export const useSecureCart = () => {
     updateQuantity,
     removeItem,
     clearCart,
-    getTotalPrice,
-    getTotalItems,
-    refetch: loadCartItems,
+    getTotalPrice: getTotalPrice(),
+    getTotalItems: getTotalItems(),
+    refetch: () => loadCartItems(true),
   };
 };

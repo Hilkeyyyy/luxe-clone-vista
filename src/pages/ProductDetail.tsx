@@ -12,6 +12,8 @@ import ProductInfo from '@/components/product/ProductInfo';
 import ProductSpecs from '@/components/product/ProductSpecs';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
+import { useSecureFavorites } from '@/hooks/useSecureFavorites';
+import { useSecureCart } from '@/hooks/useSecureCart';
 import AuthModal from '@/components/auth/AuthModal';
 
 interface Product {
@@ -41,23 +43,24 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
+  const { isFavorite, toggleFavorite } = useSecureFavorites();
+  const { addToCart } = useSecureCart();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
   useEffect(() => {
     if (id) {
       fetchProduct();
-      checkIfFavorite();
     }
-  }, [id, isAuthenticated]);
+  }, [id]);
 
   const fetchProduct = async () => {
     try {
@@ -85,45 +88,31 @@ const ProductDetail = () => {
     }
   };
 
-  const checkIfFavorite = () => {
-    if (isAuthenticated) {
-      const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-      setIsFavorite(favorites.includes(id));
-    }
-  };
+  const handleToggleFavorite = async () => {
+    if (!product) return;
 
-  const toggleFavorite = () => {
     if (!isAuthenticated) {
       setAuthMode('login');
       setShowAuthModal(true);
       return;
     }
 
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    let newFavorites;
-    
-    if (isFavorite) {
-      newFavorites = favorites.filter((fav: string) => fav !== id);
+    setIsTogglingFavorite(true);
+    try {
+      await toggleFavorite(product.id, product.name);
+    } catch (error) {
+      console.error('Erro ao alterar favorito:', error);
       toast({
-        title: "Removido dos favoritos",
-        description: `${product?.name} foi removido dos seus favoritos.`,
+        title: "Erro",
+        description: "Erro ao alterar favorito. Tente novamente.",
+        variant: "destructive",
       });
-    } else {
-      newFavorites = [...favorites, id];
-      toast({
-        title: "Adicionado aos favoritos",
-        description: `${product?.name} foi adicionado aos seus favoritos.`,
-      });
+    } finally {
+      setIsTogglingFavorite(false);
     }
-    
-    localStorage.setItem('favorites', JSON.stringify(newFavorites));
-    setIsFavorite(!isFavorite);
-    
-    // Disparar evento para atualizar contadores
-    window.dispatchEvent(new Event('favoritesUpdated'));
   };
 
-  const addToCart = async () => {
+  const handleAddToCart = async () => {
     if (!product) return;
 
     if (!isAuthenticated) {
@@ -135,29 +124,7 @@ const ProductDetail = () => {
     setIsAddingToCart(true);
     
     try {
-      const cartItems = JSON.parse(localStorage.getItem('cart') || '[]');
-      const existingItemIndex = cartItems.findIndex(
-        (item: any) => 
-          item.productId === product.id && 
-          item.selectedColor === selectedColor && 
-          item.selectedSize === selectedSize
-      );
-
-      if (existingItemIndex >= 0) {
-        cartItems[existingItemIndex].quantity += quantity;
-      } else {
-        cartItems.push({
-          productId: product.id,
-          selectedColor: selectedColor,
-          selectedSize: selectedSize,
-          quantity: quantity,
-        });
-      }
-
-      localStorage.setItem('cart', JSON.stringify(cartItems));
-      
-      // Disparar evento para atualizar contadores
-      window.dispatchEvent(new Event('cartUpdated'));
+      await addToCart(product.id, product.name, quantity, selectedColor, selectedSize);
       
       toast({
         title: "✅ Produto adicionado!",
@@ -165,6 +132,7 @@ const ProductDetail = () => {
         duration: 2000,
       });
     } catch (error) {
+      console.error('Erro ao adicionar ao carrinho:', error);
       toast({
         title: "Erro",
         description: "Não foi possível adicionar o produto ao carrinho.",
@@ -256,6 +224,7 @@ const ProductDetail = () => {
   }
 
   const isProductSoldOut = product.is_sold_out || product.stock_status === 'out_of_stock' || !product.in_stock;
+  const productIsFavorite = isFavorite(product.id);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-neutral-100 font-outfit">
@@ -361,7 +330,7 @@ const ProductDetail = () => {
                   {/* Botão Carrinho */}
                   {!isProductSoldOut && (
                     <motion.button 
-                      onClick={addToCart}
+                      onClick={handleAddToCart}
                       disabled={isAddingToCart}
                       className={`group relative overflow-hidden flex-1 px-6 py-4 rounded-2xl transition-all duration-500 font-outfit font-semibold text-lg shadow-lg hover:shadow-xl backdrop-blur-sm border flex items-center justify-center space-x-2 ${
                         isAddingToCart 
@@ -396,28 +365,33 @@ const ProductDetail = () => {
 
                   {/* Botão Favoritar */}
                   <motion.button
-                    onClick={toggleFavorite}
+                    onClick={handleToggleFavorite}
+                    disabled={isTogglingFavorite}
                     className={`group relative overflow-hidden px-6 py-4 rounded-2xl transition-all duration-500 shadow-lg hover:shadow-xl backdrop-blur-sm border-2 flex items-center justify-center ${
-                      isFavorite 
+                      productIsFavorite 
                         ? 'bg-gradient-to-r from-red-50/90 to-pink-50/90 border-red-300/50 text-red-600 hover:shadow-red-500/20' 
                         : 'bg-white/80 border-neutral-200/50 text-neutral-600 hover:border-red-300/50 hover:bg-red-50/80 hover:text-red-600 hover:shadow-red-500/10'
-                    }`}
+                    } ${isTogglingFavorite ? 'opacity-70' : ''}`}
                     whileHover={{ 
-                      scale: 1.05,
-                      rotate: isFavorite ? 0 : 5
+                      scale: isTogglingFavorite ? 1 : 1.05,
+                      rotate: productIsFavorite ? 0 : 5
                     }}
-                    whileTap={{ scale: 0.95 }}
+                    whileTap={{ scale: isTogglingFavorite ? 1 : 0.95 }}
                   >
                     {/* Liquid Glass Effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     
-                    <Heart
-                      size={24}
-                      className={`relative z-10 transition-all duration-300 ${
-                        isFavorite ? 'text-red-600 fill-red-600' : 'text-neutral-600'
-                      }`}
-                    />
+                    {isTogglingFavorite ? (
+                      <div className="relative z-10 w-6 h-6 border-2 border-red-300 border-t-red-600 rounded-full animate-spin" />
+                    ) : (
+                      <Heart
+                        size={24}
+                        className={`relative z-10 transition-all duration-300 ${
+                          productIsFavorite ? 'text-red-600 fill-red-600' : 'text-neutral-600'
+                        }`}
+                      />
+                    )}
                   </motion.button>
                 </div>
               </div>
@@ -446,7 +420,6 @@ const ProductDetail = () => {
         mode={authMode}
         onSuccess={() => {
           setShowAuthModal(false);
-          checkIfFavorite();
         }}
       />
     </div>
