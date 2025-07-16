@@ -24,7 +24,7 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
   customBadge,
 }) => {
   const getBadgeVariant = (type: string) => {
-    // CORREÇÃO 9: Cores neutras e elegantes (sem gradientes)
+    // Cores neutras e elegantes
     const variants = {
       custom: 'bg-slate-800 text-white border-slate-600 shadow-sm',
       new: 'bg-emerald-600 text-white border-emerald-500 shadow-sm',
@@ -36,13 +36,14 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
     return variants[type as keyof typeof variants] || variants.custom;
   };
 
+  // CORREÇÃO: Mostrar categoria clone por extenso, principalmente "SUPER CLONE"
   const getCloneCategoryDisplay = (category?: string) => {
     if (!category) return null;
     
     const categoryMap: { [key: string]: string } = {
       'ETA Base': 'ETA BASE',
       'Clone': 'CLONE',
-      'Super Clone': 'SUPER CLONE'
+      'Super Clone': 'SUPER CLONE'  // CORRIGIDO: Por extenso sempre
     };
     
     return categoryMap[category] || category.toUpperCase();
@@ -64,7 +65,6 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
             NOVO
           </Badge>
         )}
-        {/* CORREÇÃO 7: Remover tag visual "DESTAQUE" - produto destaque aparece só na seção de destaques */}
         {isBestseller && (
           <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('bestseller')}`}>
             MAIS VENDIDO
@@ -75,7 +75,6 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
             {getDiscountPercentage()}
           </Badge>
         )}
-        {/* CORREÇÃO 6: Tag "ESGOTADO" em todas as páginas */}
         {isSoldOut && (
           <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('soldout')}`}>
             ESGOTADO
