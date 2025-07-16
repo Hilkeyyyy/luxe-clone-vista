@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useSecureFavorites } from '@/hooks/useSecureFavorites';
 import { useSecureCart } from '@/hooks/useSecureCart';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useRealtimeCounters = () => {
   const { favoriteProducts, initialized: favoritesInitialized } = useSecureFavorites();
@@ -26,6 +27,41 @@ export const useRealtimeCounters = () => {
       console.log('🔄 Carrinho atualizado:', newCartCount);
     }
   }, [cartItems, cartInitialized]);
+
+  // Realtime updates para atualizações INSTANTÂNEAS
+  useEffect(() => {
+    const channel = supabase
+      .channel('realtime-counters')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'favorites'
+        },
+        () => {
+          console.log('⚡ Favoritos atualizados em tempo real');
+          // Os hooks já vão detectar a mudança
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'cart_items'
+        },
+        () => {
+          console.log('⚡ Carrinho atualizado em tempo real');
+          // Os hooks já vão detectar a mudança
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // Event listeners para atualizações INSTANTÂNEAS em tempo real
   useEffect(() => {

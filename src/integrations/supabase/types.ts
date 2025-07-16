@@ -282,6 +282,10 @@ export type Database = {
         Args: { category_name: string }
         Returns: string
       }
+      update_brand_category_products_count: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

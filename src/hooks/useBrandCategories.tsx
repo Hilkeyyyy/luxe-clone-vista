@@ -19,13 +19,48 @@ export const useBrandCategories = (activeOnly: boolean = false) => {
 
   useEffect(() => {
     fetchCategories();
+    
+    // Configurar realtime para atualizações instantâneas
+    const channel = supabase
+      .channel('brand-categories-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'brand_categories'
+        },
+        () => {
+          console.log('🔄 Categoria atualizada, recarregando...');
+          fetchCategories();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'products'
+        },
+        () => {
+          console.log('🔄 Produto atualizado, recarregando categorias...');
+          fetchCategories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [activeOnly]);
 
   const fetchCategories = async () => {
     try {
+      console.log('🔍 Buscando categorias com contagem correta...');
+      
       let query = supabase
         .from('brand_categories')
-        .select('*, products_count')
+        .select('*')
         .order('order_position', { ascending: true });
 
       if (activeOnly) {
@@ -34,10 +69,15 @@ export const useBrandCategories = (activeOnly: boolean = false) => {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao buscar categorias:', error);
+        throw error;
+      }
+
+      console.log('✅ Categorias carregadas:', data?.map(c => `${c.name}: ${c.products_count} produtos`));
       setCategories(data || []);
     } catch (error) {
-      console.error('Erro ao buscar categorias:', error);
+      console.error('❌ Erro ao buscar categorias:', error);
     } finally {
       setLoading(false);
     }

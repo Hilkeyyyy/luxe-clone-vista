@@ -18,12 +18,14 @@ const Index = () => {
   const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
   const { categories, loading: categoriesLoading } = useBrandCategories(true);
 
-  // Transformar categorias em formato esperado pelo componente com imagens
-  const brands = categories.map(category => ({
-    name: category.name,
-    count: category.products_count || 0,
-    image: category.image_url || undefined
-  }));
+  // Transformar categorias em formato esperado pelo componente com imagens - OTIMIZADO
+  const brands = React.useMemo(() => {
+    return categories.map(category => ({
+      name: category.name,
+      count: category.products_count || 0,
+      image: category.image_url || undefined
+    }));
+  }, [categories]);
 
   return (
     <div className="min-h-screen font-outfit bg-neutral-50">
@@ -38,24 +40,24 @@ const Index = () => {
         <HeroSection />
       </motion.div>
 
-      {/* MARCAS PREMIUM no topo - CARDS REDESENHADOS */}
+      {/* MARCAS PREMIUM no topo - CARDS MUITO MAIORES REDESENHADOS */}
       <motion.section 
-        className="py-12 sm:py-16 bg-white"
+        className="py-16 sm:py-20 bg-white"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
-            className="text-center mb-12"
+            className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            <h2 className="text-3xl sm:text-4xl font-outfit font-light text-neutral-900 mb-4 tracking-wide">
+            <h2 className="text-4xl sm:text-5xl font-outfit font-light text-neutral-900 mb-6 tracking-wide">
               MARCAS PREMIUM
             </h2>
-            <p className="text-neutral-600 text-lg max-w-2xl mx-auto font-light">
+            <p className="text-neutral-600 text-xl max-w-2xl mx-auto font-light">
               Explore nossa seleção exclusiva das melhores marcas de relógios do mundo
             </p>
           </motion.div>
@@ -69,22 +71,22 @@ const Index = () => {
       {/* Featured Products - OTIMIZADO */}
       <motion.section 
         id="featured-section"
-        className="py-12 sm:py-16 bg-neutral-50"
+        className="py-16 sm:py-20 bg-neutral-50"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.4 }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
-            className="text-center mb-12"
+            className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
           >
-            <h2 className="text-3xl sm:text-4xl font-outfit font-light text-neutral-900 mb-4 tracking-wide">
+            <h2 className="text-4xl sm:text-5xl font-outfit font-light text-neutral-900 mb-6 tracking-wide">
               PRODUTOS EM DESTAQUE
             </h2>
-            <p className="text-neutral-600 text-lg max-w-2xl mx-auto font-light">
+            <p className="text-neutral-600 text-xl max-w-2xl mx-auto font-light">
               Os relógios mais procurados e admirados da nossa coleção
             </p>
           </motion.div>
@@ -97,7 +99,7 @@ const Index = () => {
 
       {/* New Arrivals - OTIMIZADO */}
       <motion.section 
-        className="py-12 sm:py-16 bg-white"
+        className="py-16 sm:py-20 bg-white"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.6 }}
@@ -114,7 +116,7 @@ const Index = () => {
 
       {/* Offers - OTIMIZADO */}
       <motion.section 
-        className="py-12 sm:py-16 bg-neutral-50"
+        className="py-16 sm:py-20 bg-neutral-50"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.8 }}
