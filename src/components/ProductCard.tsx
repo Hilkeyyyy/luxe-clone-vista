@@ -16,9 +16,13 @@ interface ProductCardProps {
   image: string;
   isNew?: boolean;
   is_featured?: boolean;
+  is_bestseller?: boolean;
+  is_sold_out?: boolean;
   clone_category?: string;
   stock_status?: string;
+  custom_badge?: string;
   delay?: number;
+  simplified?: boolean;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -30,9 +34,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
   image,
   isNew = false,
   is_featured = false,
+  is_bestseller = false,
+  is_sold_out = false,
   clone_category,
   stock_status = 'in_stock',
+  custom_badge,
   delay = 0,
+  simplified = false,
 }) => {
   const navigate = useNavigate();
   const { 
@@ -51,7 +59,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const numericPrice = parseFloat(price.replace(/[^\d,]/g, '').replace(',', '.'));
     await addToCart(id, name, 1);
   };
 
@@ -66,8 +73,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
     await buySpecificProduct(id, name, brand, numericPrice, image);
   };
 
-  const isInStock = stock_status === 'in_stock';
-  const isOutOfStock = stock_status === 'out_of_stock';
+  // Converter preços string para number para ProductBadges
+  const numericPrice = parseFloat(price.replace(/[^\d,]/g, '').replace(',', '.'));
+  const numericOriginalPrice = originalPrice ? parseFloat(originalPrice.replace(/[^\d,]/g, '').replace(',', '.')) : undefined;
+
+  const isInStock = stock_status === 'in_stock' && !is_sold_out;
+  const isOutOfStock = stock_status === 'out_of_stock' || is_sold_out;
 
   return (
     <motion.div
@@ -92,8 +103,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <ProductBadges
             isNew={isNew}
             isFeatured={is_featured}
+            isBestseller={is_bestseller}
+            isSoldOut={is_sold_out}
+            originalPrice={numericOriginalPrice}
+            price={numericPrice}
             cloneCategory={clone_category}
-            customBadge={null}
+            customBadge={custom_badge}
           />
         </div>
 
@@ -143,7 +158,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           />
         </div>
 
-        {/* Action Buttons - TOTALMENTE FUNCIONAIS */}
+        {/* Action Buttons */}
         <div className="flex gap-2">
           <motion.button
             onClick={handleAddToCart}

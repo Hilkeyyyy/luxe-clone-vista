@@ -104,8 +104,11 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({ title, subtitle, prod
                   : undefined}
                 image={product.images[0]}
                 isNew={product.is_new || false}
+                is_featured={product.is_featured || false}
+                is_sold_out={product.is_sold_out || false}
                 clone_category={product.clone_category}
-                is_sold_out={product.is_sold_out}
+                stock_status={product.stock_status}
+                custom_badge={product.custom_badge}
                 delay={0}
               />
             </motion.div>
