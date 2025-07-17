@@ -1,3 +1,5 @@
+
+import React, { createContext, useContext } from 'react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -18,10 +20,16 @@ interface AuthState {
   loading: boolean;
   isAuthenticated: boolean;
   sessionValid: boolean;
+  isAdmin: boolean;
+  signIn: (email: string, password: string) => Promise<any>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<any>;
+  signOut: () => Promise<void>;
 }
 
-export const useAuth = () => {
-  const [authState, setAuthState] = useState<AuthState>({
+const AuthContext = createContext<AuthState | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [authState, setAuthState] = useState<Omit<AuthState, 'signIn' | 'signUp' | 'signOut' | 'isAdmin'>>({
     user: null,
     loading: true,
     isAuthenticated: false,
@@ -261,11 +269,25 @@ export const useAuth = () => {
     }
   };
 
-  return {
+  const value: AuthState = {
     ...authState,
     isAdmin: authState.user?.isAdmin || false,
     signIn,
     signUp,
     signOut
   };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
