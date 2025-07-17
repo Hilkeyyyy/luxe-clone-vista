@@ -5,9 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import ProductBadges from '@/components/product/ProductBadges';
 import PriceDisplay from '@/components/ui/PriceDisplay';
 import { useOptimizedProductActions } from '@/hooks/useOptimizedProductActions';
-import { Heart, ShoppingBag } from 'lucide-react';
+import { Heart, ShoppingBag, Phone } from 'lucide-react';
 
-interface ProductCardProps {
+interface FeaturedProductCardProps {
   id: string;
   name: string;
   brand: string;
@@ -22,11 +22,9 @@ interface ProductCardProps {
   stock_status?: string;
   custom_badge?: string;
   delay?: number;
-  simplified?: boolean;
-  showPhoneButton?: boolean; // Nova prop para mostrar botão de telefone apenas em carrosséis específicos
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({
+const FeaturedProductCard: React.FC<FeaturedProductCardProps> = ({
   id,
   name,
   brand,
@@ -41,8 +39,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
   stock_status = 'in_stock',
   custom_badge,
   delay = 0,
-  simplified = false,
-  showPhoneButton = false, // Por padrão não mostra o botão de telefone
 }) => {
   const navigate = useNavigate();
   const { 
@@ -75,7 +71,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
     await buySpecificProduct(id, name, brand, numericPrice, image);
   };
 
-  // Converter preços string para number para ProductBadges e PriceDisplay
+  // Converter preços string para number
   const numericPrice = parseFloat(price.replace(/[^\d,]/g, '').replace(',', '.'));
   const numericOriginalPrice = originalPrice ? parseFloat(originalPrice.replace(/[^\d,]/g, '').replace(',', '.')) : undefined;
 
@@ -101,18 +97,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
         />
         
         {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1">
-          <ProductBadges
-            isNew={isNew}
-            isFeatured={is_featured}
-            isBestseller={is_bestseller}
-            isSoldOut={is_sold_out}
-            originalPrice={numericOriginalPrice}
-            price={numericPrice}
-            cloneCategory={clone_category}
-            customBadge={custom_badge}
-          />
-        </div>
+        <ProductBadges
+          isNew={isNew}
+          isFeatured={is_featured}
+          isBestseller={is_bestseller}
+          isSoldOut={is_sold_out}
+          originalPrice={numericOriginalPrice}
+          price={numericPrice}
+          cloneCategory={clone_category}
+          customBadge={custom_badge}
+        />
 
         {/* Stock Status */}
         {isOutOfStock && (
@@ -123,7 +117,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         )}
 
-        {/* Favorite Button - SEMPRE PRESENTE (substitui o botão de telefone) */}
+        {/* Favorite Button */}
         <motion.button
           onClick={handleToggleFavorite}
           disabled={buttonState.isFavoriteLoading}
@@ -162,7 +156,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           />
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons - COM BOTÃO DE TELEFONE para carrosséis especiais */}
         <div className="flex gap-2">
           <motion.button
             onClick={handleAddToCart}
@@ -201,17 +195,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
             )}
           </motion.button>
           
-          {/* Botão de telefone - APENAS quando showPhoneButton for true */}
-          {showPhoneButton && !isOutOfStock && (
+          {/* Botão de WhatsApp - SEMPRE presente nos carrosséis especiais */}
+          {!isOutOfStock && (
             <motion.button
               onClick={handleBuyNow}
               className="px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md"
               whileHover={{ scale: 1.02, y: -1 }}
               whileTap={{ scale: 0.98 }}
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-              </svg>
+              <Phone className="w-4 h-4" />
             </motion.button>
           )}
         </div>
@@ -220,4 +212,4 @@ const ProductCard: React.FC<ProductCardProps> = ({
   );
 };
 
-export default ProductCard;
+export default FeaturedProductCard;

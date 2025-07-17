@@ -71,6 +71,7 @@ const ProductsGrid: React.FC<ProductsGridProps> = ({ products, onClearFilters })
           isNew={product.is_new}
           delay={index * 0.1}
           simplified={true}
+          showPhoneButton={false} // SEM botão de telefone na listagem geral
         />
       ))}
     </motion.div>

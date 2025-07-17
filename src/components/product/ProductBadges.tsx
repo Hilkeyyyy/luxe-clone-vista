@@ -36,14 +36,15 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
     return variants[type as keyof typeof variants] || variants.custom;
   };
 
-  // CORREÇÃO: Mostrar categoria clone por extenso, principalmente "SUPER CLONE"
+  // CORREÇÃO: Mostrar categoria clone por extenso SEMPRE EM UMA LINHA
   const getCloneCategoryDisplay = (category?: string) => {
     if (!category) return null;
     
     const categoryMap: { [key: string]: string } = {
       'ETA Base': 'ETA BASE',
+      'ETA Básico': 'ETA BASE',
       'Clone': 'CLONE',
-      'Super Clone': 'SUPER CLONE'  // CORRIGIDO: Por extenso sempre
+      'Super Clone': 'SUPER CLONE'  // SEMPRE POR EXTENSO EM UMA LINHA
     };
     
     return categoryMap[category] || category.toUpperCase();
@@ -61,27 +62,27 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
       {/* Badges - Left Side */}
       <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
         {isNew && (
-          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('new')}`}>
+          <Badge className={`text-xs font-bold px-3 py-1.5 whitespace-nowrap ${getBadgeVariant('new')}`}>
             NOVO
           </Badge>
         )}
         {isBestseller && (
-          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('bestseller')}`}>
+          <Badge className={`text-xs font-bold px-3 py-1.5 whitespace-nowrap ${getBadgeVariant('bestseller')}`}>
             MAIS VENDIDO
           </Badge>
         )}
         {originalPrice && originalPrice > price && (
-          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('discount')}`}>
+          <Badge className={`text-xs font-bold px-3 py-1.5 whitespace-nowrap ${getBadgeVariant('discount')}`}>
             {getDiscountPercentage()}
           </Badge>
         )}
         {isSoldOut && (
-          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('soldout')}`}>
+          <Badge className={`text-xs font-bold px-3 py-1.5 whitespace-nowrap ${getBadgeVariant('soldout')}`}>
             ESGOTADO
           </Badge>
         )}
         {cloneCategory && (
-          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('clone')}`}>
+          <Badge className={`text-xs font-bold px-3 py-1.5 whitespace-nowrap ${getBadgeVariant('clone')}`}>
             {getCloneCategoryDisplay(cloneCategory)}
           </Badge>
         )}
@@ -90,7 +91,7 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
       {/* Custom Badge - Top Right */}
       {customBadge && (
         <div className="absolute top-3 right-3 z-10">
-          <Badge className={`text-xs font-bold px-3 py-1.5 ${getBadgeVariant('custom')}`}>
+          <Badge className={`text-xs font-bold px-3 py-1.5 whitespace-nowrap ${getBadgeVariant('custom')}`}>
             {customBadge.toUpperCase()}
           </Badge>
         </div>

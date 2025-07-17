@@ -20,9 +20,9 @@ export const useBrandCategories = (activeOnly: boolean = false) => {
   useEffect(() => {
     fetchCategories();
     
-    // Configurar realtime para atualizações instantâneas
+    // Configurar realtime para atualizações instantâneas - CORRIGIDO
     const channel = supabase
-      .channel('brand-categories-changes')
+      .channel('brand-categories-real-time')
       .on(
         'postgres_changes',
         {
@@ -56,8 +56,9 @@ export const useBrandCategories = (activeOnly: boolean = false) => {
 
   const fetchCategories = async () => {
     try {
-      console.log('🔍 Buscando categorias com contagem correta...');
+      console.log('🔍 Buscando categorias com contagem CORRETA em tempo real...');
       
+      // CORREÇÃO: Buscar categorias e contar produtos corretamente por marca
       let query = supabase
         .from('brand_categories')
         .select('*')
@@ -67,15 +68,35 @@ export const useBrandCategories = (activeOnly: boolean = false) => {
         query = query.eq('is_active', true);
       }
 
-      const { data, error } = await query;
+      const { data: categoriesData, error: categoriesError } = await query;
 
-      if (error) {
-        console.error('❌ Erro ao buscar categorias:', error);
-        throw error;
+      if (categoriesError) {
+        console.error('❌ Erro ao buscar categorias:', categoriesError);
+        throw categoriesError;
       }
 
-      console.log('✅ Categorias carregadas:', data?.map(c => `${c.name}: ${c.products_count} produtos`));
-      setCategories(data || []);
+      // Para cada categoria, contar produtos CORRETAMENTE por marca
+      const categoriesWithCount = await Promise.all(
+        (categoriesData || []).map(async (category) => {
+          const { count, error: countError } = await supabase
+            .from('products')
+            .select('*', { count: 'exact', head: true })
+            .ilike('brand', category.name) // Buscar por marca que corresponde ao nome da categoria
+            .eq('in_stock', true)
+            .eq('is_sold_out', false);
+
+          if (countError) {
+            console.error(`❌ Erro ao contar produtos para ${category.name}:`, countError);
+            return { ...category, products_count: 0 };
+          }
+
+          console.log(`✅ ${category.name}: ${count || 0} produtos`);
+          return { ...category, products_count: count || 0 };
+        })
+      );
+
+      console.log('✅ Categorias carregadas com contagem correta:', categoriesWithCount.map(c => `${c.name}: ${c.products_count} produtos`));
+      setCategories(categoriesWithCount);
     } catch (error) {
       console.error('❌ Erro ao buscar categorias:', error);
     } finally {

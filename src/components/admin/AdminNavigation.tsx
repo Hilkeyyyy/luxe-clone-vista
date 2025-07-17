@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Package, BarChart3, Tags } from 'lucide-react';
+import { Package, BarChart3, Tags, Settings } from 'lucide-react';
 
 const AdminNavigation = () => {
   const navigate = useNavigate();
@@ -23,11 +23,18 @@ const AdminNavigation = () => {
       color: 'from-green-600 to-green-700'
     },
     {
+      icon: Settings,
+      title: 'Configurações',
+      description: 'Configurações do sistema e preferências',
+      path: '/admin/settings',
+      color: 'from-purple-600 to-purple-700'
+    },
+    {
       icon: BarChart3,
       title: 'Dashboard',
       description: 'Estatísticas e relatórios detalhados',
       path: '/admin/dashboard',
-      color: 'from-purple-600 to-purple-700'
+      color: 'from-orange-600 to-orange-700'
     }
   ];
 
@@ -56,7 +63,7 @@ const AdminNavigation = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-12">
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
