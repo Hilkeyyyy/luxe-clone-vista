@@ -15,15 +15,18 @@ const Favorites = () => {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const { favoriteProducts, loading: favoritesLoading, initialized } = useSecureFavorites();
 
-  // CORREÇÃO: Aguardar autenticação antes de mostrar conteúdo
+  // Componente de loading otimizado
+  const OptimizedLoading = React.memo(() => (
+    <div className="min-h-screen bg-white font-outfit">
+      <Header />
+      <LoadingSpinner />
+      <Footer />
+    </div>
+  ));
+
+  // Loading states otimizados
   if (authLoading || !initialized) {
-    return (
-      <div className="min-h-screen bg-white font-outfit">
-        <Header />
-        <LoadingSpinner />
-        <Footer />
-      </div>
-    );
+    return <OptimizedLoading />;
   }
 
   if (!isAuthenticated) {
@@ -45,13 +48,7 @@ const Favorites = () => {
   }
 
   if (favoritesLoading) {
-    return (
-      <div className="min-h-screen bg-white font-outfit">
-        <Header />
-        <LoadingSpinner />
-        <Footer />
-      </div>
-    );
+    return <OptimizedLoading />;
   }
 
   return (

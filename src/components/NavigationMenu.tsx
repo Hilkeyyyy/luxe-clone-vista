@@ -78,34 +78,36 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-black/10 z-40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
 
-          {/* Menu - Glassmorphism Premium */}
+          {/* Menu - Efeito Fosco Aprimorado */}
           <motion.div
             ref={menuRef}
-            className="absolute right-0 top-12 w-72 bg-white/80 backdrop-blur-xl rounded-lg shadow-lg border border-white/30 z-50 overflow-hidden"
+            className="absolute right-0 top-12 w-72 bg-white/95 backdrop-blur-lg rounded-lg shadow-xl border border-neutral-200 z-50 overflow-hidden"
             initial={{ opacity: 0, scale: 0.95, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             style={{
-              backdropFilter: 'blur(20px)',
-              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05)',
+              backdropFilter: 'blur(24px) saturate(180%)',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 10px 20px -5px rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
             }}
           >
             <div className="p-4">
               {user ? (
                 <>
-                  {/* User Info - Glassmorphism */}
-                  <div className="mb-4 p-3 rounded-lg bg-white/40 backdrop-blur-sm border border-white/30">
+                  {/* User Info - Fosco Limpo */}
+                  <div className="mb-4 p-3 rounded-lg bg-neutral-50/80 backdrop-blur-sm border border-neutral-100">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-neutral-200 to-neutral-300 rounded-full flex items-center justify-center">
-                        <User size={18} className="text-neutral-600" />
+                      <div className="w-10 h-10 bg-gradient-to-r from-neutral-100 to-neutral-200 rounded-full flex items-center justify-center">
+                        <User size={18} className="text-neutral-700" />
                       </div>
                       <div>
                         <p className="font-semibold text-neutral-900 text-sm">
@@ -118,11 +120,11 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
                     </div>
                   </div>
 
-                  {/* Navigation Links - Flat Premium */}
+                  {/* Navigation Links - Design Limpo */}
                   <nav className="space-y-1">
                     <motion.button
                       onClick={() => handleNavigation('/produtos')}
-                      className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-neutral-700 hover:text-neutral-900 hover:bg-white/50 rounded-lg transition-all duration-200"
+                      className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 rounded-lg transition-all duration-200"
                       whileHover={{ x: 2 }}
                     >
                       <Grid3X3 size={18} />
@@ -131,7 +133,7 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
 
                     <motion.button
                       onClick={() => handleNavigation('/favorites')}
-                      className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-neutral-700 hover:text-neutral-900 hover:bg-white/50 rounded-lg transition-all duration-200"
+                      className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 rounded-lg transition-all duration-200"
                       whileHover={{ x: 2 }}
                     >
                       <Heart size={18} />
@@ -140,17 +142,17 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
 
                     <motion.button
                       onClick={() => handleNavigation('/cart')}
-                      className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-neutral-700 hover:text-neutral-900 hover:bg-white/50 rounded-lg transition-all duration-200"
+                      className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 rounded-lg transition-all duration-200"
                       whileHover={{ x: 2 }}
                     >
                       <ShoppingBag size={18} />
                       <span className="font-medium">Carrinho</span>
                     </motion.button>
 
-                    {/* Admin Section */}
+                    {/* Admin Section - Sem Azul */}
                     {isAdmin && (
                       <>
-                        <div className="border-t border-white/30 my-3"></div>
+                        <div className="border-t border-neutral-200 my-3"></div>
                         <div className="px-3 py-1">
                           <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                             Administração
@@ -159,7 +161,7 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
 
                         <motion.button
                           onClick={() => handleNavigation('/admin')}
-                          className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-blue-700 hover:text-blue-900 hover:bg-blue-50/50 rounded-lg transition-all duration-200"
+                          className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 rounded-lg transition-all duration-200"
                           whileHover={{ x: 2 }}
                         >
                           <BarChart3 size={18} />
@@ -167,8 +169,8 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
                         </motion.button>
 
                         <motion.button
-                          onClick={() => handleNavigation('/admin/produtos')}
-                          className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-blue-700 hover:text-blue-900 hover:bg-blue-50/50 rounded-lg transition-all duration-200"
+                          onClick={() => handleNavigation('/admin/products')}
+                          className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 rounded-lg transition-all duration-200"
                           whileHover={{ x: 2 }}
                         >
                           <Package size={18} />
@@ -177,7 +179,7 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
 
                         <motion.button
                           onClick={() => handleNavigation('/admin/configuracoes')}
-                          className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-blue-700 hover:text-blue-900 hover:bg-blue-50/50 rounded-lg transition-all duration-200"
+                          className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 rounded-lg transition-all duration-200"
                           whileHover={{ x: 2 }}
                         >
                           <Settings size={18} />
@@ -186,12 +188,12 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
                       </>
                     )}
 
-                    <div className="border-t border-white/30 my-3"></div>
+                    <div className="border-t border-neutral-200 my-3"></div>
 
                     {/* Logout */}
                     <motion.button
                       onClick={handleSignOut}
-                      className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-red-600 hover:text-red-800 hover:bg-red-50/50 rounded-lg transition-all duration-200"
+                      className="w-full flex items-center space-x-3 px-3 py-2.5 text-left text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200"
                       whileHover={{ x: 2 }}
                     >
                       <LogOut size={18} />

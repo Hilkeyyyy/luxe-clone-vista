@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ShoppingBag } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -25,27 +25,33 @@ const Cart = () => {
     getTotalItems,
   } = useSecureCart();
 
-  const handleWhatsAppOrder = () => {
-    const message = cartItems.map(item => 
-      `• ${item.name} (${item.quantity}x) - R$ ${(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-    ).join('\n');
-    
-    const total = getTotalPrice;
-    const whatsappMessage = `🛒 *Pedido do Carrinho*\n\n${message}\n\n💰 *Total: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}*\n\nOlá! Gostaria de finalizar este pedido. Poderia me informar sobre formas de pagamento e entrega?`;
-    
-    const whatsappUrl = `https://wa.me/5519999413755?text=${encodeURIComponent(whatsappMessage)}`;
-    window.open(whatsappUrl, '_blank');
-  };
+  // Memoizar função WhatsApp para evitar re-renders
+  const handleWhatsAppOrder = useMemo(() => {
+    return () => {
+      const message = cartItems.map(item => 
+        `• ${item.name} (${item.quantity}x) - R$ ${(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      ).join('\n');
+      
+      const total = getTotalPrice;
+      const whatsappMessage = `🛒 *Pedido do Carrinho*\n\n${message}\n\n💰 *Total: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}*\n\nOlá! Gostaria de finalizar este pedido. Poderia me informar sobre formas de pagamento e entrega?`;
+      
+      const whatsappUrl = `https://wa.me/5519999413755?text=${encodeURIComponent(whatsappMessage)}`;
+      window.open(whatsappUrl, '_blank');
+    };
+  }, [cartItems, getTotalPrice]);
 
-  // CORREÇÃO: Aguardar autenticação antes de mostrar conteúdo
+  // Componente de loading otimizado
+  const OptimizedLoading = React.memo(() => (
+    <div className="min-h-screen bg-white font-outfit">
+      <Header />
+      <LoadingSpinner />
+      <Footer />
+    </div>
+  ));
+
+  // Loading states otimizados
   if (authLoading || !initialized) {
-    return (
-      <div className="min-h-screen bg-white font-outfit">
-        <Header />
-        <LoadingSpinner />
-        <Footer />
-      </div>
-    );
+    return <OptimizedLoading />;
   }
 
   if (!isAuthenticated) {
@@ -67,13 +73,7 @@ const Cart = () => {
   }
 
   if (cartLoading) {
-    return (
-      <div className="min-h-screen bg-white font-outfit">
-        <Header />
-        <LoadingSpinner />
-        <Footer />
-      </div>
-    );
+    return <OptimizedLoading />;
   }
 
   return (
@@ -88,7 +88,7 @@ const Cart = () => {
             <div className="lg:col-span-2 space-y-4">
               {cartItems.map((item, index) => (
                 <CartItem
-                  key={item.id}
+                  key={`${item.id}-${item.selectedColor}-${item.selectedSize}`}
                   {...item}
                   index={index}
                   onUpdateQuantity={(productId, quantity) => updateQuantity(item.id, quantity)}

@@ -13,28 +13,28 @@ const AdminNavigation = () => {
       title: 'Produtos',
       description: 'Gerenciar produtos, estoque e preços',
       path: '/admin/products',
-      color: 'from-blue-600 to-blue-700'
+      color: 'from-neutral-600 to-neutral-700'
     },
     {
       icon: Tags,
       title: 'Categorias',
       description: 'Gerenciar categorias de marcas com fotos e descrições',
       path: '/products',
-      color: 'from-green-600 to-green-700'
+      color: 'from-neutral-600 to-neutral-700'
     },
     {
       icon: Settings,
       title: 'Configurações',
       description: 'Configurações do sistema e preferências',
       path: '/admin/settings',
-      color: 'from-purple-600 to-purple-700'
+      color: 'from-neutral-600 to-neutral-700'
     },
     {
       icon: BarChart3,
       title: 'Dashboard',
       description: 'Estatísticas e relatórios detalhados',
       path: '/admin/dashboard',
-      color: 'from-orange-600 to-orange-700'
+      color: 'from-neutral-600 to-neutral-700'
     }
   ];
 
