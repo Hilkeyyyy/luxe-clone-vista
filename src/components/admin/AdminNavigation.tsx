@@ -19,7 +19,7 @@ const AdminNavigation = () => {
       icon: Tags,
       title: 'Categorias',
       description: 'Gerenciar categorias de marcas com fotos e descrições',
-      path: '/admin/categorias',
+      path: '/products',
       color: 'from-green-600 to-green-700'
     },
     {

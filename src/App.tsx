@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import AdminProducts from "./pages/AdminProducts";
+import AdminCategories from "./pages/AdminCategories";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSettings from "./pages/AdminSettings";
 import Categories from "./pages/Categories";
@@ -34,7 +35,7 @@ const App = () => (
           <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/products" element={<Products />} />
+              <Route path="/products" element={<AdminCategories />} />
               <Route path="/produtos" element={<Products />} />
               <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
@@ -45,7 +46,7 @@ const App = () => (
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin/products" element={<AdminProducts />} />
-              <Route path="/admin/categorias" element={<Categories />} />
+              <Route path="/admin/categorias" element={<AdminCategories />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/categories" element={<Categories />} />
