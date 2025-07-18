@@ -124,7 +124,7 @@ export const useOptimizedProductActions = () => {
     }
   }, [isAuthenticated, addToCart, toast, setLoading, setSuccess]);
 
-  // WHATSAPP PRODUTO ESPECÍFICO - OTIMIZADO
+  // WHATSAPP PRODUTO ESPECÍFICO - NOVA FORMATAÇÃO
   const handleBuySpecificProduct = useCallback(async (
     productId: string, 
     productName: string, 
@@ -137,21 +137,29 @@ export const useOptimizedProductActions = () => {
   ) => {
     try {
       const whatsappNumber = "19999413755";
-      const storeUrl = window.location.origin;
-      const productUrl = `${storeUrl}/products/${productId}`;
       
-      let message = `🛒 *INTERESSE EM PRODUTO*\n\n`;
-      message += `📋 *PRODUTO SELECIONADO:*\n\n`;
-      message += `🏷️ *${productName}*\n`;
-      message += `   • Marca: ${brand}\n`;
-      message += `   • Preço: R$ ${price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
-      message += `   • Quantidade: ${quantity}\n`;
-      if (selectedColor) message += `   • Cor: ${selectedColor}\n`;
-      if (selectedSize) message += `   • Tamanho: ${selectedSize}\n`;
-      message += `   • Link: ${productUrl}\n`;
-      if (image) message += `   • Imagem: ${image}\n\n`;
-      message += `📞 Gostaria de mais informações sobre este produto!\n`;
-      message += `Formas de pagamento e entrega disponíveis?`;
+      let message = `🛒 INTERESSE CONFIRMADO NO PRODUTO!\n\n`;
+      message += `📦 PRODUTO SELECIONADO:\n`;
+      message += `🏷️ ${productName}\n`;
+      message += `🔹 Marca: ${brand}\n`;
+      message += `💰 Valor: R$ ${price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+      message += `📦 Quantidade: ${quantity} unidade${quantity > 1 ? 's' : ''}\n`;
+      
+      if (selectedColor) {
+        message += `🎨 Cor: ${selectedColor}\n`;
+      }
+      if (selectedSize) {
+        message += `📏 Tamanho: ${selectedSize}\n`;
+      }
+      
+      if (image) {
+        message += `📸 Imagem do produto:\n${image}\n`;
+      }
+      
+      message += `\n📞 Gostaria de receber mais informações sobre este produto!\n`;
+      message += `💳 Quais são as formas de pagamento disponíveis?\n`;
+      message += `🚚 Como funciona a entrega?\n\n`;
+      message += `Aguardo retorno para finalizar a compra!`;
 
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
       
@@ -172,7 +180,7 @@ export const useOptimizedProductActions = () => {
     }
   }, [toast]);
 
-  // Função para enviar todo o carrinho - OTIMIZADA
+  // Função para enviar todo o carrinho - NOVA FORMATAÇÃO
   const handleBuyNow = useCallback(async () => {
     if (!isAuthenticated) {
       toast({
@@ -194,35 +202,31 @@ export const useOptimizedProductActions = () => {
 
     try {
       const whatsappNumber = "19999413755";
-      const storeUrl = window.location.origin;
-      let message = `🛒 *PEDIDO - RELÓGIOS*\n\n📋 *PRODUTOS:*\n\n`;
+      let message = `🛒 Pedido do Carrinho\n\n`;
 
       cartItems.forEach((item, index) => {
-        const productUrl = `${storeUrl}/products/${item.productId}`;
-        const subtotal = item.price * item.quantity;
-        
-        message += `${index + 1}️⃣ *${item.name}*\n`;
-        message += `   🏷️ Marca: ${item.brand}\n`;
-        message += `   💰 Preço unitário: R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
-        message += `   📦 Quantidade: ${item.quantity}\n`;
-        message += `   💵 Subtotal: R$ ${subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+        message += `🧾 Produto: ${item.name}\n`;
+        message += `📦 Quantidade: ${item.quantity}x\n`;
+        message += `💸 Valor unitário: R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
         
         if (item.selectedColor) {
-          message += `   🎨 Cor: ${item.selectedColor}\n`;
+          message += `🎨 Cor: ${item.selectedColor}\n`;
         }
         if (item.selectedSize) {
-          message += `   📏 Tamanho: ${item.selectedSize}\n`;
+          message += `📏 Tamanho: ${item.selectedSize}\n`;
         }
         
-        message += `   🔗 Link: ${productUrl}\n\n`;
+        if (item.images && item.images.length > 0) {
+          message += `🖼️ Imagem do produto:\n${item.images[0]}\n`;
+        }
+        
+        if (index < cartItems.length - 1) {
+          message += `\n`;
+        }
       });
 
       const totalPrice = getTotalPrice;
-      message += `💰 *RESUMO FINANCEIRO:*\n`;
-      message += `   • Total de itens: ${cartItems.reduce((sum, item) => sum + item.quantity, 0)}\n`;
-      message += `   • Valor total: R$ ${totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n`;
-      message += `📞 Gostaria de finalizar este pedido!\n`;
-      message += `Poderia me informar sobre formas de pagamento e entrega?`;
+      message += `\n💰 Total do Pedido: R$ ${totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
       

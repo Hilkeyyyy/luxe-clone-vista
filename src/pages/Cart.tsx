@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { ShoppingBag } from 'lucide-react';
 import Header from '@/components/Header';
@@ -28,14 +27,28 @@ const Cart = () => {
   // Memoizar função WhatsApp para evitar re-renders
   const handleWhatsAppOrder = useMemo(() => {
     return () => {
-      const message = cartItems.map(item => 
-        `• ${item.name} (${item.quantity}x) - R$ ${(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-      ).join('\n');
+      let message = `🛒 Pedido do Carrinho\n\n`;
+
+      cartItems.forEach((item, index) => {
+        const subtotal = item.price * item.quantity;
+        
+        message += `🧾 Produto: ${item.name}\n`;
+        message += `📦 Quantidade: ${item.quantity}x\n`;
+        message += `💸 Valor unitário: R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
+        
+        if (item.images && item.images.length > 0) {
+          message += `🖼️ Imagem do produto:\n${item.images[0]}\n`;
+        }
+        
+        if (index < cartItems.length - 1) {
+          message += `\n`;
+        }
+      });
       
       const total = getTotalPrice;
-      const whatsappMessage = `🛒 *Pedido do Carrinho*\n\n${message}\n\n💰 *Total: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}*\n\nOlá! Gostaria de finalizar este pedido. Poderia me informar sobre formas de pagamento e entrega?`;
+      message += `\n💰 Total do Pedido: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
       
-      const whatsappUrl = `https://wa.me/5519999413755?text=${encodeURIComponent(whatsappMessage)}`;
+      const whatsappUrl = `https://wa.me/5519999413755?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
     };
   }, [cartItems, getTotalPrice]);
