@@ -11,6 +11,7 @@ import ProductSpecs from '@/components/product/ProductSpecs';
 import ProductActions from '@/components/product/ProductActions';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useProducts } from '@/hooks/useProducts';
+import { useOptimizedProductActions } from '@/hooks/useOptimizedProductActions';
 import { Product } from '@/types/product';
 
 // Lazy load ProductOptions
@@ -21,6 +22,16 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { products, loading } = useProducts();
   const [product, setProduct] = useState<Product | null>(null);
+
+  const {
+    isFavorite,
+    isCartLoading,
+    isCartAdded,
+    isFavoriteLoading,
+    handleToggleFavorite,
+    handleAddToCart,
+    handleBuyNow
+  } = useOptimizedProductActions(product?.id || '');
 
   useEffect(() => {
     if (products.length > 0 && id) {
@@ -92,7 +103,20 @@ const ProductDetail = () => {
             className="space-y-8"
           >
             <ProductInfo product={product} />
-            <ProductActions product={product} />
+            <ProductActions
+              isFavorite={isFavorite}
+              isSoldOut={product.is_sold_out || false}
+              onToggleFavorite={handleToggleFavorite}
+              onAddToCart={handleAddToCart}
+              onBuyNow={handleBuyNow}
+              customBadge={product.custom_badge}
+              showBuyButton={true}
+              showCartText={true}
+              isCartLoading={isCartLoading}
+              isCartAdded={isCartAdded}
+              isFavoriteLoading={isFavoriteLoading}
+              productId={product.id}
+            />
           </motion.div>
         </div>
 
@@ -103,7 +127,7 @@ const ProductDetail = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="space-y-8"
         >
-          <ProductSpecs product={product} />
+          <ProductSpecs specifications={product.specifications} />
           
           {/* Opções do produto (Garantia, Entrega, Qualidade) */}
           <Suspense fallback={
