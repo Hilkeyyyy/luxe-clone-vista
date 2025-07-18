@@ -24,14 +24,15 @@ const ProductDetail = () => {
   const [product, setProduct] = useState<Product | null>(null);
 
   const {
+    toggleFavorite,
+    addToCart,
+    buyNow,
+    buySpecificProduct,
     isFavorite,
-    isCartLoading,
-    isCartAdded,
-    isFavoriteLoading,
-    handleToggleFavorite,
-    handleAddToCart,
-    handleBuyNow
-  } = useOptimizedProductActions(product?.id || '');
+    getButtonState
+  } = useOptimizedProductActions();
+
+  const buttonState = getButtonState(product?.id || '');
 
   useEffect(() => {
     if (products.length > 0 && id) {
@@ -39,6 +40,31 @@ const ProductDetail = () => {
       setProduct(foundProduct || null);
     }
   }, [products, id]);
+
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!product) return;
+    await toggleFavorite(product.id, product.name);
+  };
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!product) return;
+    await addToCart(product.id, product.name, 1);
+  };
+
+  const handleBuyNow = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!product) return;
+    await buySpecificProduct(
+      product.id,
+      product.name,
+      product.brand,
+      product.price,
+      product.images[0] || '',
+      1
+    );
+  };
 
   if (loading) {
     return (
@@ -102,9 +128,18 @@ const ProductDetail = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="space-y-8"
           >
-            <ProductInfo product={product} />
+            <ProductInfo 
+              product={{
+                ...product,
+                in_stock: product.in_stock ?? true
+              }}
+              selectedColor=""
+              selectedSize=""
+              onColorChange={() => {}}
+              onSizeChange={() => {}}
+            />
             <ProductActions
-              isFavorite={isFavorite}
+              isFavorite={isFavorite(product.id)}
               isSoldOut={product.is_sold_out || false}
               onToggleFavorite={handleToggleFavorite}
               onAddToCart={handleAddToCart}
@@ -112,9 +147,9 @@ const ProductDetail = () => {
               customBadge={product.custom_badge}
               showBuyButton={true}
               showCartText={true}
-              isCartLoading={isCartLoading}
-              isCartAdded={isCartAdded}
-              isFavoriteLoading={isFavoriteLoading}
+              isCartLoading={buttonState.isCartLoading}
+              isCartAdded={buttonState.isCartAdded}
+              isFavoriteLoading={buttonState.isFavoriteLoading}
               productId={product.id}
             />
           </motion.div>
