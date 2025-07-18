@@ -131,7 +131,8 @@ const ProductDetail = () => {
             <ProductInfo 
               product={{
                 ...product,
-                in_stock: product.in_stock ?? true
+                in_stock: product.in_stock ?? true,
+                is_new: product.is_new ?? false
               }}
               selectedColor=""
               selectedSize=""
