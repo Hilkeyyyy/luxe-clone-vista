@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSecureFavorites } from '@/hooks/useSecureFavorites';
@@ -124,7 +123,7 @@ export const useOptimizedProductActions = () => {
     }
   }, [isAuthenticated, addToCart, toast, setLoading, setSuccess]);
 
-  // WHATSAPP PRODUTO ESPECÍFICO - NOVA FORMATAÇÃO
+  // WHATSAPP PRODUTO ESPECÍFICO - NOVA FORMATAÇÃO CORRIGIDA
   const handleBuySpecificProduct = useCallback(async (
     productId: string, 
     productName: string, 
@@ -180,7 +179,7 @@ export const useOptimizedProductActions = () => {
     }
   }, [toast]);
 
-  // Função para enviar todo o carrinho - NOVA FORMATAÇÃO
+  // Função para enviar todo o carrinho - CORRIGIDA
   const handleBuyNow = useCallback(async () => {
     if (!isAuthenticated) {
       toast({
@@ -216,8 +215,8 @@ export const useOptimizedProductActions = () => {
           message += `📏 Tamanho: ${item.selectedSize}\n`;
         }
         
-        if (item.images && item.images.length > 0) {
-          message += `🖼️ Imagem do produto:\n${item.images[0]}\n`;
+        if (item.image) {
+          message += `🖼️ Imagem do produto:\n${item.image}\n`;
         }
         
         if (index < cartItems.length - 1) {

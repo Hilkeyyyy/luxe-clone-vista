@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useSecureFavorites } from '@/hooks/useSecureFavorites';
@@ -116,7 +115,7 @@ export const useSecureProductActions = () => {
     }
   };
 
-  // WHATSAPP PRODUTO ESPECÍFICO - NOVA FORMATAÇÃO
+  // WHATSAPP PRODUTO ESPECÍFICO - NOVA FORMATAÇÃO CORRIGIDA
   const handleBuySpecificProduct = async (productId: string, productName: string, brand: string, price: number, image: string, quantity: number = 1, selectedColor?: string, selectedSize?: string) => {
     try {
       const whatsappNumber = "19999413755";
@@ -163,7 +162,7 @@ export const useSecureProductActions = () => {
     }
   };
 
-  // Função para enviar todo o carrinho - NOVA FORMATAÇÃO
+  // Função para enviar todo o carrinho - CORRIGIDA
   const handleBuyNow = async () => {
     if (!isAuthenticated) {
       toast({
@@ -199,8 +198,8 @@ export const useSecureProductActions = () => {
           message += `📏 Tamanho: ${item.selectedSize}\n`;
         }
         
-        if (item.images && item.images.length > 0) {
-          message += `🖼️ Imagem do produto:\n${item.images[0]}\n`;
+        if (item.image) {
+          message += `🖼️ Imagem do produto:\n${item.image}\n`;
         }
         
         if (index < cartItems.length - 1) {

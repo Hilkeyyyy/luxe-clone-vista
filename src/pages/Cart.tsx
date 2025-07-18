@@ -30,14 +30,12 @@ const Cart = () => {
       let message = `🛒 Pedido do Carrinho\n\n`;
 
       cartItems.forEach((item, index) => {
-        const subtotal = item.price * item.quantity;
-        
         message += `🧾 Produto: ${item.name}\n`;
         message += `📦 Quantidade: ${item.quantity}x\n`;
         message += `💸 Valor unitário: R$ ${item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`;
         
-        if (item.images && item.images.length > 0) {
-          message += `🖼️ Imagem do produto:\n${item.images[0]}\n`;
+        if (item.image) {
+          message += `🖼️ Imagem do produto:\n${item.image}\n`;
         }
         
         if (index < cartItems.length - 1) {
