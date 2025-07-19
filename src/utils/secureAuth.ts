@@ -196,7 +196,6 @@ export const detectSuspiciousSession = async (): Promise<boolean> => {
     if (!session) return false;
     
     // Verificar se a sessão é muito antiga
-    // Corrigido: usar created_at ao invés de issued_at
     const sessionAge = Date.now() - new Date(session.created_at || 0).getTime();
     const maxAge = 24 * 60 * 60 * 1000; // 24 horas
     
@@ -214,3 +213,68 @@ export const detectSuspiciousSession = async (): Promise<boolean> => {
     return false;
   }
 };
+
+// Validar integridade da sessão
+export const validateSessionIntegrity = async (): Promise<boolean> => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) return false;
+    
+    // Verificar se os dados da sessão são válidos
+    if (!session.user || !session.user.id || !session.user.email) {
+      secureLog.warn('Sessão com dados inválidos detectada');
+      return false;
+    }
+    
+    // Verificar se a sessão não está expirada
+    const expiresAt = new Date(session.expires_at || 0);
+    if (expiresAt.getTime() <= Date.now()) {
+      secureLog.warn('Sessão expirada detectada');
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    secureLog.error('Erro ao validar integridade da sessão', error);
+    return false;
+  }
+};
+
+// Função para limpeza automática de segurança
+export const performSecurityCleanup = async (): Promise<void> => {
+  try {
+    // Verificar e limpar sessões suspeitas
+    const isSuspicious = await detectSuspiciousSession();
+    if (isSuspicious) {
+      secureLog.warn('Sessão suspeita detectada - limpando estado');
+      cleanAuthState();
+      await supabase.auth.signOut();
+    }
+    
+    // Validar integridade da sessão
+    const isValid = await validateSessionIntegrity();
+    if (!isValid) {
+      secureLog.warn('Sessão inválida detectada - limpando estado');
+      cleanAuthState();
+    }
+    
+    // Limpar cache de admin expirado
+    const now = Date.now();
+    for (const [userId, cache] of adminStatusCache.entries()) {
+      if (now - cache.timestamp > CACHE_DURATION) {
+        adminStatusCache.delete(userId);
+      }
+    }
+    
+  } catch (error) {
+    secureLog.error('Erro durante limpeza de segurança', error);
+  }
+};
+
+// Executar limpeza automática a cada 10 minutos
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    performSecurityCleanup();
+  }, 10 * 60 * 1000);
+}

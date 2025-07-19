@@ -14,15 +14,18 @@ class EnhancedRateLimiter {
   private readonly windowMs = 15 * 60 * 1000; // 15 minutos
   private readonly blockDurationMs = 30 * 60 * 1000; // 30 minutos de bloqueio
 
-  // Log tentativas de login (simplificado sem banco de dados por enquanto)
+  // Log tentativas de login (simplificado sem banco de dados)
   async logLoginAttempt(email: string, success: boolean, ipAddress?: string) {
     try {
-      // Por enquanto, apenas log no console até os tipos serem atualizados
+      // Log apenas no console e armazenamento local
       secureLog.info('Tentativa de login registrada', {
         email: email.substring(0, 10),
         success,
         ipAddress: ipAddress?.substring(0, 10)
       });
+      
+      // Salvar no localStorage para persistência básica
+      this.saveAttemptToStorage(email, success, ipAddress);
     } catch (error) {
       secureLog.error('Erro ao registrar tentativa de login', error);
     }
@@ -47,7 +50,8 @@ class EnhancedRateLimiter {
     if (entry.blocked) {
       if (now - entry.lastAttempt < this.blockDurationMs) {
         secureLog.warn('Acesso bloqueado por rate limiting', { 
-          identifier: identifier.substring(0, 10) 
+          identifier: identifier.substring(0, 10),
+          timeRemaining: Math.ceil((this.blockDurationMs - (now - entry.lastAttempt)) / 1000 / 60)
         });
         return true;
       } else {
@@ -78,7 +82,8 @@ class EnhancedRateLimiter {
       entry.blocked = true;
       secureLog.warn('Rate limit excedido - bloqueando acesso', {
         identifier: identifier.substring(0, 10),
-        attempts: entry.count
+        attempts: entry.count,
+        blockDuration: this.blockDurationMs / 1000 / 60
       });
       return true;
     }
@@ -89,6 +94,7 @@ class EnhancedRateLimiter {
   // Resetar contador para um identificador
   reset(identifier: string): void {
     this.attempts.delete(identifier);
+    secureLog.info('Rate limit resetado', { identifier: identifier.substring(0, 10) });
   }
 
   // Obter IP do cliente (melhor esforço)
@@ -100,10 +106,9 @@ class EnhancedRateLimiter {
     return 'client-browser';
   }
 
-  // Verificar tentativas recentes (simplificado sem banco por enquanto)
+  // Verificar tentativas recentes usando localStorage
   async checkRecentAttempts(email: string): Promise<boolean> {
     try {
-      // Implementação simplificada usando localStorage como fallback
       const storageKey = `failed_attempts_${email}`;
       const stored = localStorage.getItem(storageKey);
       
@@ -112,20 +117,20 @@ class EnhancedRateLimiter {
       const data = JSON.parse(stored);
       const fifteenMinutesAgo = Date.now() - this.windowMs;
       
-      // Filtrar tentativas recentes
-      const recentAttempts = data.attempts?.filter((attempt: any) => 
+      // Filtrar tentativas recentes que falharam
+      const recentFailures = data.attempts?.filter((attempt: any) => 
         attempt.timestamp > fifteenMinutesAgo && !attempt.success
       ) || [];
       
-      return recentAttempts.length >= this.maxAttempts;
+      return recentFailures.length >= this.maxAttempts;
     } catch (error) {
       secureLog.error('Erro ao verificar tentativas recentes', error);
       return false;
     }
   }
 
-  // Adicionar tentativa ao localStorage
-  private addAttemptToStorage(email: string, success: boolean) {
+  // Salvar tentativa no localStorage
+  private saveAttemptToStorage(email: string, success: boolean, ipAddress?: string) {
     try {
       const storageKey = `failed_attempts_${email}`;
       const stored = localStorage.getItem(storageKey) || '{"attempts": []}';
@@ -134,7 +139,8 @@ class EnhancedRateLimiter {
       data.attempts = data.attempts || [];
       data.attempts.push({
         timestamp: Date.now(),
-        success
+        success,
+        ipAddress: ipAddress?.substring(0, 10)
       });
       
       // Manter apenas últimas 24 horas
@@ -148,6 +154,49 @@ class EnhancedRateLimiter {
       secureLog.error('Erro ao armazenar tentativa', error);
     }
   }
+
+  // Obter estatísticas de tentativas
+  getAttemptStats(identifier: string): { count: number; blocked: boolean; timeUntilReset?: number } {
+    const entry = this.attempts.get(identifier);
+    if (!entry) return { count: 0, blocked: false };
+    
+    const now = Date.now();
+    let timeUntilReset;
+    
+    if (entry.blocked) {
+      timeUntilReset = Math.max(0, this.blockDurationMs - (now - entry.lastAttempt));
+    } else {
+      timeUntilReset = Math.max(0, this.windowMs - (now - entry.firstAttempt));
+    }
+    
+    return {
+      count: entry.count,
+      blocked: entry.blocked,
+      timeUntilReset: timeUntilReset > 0 ? timeUntilReset : undefined
+    };
+  }
+
+  // Limpar tentativas antigas
+  cleanup(): void {
+    const now = Date.now();
+    for (const [identifier, entry] of this.attempts.entries()) {
+      // Remover entradas antigas que não estão mais bloqueadas
+      if (!entry.blocked && now - entry.lastAttempt > this.windowMs) {
+        this.attempts.delete(identifier);
+      }
+      // Remover bloqueios expirados
+      else if (entry.blocked && now - entry.lastAttempt > this.blockDurationMs) {
+        this.attempts.delete(identifier);
+      }
+    }
+  }
 }
 
 export const enhancedRateLimiter = new EnhancedRateLimiter();
+
+// Executar limpeza a cada 5 minutos
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    enhancedRateLimiter.cleanup();
+  }, 5 * 60 * 1000);
+}
