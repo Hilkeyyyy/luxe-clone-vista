@@ -196,7 +196,8 @@ export const detectSuspiciousSession = async (): Promise<boolean> => {
     if (!session) return false;
     
     // Verificar se a sessão é muito antiga
-    const sessionAge = Date.now() - new Date(session.issued_at || 0).getTime();
+    // Corrigido: usar created_at ao invés de issued_at
+    const sessionAge = Date.now() - new Date(session.created_at || 0).getTime();
     const maxAge = 24 * 60 * 60 * 1000; // 24 horas
     
     if (sessionAge > maxAge) {

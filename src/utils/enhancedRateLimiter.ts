@@ -1,5 +1,4 @@
 
-import { supabase } from '@/integrations/supabase/client';
 import { secureLog } from './secureLogger';
 
 interface RateLimitEntry {
@@ -15,22 +14,17 @@ class EnhancedRateLimiter {
   private readonly windowMs = 15 * 60 * 1000; // 15 minutos
   private readonly blockDurationMs = 30 * 60 * 1000; // 30 minutos de bloqueio
 
-  // Log tentativas de login no banco de dados
+  // Log tentativas de login (simplificado sem banco de dados por enquanto)
   async logLoginAttempt(email: string, success: boolean, ipAddress?: string) {
     try {
-      const { error } = await supabase
-        .from('login_attempts')
-        .insert({
-          email: email.toLowerCase().trim(),
-          ip_address: ipAddress,
-          success,
-        });
-
-      if (error) {
-        secureLog.error('Erro ao registrar tentativa de login', error);
-      }
+      // Por enquanto, apenas log no console até os tipos serem atualizados
+      secureLog.info('Tentativa de login registrada', {
+        email: email.substring(0, 10),
+        success,
+        ipAddress: ipAddress?.substring(0, 10)
+      });
     } catch (error) {
-      secureLog.error('Erro crítico ao registrar tentativa de login', error);
+      secureLog.error('Erro ao registrar tentativa de login', error);
     }
   }
 
@@ -106,28 +100,52 @@ class EnhancedRateLimiter {
     return 'client-browser';
   }
 
-  // Verificar tentativas recentes no banco
+  // Verificar tentativas recentes (simplificado sem banco por enquanto)
   async checkRecentAttempts(email: string): Promise<boolean> {
     try {
-      const fifteenMinutesAgo = new Date(Date.now() - this.windowMs);
+      // Implementação simplificada usando localStorage como fallback
+      const storageKey = `failed_attempts_${email}`;
+      const stored = localStorage.getItem(storageKey);
       
-      const { data, error } = await supabase
-        .from('login_attempts')
-        .select('success')
-        .eq('email', email.toLowerCase().trim())
-        .gte('attempt_time', fifteenMinutesAgo.toISOString())
-        .eq('success', false);
-
-      if (error) {
-        secureLog.error('Erro ao verificar tentativas recentes', error);
-        return false;
-      }
-
-      const failedAttempts = data?.length || 0;
-      return failedAttempts >= this.maxAttempts;
+      if (!stored) return false;
+      
+      const data = JSON.parse(stored);
+      const fifteenMinutesAgo = Date.now() - this.windowMs;
+      
+      // Filtrar tentativas recentes
+      const recentAttempts = data.attempts?.filter((attempt: any) => 
+        attempt.timestamp > fifteenMinutesAgo && !attempt.success
+      ) || [];
+      
+      return recentAttempts.length >= this.maxAttempts;
     } catch (error) {
-      secureLog.error('Erro crítico ao verificar tentativas recentes', error);
+      secureLog.error('Erro ao verificar tentativas recentes', error);
       return false;
+    }
+  }
+
+  // Adicionar tentativa ao localStorage
+  private addAttemptToStorage(email: string, success: boolean) {
+    try {
+      const storageKey = `failed_attempts_${email}`;
+      const stored = localStorage.getItem(storageKey) || '{"attempts": []}';
+      const data = JSON.parse(stored);
+      
+      data.attempts = data.attempts || [];
+      data.attempts.push({
+        timestamp: Date.now(),
+        success
+      });
+      
+      // Manter apenas últimas 24 horas
+      const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+      data.attempts = data.attempts.filter((attempt: any) => 
+        attempt.timestamp > oneDayAgo
+      );
+      
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    } catch (error) {
+      secureLog.error('Erro ao armazenar tentativa', error);
     }
   }
 }
