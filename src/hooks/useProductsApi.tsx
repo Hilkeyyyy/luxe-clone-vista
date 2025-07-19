@@ -31,6 +31,7 @@ export const useProductsApi = () => {
 
       return data;
     } catch (error: any) {
+      console.error('❌ Erro completo ao criar produto:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao criar produto.",
@@ -54,7 +55,8 @@ export const useProductsApi = () => {
           sanitizeInput(productData.custom_badge, { maxLength: 50 }) : null
       };
 
-      // CORREÇÃO: Remover lógica de brand_category até ser configurada corretamente
+      console.log('🔄 Atualizando produto ID:', id, 'com dados:', sanitizedData);
+
       const { data, error } = await supabase
         .from('products')
         .update({
@@ -63,9 +65,19 @@ export const useProductsApi = () => {
         })
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao atualizar produto:', error);
+        throw error;
+      }
+
+      if (!data) {
+        console.error('❌ Nenhum dado retornado após atualização para ID:', id);
+        throw new Error('Produto não foi atualizado. Verifique se o produto existe e se você tem permissões.');
+      }
+
+      console.log('✅ Produto atualizado com sucesso:', data);
 
       toast({
         title: "Sucesso",

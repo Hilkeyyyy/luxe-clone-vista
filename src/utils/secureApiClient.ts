@@ -66,13 +66,25 @@ export class SecureApiClient {
           sanitizeInput(productData.custom_badge, { maxLength: 50 }) : null
       };
 
+      console.log('🔄 Criando produto com dados:', sanitizedData);
+
       const { data, error } = await supabase
         .from('products')
         .insert([sanitizedData])
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao inserir produto:', error);
+        throw error;
+      }
+
+      if (!data) {
+        console.error('❌ Nenhum dado retornado após inserção');
+        throw new Error('Produto não foi criado. Verifique as permissões.');
+      }
+
+      console.log('✅ Produto criado com sucesso:', data);
       return data;
     }, 'CREATE_PRODUCT');
   }
@@ -133,9 +145,14 @@ export class SecureApiClient {
         .from('profiles')
         .insert([sanitizedData])
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+
+      if (!data) {
+        throw new Error('Perfil não foi criado. Verifique as permissões.');
+      }
+
       return data;
     }, 'CREATE_PROFILE');
   }
