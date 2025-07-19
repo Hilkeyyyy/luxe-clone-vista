@@ -316,7 +316,7 @@ const AdminDashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <button
-                    onClick={() => navigate('/admin/produtos/novo')}
+                    onClick={() => navigate('/admin/products')}
                     className="flex items-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Package size={20} />
@@ -324,7 +324,7 @@ const AdminDashboard = () => {
                   </button>
                   
                   <button
-                    onClick={() => navigate('/admin/produtos')}
+                    onClick={() => navigate('/admin/products')}
                     className="flex items-center space-x-2 px-4 py-3 bg-neutral-600 text-white rounded-lg hover:bg-neutral-700 transition-colors"
                   >
                     <Eye size={20} />
@@ -332,7 +332,7 @@ const AdminDashboard = () => {
                   </button>
                   
                   <button
-                    onClick={() => navigate('/admin/configuracoes')}
+                    onClick={() => navigate('/admin/settings')}
                     className="flex items-center space-x-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <TrendingUp size={20} />
