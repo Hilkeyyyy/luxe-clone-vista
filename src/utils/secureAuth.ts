@@ -195,13 +195,16 @@ export const detectSuspiciousSession = async (): Promise<boolean> => {
     
     if (!session) return false;
     
-    // Verificar se a sessão é muito antiga
-    const sessionAge = Date.now() - new Date(session.created_at || 0).getTime();
-    const maxAge = 24 * 60 * 60 * 1000; // 24 horas
+    // Verificar se a sessão é muito antiga usando expires_at
+    const expiresAt = new Date(session.expires_at || 0).getTime();
+    const now = Date.now();
+    const timeToExpiry = expiresAt - now;
     
-    if (sessionAge > maxAge) {
-      secureLog.warn('Sessão muito antiga detectada', {
-        sessionAge: Math.ceil(sessionAge / 1000 / 60 / 60),
+    // Se a sessão expira em menos de 1 hora, considerar suspeita
+    const oneHour = 60 * 60 * 1000;
+    if (timeToExpiry < oneHour && timeToExpiry > 0) {
+      secureLog.warn('Sessão próxima do vencimento detectada', {
+        timeToExpiry: Math.ceil(timeToExpiry / 1000 / 60),
         userId: session.user.id.substring(0, 8)
       });
       return true;
