@@ -4,6 +4,14 @@ import { useToast } from '@/hooks/use-toast';
 import { secureApiClient } from '@/utils/secureApiClient';
 import { sanitizeInput } from '@/utils/securityEnhancements';
 
+// Tipo para o retorno da função RPC delete_product_with_dependencies
+interface DeleteProductResult {
+  success: boolean;
+  cart_items_deleted: number;
+  favorites_deleted: number;
+  message: string;
+}
+
 export const useProductsApi = () => {
   const { toast } = useToast();
 
@@ -105,8 +113,8 @@ export const useProductsApi = () => {
 
         console.log('✅ Produto excluído com sucesso via transação:', data);
 
-        // Exibir mensagem de sucesso com detalhes
-        const successData = data || {};
+        // Tipar corretamente o retorno da função RPC
+        const successData = data as DeleteProductResult;
         let successMessage = "Produto excluído com sucesso.";
         
         if (successData.cart_items_deleted > 0 || successData.favorites_deleted > 0) {
