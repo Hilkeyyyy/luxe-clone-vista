@@ -113,8 +113,8 @@ export const useProductsApi = () => {
 
         console.log('✅ Produto excluído com sucesso via transação:', data);
 
-        // Tipar corretamente o retorno da função RPC
-        const successData = data as DeleteProductResult;
+        // CORREÇÃO: Conversão segura através de unknown primeiro
+        const successData = data as unknown as DeleteProductResult;
         let successMessage = "Produto excluído com sucesso.";
         
         if (successData.cart_items_deleted > 0 || successData.favorites_deleted > 0) {
