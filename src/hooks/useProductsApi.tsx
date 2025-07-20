@@ -90,17 +90,96 @@ export const useProductsApi = () => {
 
   const deleteProduct = async (id: string) => {
     return secureApiClient.secureRequest(async () => {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
+      console.log('🗑️ Iniciando exclusão do produto ID:', id);
 
-      if (error) throw error;
+      try {
+        // ETAPA 1: Verificar quantos registros relacionados existem
+        const { data: cartItems, error: cartError } = await supabase
+          .from('cart_items')
+          .select('id, user_id')
+          .eq('product_id', id);
 
-      toast({
-        title: "Sucesso",
-        description: "Produto excluído com sucesso.",
-      });
+        if (cartError) {
+          console.error('❌ Erro ao verificar itens do carrinho:', cartError);
+          throw new Error('Erro ao verificar dependências do produto.');
+        }
+
+        const { data: favoriteItems, error: favError } = await supabase
+          .from('favorites')
+          .select('id, user_id')
+          .eq('product_id', id);
+
+        if (favError) {
+          console.error('❌ Erro ao verificar favoritos:', favError);
+          throw new Error('Erro ao verificar dependências do produto.');
+        }
+
+        const cartCount = cartItems?.length || 0;
+        const favoritesCount = favoriteItems?.length || 0;
+
+        console.log(`📊 Produto tem ${cartCount} itens no carrinho e ${favoritesCount} favoritos`);
+
+        // ETAPA 2: Remover todas as referências do produto
+        if (cartCount > 0) {
+          console.log('🛒 Removendo itens do carrinho...');
+          const { error: deleteCartError } = await supabase
+            .from('cart_items')
+            .delete()
+            .eq('product_id', id);
+
+          if (deleteCartError) {
+            console.error('❌ Erro ao remover itens do carrinho:', deleteCartError);
+            throw new Error('Erro ao limpar carrinho de compras.');
+          }
+          console.log('✅ Itens do carrinho removidos com sucesso');
+        }
+
+        if (favoritesCount > 0) {
+          console.log('❤️ Removendo favoritos...');
+          const { error: deleteFavError } = await supabase
+            .from('favorites')
+            .delete()
+            .eq('product_id', id);
+
+          if (deleteFavError) {
+            console.error('❌ Erro ao remover favoritos:', deleteFavError);
+            throw new Error('Erro ao limpar favoritos.');
+          }
+          console.log('✅ Favoritos removidos com sucesso');
+        }
+
+        // ETAPA 3: Excluir o produto
+        console.log('🗑️ Excluindo produto...');
+        const { error: deleteProductError } = await supabase
+          .from('products')
+          .delete()
+          .eq('id', id);
+
+        if (deleteProductError) {
+          console.error('❌ Erro ao excluir produto:', deleteProductError);
+          throw deleteProductError;
+        }
+
+        console.log('✅ Produto excluído com sucesso');
+
+        // Mensagem de sucesso detalhada
+        let successMessage = "Produto excluído com sucesso.";
+        if (cartCount > 0 || favoritesCount > 0) {
+          const details = [];
+          if (cartCount > 0) details.push(`${cartCount} item(s) removido(s) do carrinho`);
+          if (favoritesCount > 0) details.push(`${favoritesCount} favorito(s) removido(s)`);
+          successMessage += ` Também foram: ${details.join(' e ')}.`;
+        }
+
+        toast({
+          title: "Sucesso",
+          description: successMessage,
+        });
+
+      } catch (error: any) {
+        console.error('❌ Erro durante exclusão completa:', error);
+        throw error;
+      }
     }, 'DELETE_PRODUCT', id);
   };
 
