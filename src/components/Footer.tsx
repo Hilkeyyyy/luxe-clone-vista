@@ -90,7 +90,7 @@ const Footer = () => {
           transition={{ duration: 0.6, delay: 0.3 }}
         >
           <p className="text-neutral-500 text-sm font-light">
-            © 2024 Velar Watches. Todos os direitos reservados.
+            © 2025 Velar Watches. Todos os direitos reservados.
           </p>
           
           <motion.div 
