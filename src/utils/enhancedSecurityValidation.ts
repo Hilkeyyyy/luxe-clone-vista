@@ -1,189 +1,229 @@
 
+import { supabase } from '@/integrations/supabase/client';
 import { secureLog } from './secureLogger';
 
 /**
- * Validações de segurança aprimoradas para dados de entrada
+ * Validação de segurança aprimorada para senhas e autenticação
  */
 
-export const validateProductData = (productData: any): string[] => {
-  const errors: string[] = [];
-  
-  // Validar campos obrigatórios
-  if (!productData.name || typeof productData.name !== 'string' || productData.name.trim().length === 0) {
-    errors.push('Nome do produto é obrigatório');
-  }
-  
-  if (!productData.brand || typeof productData.brand !== 'string' || productData.brand.trim().length === 0) {
-    errors.push('Marca do produto é obrigatória');
-  }
-  
-  if (!productData.price || typeof productData.price !== 'number' || productData.price <= 0) {
-    errors.push('Preço deve ser um número positivo');
-  }
-  
-  if (productData.original_price && (typeof productData.original_price !== 'number' || productData.original_price <= 0)) {
-    errors.push('Preço original deve ser um número positivo');
-  }
-  
-  // Validar limites de tamanho
-  if (productData.name && productData.name.length > 200) {
-    errors.push('Nome do produto muito longo (máximo 200 caracteres)');
-  }
-  
-  if (productData.brand && productData.brand.length > 100) {
-    errors.push('Nome da marca muito longo (máximo 100 caracteres)');
-  }
-  
-  if (productData.description && productData.description.length > 5000) {
-    errors.push('Descrição muito longa (máximo 5000 caracteres)');
-  }
-  
-  // Validar arrays
-  if (productData.images && !Array.isArray(productData.images)) {
-    errors.push('Imagens deve ser um array');
-  }
-  
-  if (productData.colors && !Array.isArray(productData.colors)) {
-    errors.push('Cores deve ser um array');
-  }
-  
-  if (productData.sizes && !Array.isArray(productData.sizes)) {
-    errors.push('Tamanhos deve ser um array');
-  }
-  
-  return errors;
-};
+export interface PasswordValidationResult {
+  isValid: boolean;
+  errors: string[];
+  strength: 'weak' | 'medium' | 'strong';
+}
 
-export const validateAdminSettings = (settings: Record<string, any>): string[] => {
+export const validatePasswordStrength = async (password: string): Promise<PasswordValidationResult> => {
   const errors: string[] = [];
-  
-  // Lista de configurações permitidas
-  const allowedSettings = [
-    'whatsapp_number',
-    'whatsapp_message_template',
-    'whatsapp_enabled',
-    'company_name',
-    'company_phone',
-    'company_email',
-    'instagram_url'
-  ];
-  
-  for (const [key, value] of Object.entries(settings)) {
-    // Validar se a chave é permitida
-    if (!allowedSettings.includes(key)) {
-      errors.push(`Configuração não permitida: ${key}`);
-      continue;
-    }
-    
-    // Validar tamanho da chave
-    if (key.length > 100) {
-      errors.push(`Nome da configuração muito longo: ${key}`);
-    }
-    
-    // Validar valor baseado no tipo
-    if (typeof value === 'string' && value.length > 1000) {
-      errors.push(`Valor muito longo para: ${key}`);
-    }
-    
-    // Validações específicas por campo
-    switch (key) {
-      case 'whatsapp_number':
-        if (typeof value === 'string' && value && !/^\d{10,15}$/.test(value.replace(/\D/g, ''))) {
-          errors.push('Número do WhatsApp inválido');
-        }
-        break;
-        
-      case 'company_email':
-        if (typeof value === 'string' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          errors.push('Email da empresa inválido');
-        }
-        break;
-        
-      case 'instagram_url':
-        if (typeof value === 'string' && value && !value.startsWith('https://')) {
-          errors.push('URL do Instagram deve começar com https://');
-        }
-        break;
-    }
-  }
-  
-  return errors;
-};
+  let strength: 'weak' | 'medium' | 'strong' = 'weak';
 
-export const validateUserInput = (input: any, fieldName: string, options: {
-  required?: boolean;
-  minLength?: number;
-  maxLength?: number;
-  type?: 'string' | 'number' | 'email' | 'url';
-}): string[] => {
-  const errors: string[] = [];
-  
-  // Verificar se é obrigatório
-  if (options.required && (!input || (typeof input === 'string' && input.trim().length === 0))) {
-    errors.push(`${fieldName} é obrigatório`);
-    return errors;
-  }
-  
-  // Se não é obrigatório e está vazio, não validar mais
-  if (!input) return errors;
-  
-  // Validar tipo
-  if (options.type === 'string' && typeof input !== 'string') {
-    errors.push(`${fieldName} deve ser texto`);
-    return errors;
-  }
-  
-  if (options.type === 'number' && typeof input !== 'number') {
-    errors.push(`${fieldName} deve ser um número`);
-    return errors;
-  }
-  
-  // Validar comprimento para strings
-  if (typeof input === 'string') {
-    if (options.minLength && input.length < options.minLength) {
-      errors.push(`${fieldName} deve ter pelo menos ${options.minLength} caracteres`);
-    }
-    
-    if (options.maxLength && input.length > options.maxLength) {
-      errors.push(`${fieldName} deve ter no máximo ${options.maxLength} caracteres`);
-    }
-    
-    // Validações específicas por tipo
-    if (options.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input)) {
-      errors.push(`${fieldName} deve ser um email válido`);
-    }
-    
-    if (options.type === 'url' && !input.startsWith('http')) {
-      errors.push(`${fieldName} deve ser uma URL válida`);
-    }
-  }
-  
-  return errors;
-};
-
-/**
- * Valida se o usuário tem permissão para realizar uma ação
- */
-export const validateUserPermission = (userRole: string, requiredRole: string): boolean => {
-  const roleHierarchy = {
-    'admin': 3,
-    'moderator': 2,
-    'user': 1
-  };
-  
-  const userLevel = roleHierarchy[userRole as keyof typeof roleHierarchy] || 0;
-  const requiredLevel = roleHierarchy[requiredRole as keyof typeof roleHierarchy] || 999;
-  
-  const hasPermission = userLevel >= requiredLevel;
-  
-  if (!hasPermission) {
-    secureLog.warn('Tentativa de acesso sem permissão', { 
-      userRole, 
-      requiredRole, 
-      userLevel, 
-      requiredLevel 
+  try {
+    // Validar usando a função do banco de dados
+    const { data, error } = await supabase.rpc('validate_password_strength', {
+      password: password
     });
+
+    if (error) {
+      secureLog.error('Erro ao validar força da senha no banco', error);
+      // Fallback para validação local
+      return validatePasswordLocal(password);
+    }
+
+    if (!data) {
+      errors.push('Senha não atende aos critérios de segurança');
+    }
+
+    // Determinar força da senha
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumbers = /[0-9]/.test(password);
+    const hasSpecialChars = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+    const criteriaMet = [hasUppercase, hasLowercase, hasNumbers, hasSpecialChars].filter(Boolean).length;
+    
+    if (password.length >= 12 && criteriaMet >= 3) {
+      strength = 'strong';
+    } else if (password.length >= 8 && criteriaMet >= 2) {
+      strength = 'medium';
+    }
+
+    return {
+      isValid: data && errors.length === 0,
+      errors,
+      strength
+    };
+  } catch (error) {
+    secureLog.error('Erro crítico na validação de senha', error);
+    return validatePasswordLocal(password);
+  }
+};
+
+const validatePasswordLocal = (password: string): PasswordValidationResult => {
+  const errors: string[] = [];
+  
+  if (password.length < 8) {
+    errors.push('A senha deve ter pelo menos 8 caracteres');
   }
   
-  return hasPermission;
+  if (!/[A-Z]/.test(password)) {
+    errors.push('A senha deve conter pelo menos uma letra maiúscula');
+  }
+  
+  if (!/[a-z]/.test(password)) {
+    errors.push('A senha deve conter pelo menos uma letra minúscula');
+  }
+  
+  if (!/[0-9]/.test(password)) {
+    errors.push('A senha deve conter pelo menos um número');
+  }
+  
+  const hasSpecialChars = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+  let strength: 'weak' | 'medium' | 'strong' = 'weak';
+  
+  if (password.length >= 12 && hasSpecialChars && errors.length === 0) {
+    strength = 'strong';
+  } else if (password.length >= 8 && errors.length === 0) {
+    strength = 'medium';
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors,
+    strength
+  };
 };
+
+// Função para registrar eventos de segurança
+export const logSecurityEvent = async (
+  action: string,
+  details: Record<string, any> = {},
+  ipAddress?: string,
+  userAgent?: string
+) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const { error } = await supabase.rpc('log_security_event', {
+      p_user_id: user?.id || null,
+      p_action: action,
+      p_details: details,
+      p_ip_address: ipAddress || null,
+      p_user_agent: userAgent || null
+    });
+
+    if (error) {
+      secureLog.error('Erro ao registrar evento de segurança', error);
+    } else {
+      secureLog.info('Evento de segurança registrado', { action, userId: user?.id?.substring(0, 8) });
+    }
+  } catch (error) {
+    secureLog.error('Erro crítico ao registrar evento de segurança', error);
+  }
+};
+
+// Função para limpar tokens expirados
+export const cleanupExpiredTokens = async (): Promise<void> => {
+  try {
+    const { error } = await supabase.rpc('cleanup_expired_tokens');
+    
+    if (error) {
+      secureLog.error('Erro ao limpar tokens expirados', error);
+    } else {
+      secureLog.info('Tokens expirados limpos com sucesso');
+    }
+  } catch (error) {
+    secureLog.error('Erro crítico ao limpar tokens expirados', error);
+  }
+};
+
+// Validação de entrada para prevenir ataques de injeção
+export const sanitizeInput = (input: string): string => {
+  if (!input) return '';
+  
+  // Remover caracteres perigosos
+  return input
+    .replace(/[<>]/g, '') // Remove < e >
+    .replace(/javascript:/gi, '') // Remove javascript:
+    .replace(/on\w+=/gi, '') // Remove event handlers
+    .trim();
+};
+
+// Verificação de integridade de dados
+export const validateDataIntegrity = (data: any): boolean => {
+  try {
+    // Verificar se não é null ou undefined
+    if (data === null || data === undefined) {
+      return false;
+    }
+    
+    // Verificar se é um objeto válido
+    if (typeof data === 'object' && data !== null) {
+      // Verificar se não há propriedades perigosas
+      const dangerousProps = ['__proto__', 'constructor', 'prototype'];
+      for (const prop of dangerousProps) {
+        if (prop in data) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    secureLog.error('Erro na validação de integridade de dados', error);
+    return false;
+  }
+};
+
+// Rate limiting aprimorado
+export class SecurityRateLimiter {
+  private attempts = new Map<string, { count: number; lastAttempt: number; blocked: boolean }>();
+  private readonly maxAttempts = 5;
+  private readonly windowMs = 15 * 60 * 1000; // 15 minutos
+  private readonly blockDurationMs = 30 * 60 * 1000; // 30 minutos
+
+  isRateLimited(key: string): boolean {
+    const now = Date.now();
+    const record = this.attempts.get(key);
+    
+    if (!record) {
+      this.attempts.set(key, { count: 1, lastAttempt: now, blocked: false });
+      return false;
+    }
+    
+    // Verificar se está bloqueado
+    if (record.blocked) {
+      if (now - record.lastAttempt < this.blockDurationMs) {
+        return true;
+      } else {
+        // Período de bloqueio expirou
+        record.blocked = false;
+        record.count = 1;
+        record.lastAttempt = now;
+        return false;
+      }
+    }
+    
+    // Resetar se passou da janela de tempo
+    if (now - record.lastAttempt > this.windowMs) {
+      record.count = 1;
+      record.lastAttempt = now;
+      return false;
+    }
+    
+    record.count++;
+    record.lastAttempt = now;
+    
+    if (record.count > this.maxAttempts) {
+      record.blocked = true;
+      logSecurityEvent('rate_limit_exceeded', { key: key.substring(0, 10) });
+      return true;
+    }
+    
+    return false;
+  }
+
+  reset(key: string): void {
+    this.attempts.delete(key);
+  }
+}
+
+export const securityRateLimiter = new SecurityRateLimiter();

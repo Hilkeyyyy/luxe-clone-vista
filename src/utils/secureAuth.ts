@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { secureLog } from './secureLogger';
+import { validatePasswordStrength, logSecurityEvent } from './enhancedSecurityValidation';
 
 /**
  * Utilities de autenticação segura aprimorados
@@ -40,6 +41,11 @@ export const verifyAdminStatus = async (userId: string): Promise<boolean> => {
       timestamp: Date.now()
     });
 
+    // Registrar evento de verificação de admin
+    if (isAdmin) {
+      await logSecurityEvent('admin_verification', { userId: userId.substring(0, 8) });
+    }
+
     return isAdmin;
   } catch (error) {
     secureLog.error('Erro crítico ao verificar status de admin', error);
@@ -57,8 +63,11 @@ export const clearAdminStatusCache = (userId?: string) => {
 };
 
 // Limpar estado de autenticação com mais segurança
-export const cleanAuthState = () => {
+export const cleanAuthState = async () => {
   try {
+    // Registrar evento de limpeza
+    await logSecurityEvent('auth_state_cleanup', { timestamp: new Date().toISOString() });
+    
     // Limpar cache de admin
     clearAdminStatusCache();
     
@@ -107,7 +116,8 @@ export const cleanAuthState = () => {
           const key = sessionStorage.key(i);
           if (key && (
             key.startsWith('supabase.auth.') || 
-            key.includes('sb-cfzlalckxzmfdxrpnirg')
+            key.includes('sb-cfzlalckxzmfdxrpnirg') ||
+            key.startsWith('security_')
           )) {
             sessionKeys.push(key);
           }
@@ -132,14 +142,14 @@ class EnhancedRateLimiter {
   private readonly windowMs = 15 * 60 * 1000; // 15 minutos
   private readonly blockDurationMs = 30 * 60 * 1000; // 30 minutos
 
-  isRateLimited(key: string): boolean {
+  async isRateLimited(key: string): Promise<boolean> {
     const now = Date.now();
     
     // Verificar se está bloqueado
     if (this.blocked.has(key)) {
       const record = this.attempts.get(key);
       if (record && now - record.lastAttempt < this.blockDurationMs) {
-        secureLog.warn('Acesso bloqueado por rate limiting', { 
+        await logSecurityEvent('rate_limit_blocked', { 
           key: key.substring(0, 10),
           timeRemaining: Math.ceil((this.blockDurationMs - (now - record.lastAttempt)) / 1000 / 60)
         });
@@ -164,7 +174,7 @@ class EnhancedRateLimiter {
     
     if (record.count > this.maxAttempts) {
       this.blocked.add(key);
-      secureLog.warn('Rate limit excedido - bloqueando acesso', {
+      await logSecurityEvent('rate_limit_exceeded', {
         key: key.substring(0, 10),
         attempts: record.count,
         blockDuration: this.blockDurationMs / 1000 / 60
@@ -203,7 +213,7 @@ export const detectSuspiciousSession = async (): Promise<boolean> => {
     // Se a sessão expira em menos de 1 hora, considerar suspeita
     const oneHour = 60 * 60 * 1000;
     if (timeToExpiry < oneHour && timeToExpiry > 0) {
-      secureLog.warn('Sessão próxima do vencimento detectada', {
+      await logSecurityEvent('suspicious_session_detected', {
         timeToExpiry: Math.ceil(timeToExpiry / 1000 / 60),
         userId: session.user.id.substring(0, 8)
       });
@@ -226,14 +236,21 @@ export const validateSessionIntegrity = async (): Promise<boolean> => {
     
     // Verificar se os dados da sessão são válidos
     if (!session.user || !session.user.id || !session.user.email) {
-      secureLog.warn('Sessão com dados inválidos detectada');
+      await logSecurityEvent('invalid_session_data', { 
+        hasUser: !!session.user,
+        hasId: !!session.user?.id,
+        hasEmail: !!session.user?.email
+      });
       return false;
     }
     
     // Verificar se a sessão não está expirada
     const expiresAt = new Date(session.expires_at || 0);
     if (expiresAt.getTime() <= Date.now()) {
-      secureLog.warn('Sessão expirada detectada');
+      await logSecurityEvent('expired_session_detected', {
+        expiresAt: expiresAt.toISOString(),
+        userId: session.user.id.substring(0, 8)
+      });
       return false;
     }
     
@@ -251,7 +268,7 @@ export const performSecurityCleanup = async (): Promise<void> => {
     const isSuspicious = await detectSuspiciousSession();
     if (isSuspicious) {
       secureLog.warn('Sessão suspeita detectada - limpando estado');
-      cleanAuthState();
+      await cleanAuthState();
       await supabase.auth.signOut();
     }
     
@@ -259,7 +276,7 @@ export const performSecurityCleanup = async (): Promise<void> => {
     const isValid = await validateSessionIntegrity();
     if (!isValid) {
       secureLog.warn('Sessão inválida detectada - limpando estado');
-      cleanAuthState();
+      await cleanAuthState();
     }
     
     // Limpar cache de admin expirado
@@ -272,6 +289,70 @@ export const performSecurityCleanup = async (): Promise<void> => {
     
   } catch (error) {
     secureLog.error('Erro durante limpeza de segurança', error);
+  }
+};
+
+// Função para login seguro com validação de senha
+export const secureLogin = async (email: string, password: string): Promise<{
+  success: boolean;
+  error?: string;
+  data?: any;
+}> => {
+  try {
+    // Verificar rate limiting
+    const rateLimited = await rateLimiter.isRateLimited(email);
+    if (rateLimited) {
+      return {
+        success: false,
+        error: 'Muitas tentativas de login. Tente novamente mais tarde.'
+      };
+    }
+
+    // Validar força da senha
+    const passwordValidation = await validatePasswordStrength(password);
+    if (!passwordValidation.isValid) {
+      await logSecurityEvent('weak_password_login_attempt', {
+        email: email.substring(0, 3) + '***',
+        errors: passwordValidation.errors
+      });
+    }
+
+    // Tentar fazer login
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      await logSecurityEvent('login_failed', {
+        email: email.substring(0, 3) + '***',
+        error: error.message
+      });
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+
+    // Login bem-sucedido
+    await logSecurityEvent('login_successful', {
+      email: email.substring(0, 3) + '***',
+      userId: data.user?.id?.substring(0, 8)
+    });
+
+    // Resetar rate limiter
+    rateLimiter.reset(email);
+
+    return {
+      success: true,
+      data
+    };
+  } catch (error) {
+    secureLog.error('Erro crítico durante login seguro', error);
+    return {
+      success: false,
+      error: 'Erro interno do servidor'
+    };
   }
 };
 
