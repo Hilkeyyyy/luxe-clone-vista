@@ -1,204 +1,166 @@
 
-import { supabase } from '@/integrations/supabase/client';
 import { secureLog } from './secureLogger';
-import { logSecurityEvent } from './enhancedSecurityValidation';
 
 /**
- * Sistema de monitoramento de segurança em tempo real
+ * Sistema de monitoramento de segurança simplificado
  */
 
 export interface SecurityThreat {
-  type: 'suspicious_activity' | 'multiple_login_attempts' | 'unusual_access_pattern' | 'potential_attack';
+  id: string;
+  type: 'brute_force' | 'suspicious_activity' | 'rate_limit' | 'data_breach' | 'unauthorized_access';
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
+  details: Record<string, any>;
   timestamp: Date;
-  userId?: string;
-  ipAddress?: string;
-  userAgent?: string;
+  resolved: boolean;
 }
 
-class SecurityMonitor {
+export interface SecurityMetrics {
+  totalThreats: number;
+  activeThreatsByType: Record<string, number>;
+  lastThreatTime: Date | null;
+  systemHealth: 'healthy' | 'warning' | 'critical';
+}
+
+class SecurityMonitoringService {
   private threats: SecurityThreat[] = [];
-  private listeners: ((threat: SecurityThreat) => void)[] = [];
-  private monitoringInterval: NodeJS.Timeout | null = null;
+  private threatListeners: ((threat: SecurityThreat) => void)[] = [];
+  private readonly maxThreatsInMemory = 100;
 
   constructor() {
-    this.startMonitoring();
+    // Inicializar monitoramento
+    this.initializeMonitoring();
   }
 
-  private startMonitoring(): void {
-    // Monitorar a cada 30 segundos
-    this.monitoringInterval = setInterval(() => {
-      this.checkForThreats();
-    }, 30000);
+  private initializeMonitoring(): void {
+    // Verificação periódica de segurança a cada 5 minutos
+    setInterval(() => {
+      this.performSecurityCheck();
+    }, 5 * 60 * 1000);
   }
 
-  private async checkForThreats(): Promise<void> {
+  private async performSecurityCheck(): Promise<void> {
     try {
-      await this.checkSuspiciousLoginAttempts();
-      await this.checkUnusualAccessPatterns();
-      await this.validateSessionIntegrity();
-    } catch (error) {
-      secureLog.error('Erro durante monitoramento de segurança', error);
-    }
-  }
-
-  private async checkSuspiciousLoginAttempts(): Promise<void> {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Verificar tentativas de login recentes
-      const { data: attempts, error } = await supabase
-        .from('login_attempts')
-        .select('*')
-        .eq('email', user.email)
-        .gte('attempt_time', new Date(Date.now() - 60 * 60 * 1000).toISOString()) // Última hora
-        .order('attempt_time', { ascending: false });
-
-      if (error) {
-        secureLog.error('Erro ao verificar tentativas de login', error);
-        return;
-      }
-
-      if (attempts && attempts.length > 10) {
-        const threat: SecurityThreat = {
-          type: 'multiple_login_attempts',
-          severity: 'high',
-          description: `Múltiplas tentativas de login detectadas (${attempts.length} tentativas na última hora)`,
-          timestamp: new Date(),
-          userId: user.id
-        };
-
-        this.reportThreat(threat);
-      }
-    } catch (error) {
-      secureLog.error('Erro ao verificar tentativas de login suspeitas', error);
-    }
-  }
-
-  private async checkUnusualAccessPatterns(): Promise<void> {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Verificar padrões de acesso incomuns
-      const { data: auditLogs, error } = await supabase
-        .from('security_audit_log')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Últimas 24 horas
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        secureLog.error('Erro ao verificar logs de auditoria', error);
-        return;
-      }
-
-      if (auditLogs && auditLogs.length > 50) {
-        const threat: SecurityThreat = {
-          type: 'unusual_access_pattern',
-          severity: 'medium',
-          description: `Padrão de acesso incomum detectado (${auditLogs.length} ações nas últimas 24h)`,
-          timestamp: new Date(),
-          userId: user.id
-        };
-
-        this.reportThreat(threat);
-      }
-    } catch (error) {
-      secureLog.error('Erro ao verificar padrões de acesso', error);
-    }
-  }
-
-  private async validateSessionIntegrity(): Promise<void> {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Verificar tentativas de login suspeitas (simulado)
+      const suspiciousActivity = this.detectSuspiciousActivity();
       
-      if (!session) return;
-
-      // Verificar se a sessão está próxima do vencimento
-      const expiresAt = new Date(session.expires_at || 0);
-      const now = new Date();
-      const timeToExpiry = expiresAt.getTime() - now.getTime();
-      
-      // Se a sessão expira em menos de 5 minutos, alertar
-      if (timeToExpiry < 5 * 60 * 1000 && timeToExpiry > 0) {
-        const threat: SecurityThreat = {
+      if (suspiciousActivity) {
+        this.reportThreat({
           type: 'suspicious_activity',
-          severity: 'low',
-          description: 'Sessão próxima do vencimento',
-          timestamp: new Date(),
-          userId: session.user.id
-        };
-
-        this.reportThreat(threat);
+          severity: 'medium',
+          description: 'Atividade suspeita detectada',
+          details: { source: 'automated_check' }
+        });
       }
     } catch (error) {
-      secureLog.error('Erro ao validar integridade da sessão', error);
+      secureLog.error('Erro durante verificação de segurança', error);
     }
   }
 
-  private reportThreat(threat: SecurityThreat): void {
-    // Adicionar à lista de ameaças
-    this.threats.push(threat);
+  private detectSuspiciousActivity(): boolean {
+    // Lógica simplificada de detecção
+    const now = Date.now();
+    const recentThreats = this.threats.filter(
+      threat => now - threat.timestamp.getTime() < 10 * 60 * 1000 // 10 minutos
+    );
     
-    // Manter apenas as últimas 100 ameaças
-    if (this.threats.length > 100) {
-      this.threats = this.threats.slice(-100);
-    }
+    return recentThreats.length > 5;
+  }
 
-    // Registrar evento de segurança
-    logSecurityEvent('security_threat_detected', {
-      type: threat.type,
-      severity: threat.severity,
-      description: threat.description
-    });
+  reportThreat(threat: Omit<SecurityThreat, 'id' | 'timestamp' | 'resolved'>): void {
+    const newThreat: SecurityThreat = {
+      id: `threat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date(),
+      resolved: false,
+      ...threat
+    };
+
+    this.threats.unshift(newThreat);
+    
+    // Manter apenas as últimas ameaças na memória
+    if (this.threats.length > this.maxThreatsInMemory) {
+      this.threats = this.threats.slice(0, this.maxThreatsInMemory);
+    }
 
     // Notificar listeners
-    this.listeners.forEach(listener => {
+    this.threatListeners.forEach(listener => {
       try {
-        listener(threat);
+        listener(newThreat);
       } catch (error) {
-        secureLog.error('Erro ao notificar listener de segurança', error);
+        secureLog.error('Erro ao notificar listener de ameaça', error);
       }
     });
 
     // Log da ameaça
-    secureLog.warn('Ameaça de segurança detectada', {
-      type: threat.type,
-      severity: threat.severity,
-      description: threat.description
+    secureLog.warn('Nova ameaça de segurança detectada', {
+      id: newThreat.id,
+      type: newThreat.type,
+      severity: newThreat.severity,
+      description: newThreat.description
     });
   }
 
-  public addThreatListener(listener: (threat: SecurityThreat) => void): void {
-    this.listeners.push(listener);
+  getRecentThreats(limit: number = 10): SecurityThreat[] {
+    return this.threats.slice(0, limit);
   }
 
-  public removeThreatListener(listener: (threat: SecurityThreat) => void): void {
-    const index = this.listeners.indexOf(listener);
-    if (index > -1) {
-      this.listeners.splice(index, 1);
+  getThreatsByType(type: SecurityThreat['type']): SecurityThreat[] {
+    return this.threats.filter(threat => threat.type === type);
+  }
+
+  getSecurityMetrics(): SecurityMetrics {
+    const activeThreatsByType: Record<string, number> = {};
+    const activeThreats = this.threats.filter(threat => !threat.resolved);
+
+    activeThreats.forEach(threat => {
+      activeThreatsByType[threat.type] = (activeThreatsByType[threat.type] || 0) + 1;
+    });
+
+    const criticalThreats = activeThreats.filter(threat => threat.severity === 'critical');
+    const highThreats = activeThreats.filter(threat => threat.severity === 'high');
+
+    let systemHealth: 'healthy' | 'warning' | 'critical' = 'healthy';
+    if (criticalThreats.length > 0) {
+      systemHealth = 'critical';
+    } else if (highThreats.length > 0 || activeThreats.length > 10) {
+      systemHealth = 'warning';
     }
+
+    return {
+      totalThreats: this.threats.length,
+      activeThreatsByType,
+      lastThreatTime: this.threats.length > 0 ? this.threats[0].timestamp : null,
+      systemHealth
+    };
   }
 
-  public getRecentThreats(limit: number = 10): SecurityThreat[] {
-    return this.threats.slice(-limit).reverse();
+  resolveThreat(threatId: string): boolean {
+    const threat = this.threats.find(t => t.id === threatId);
+    if (threat) {
+      threat.resolved = true;
+      secureLog.info('Ameaça resolvida', { threatId });
+      return true;
+    }
+    return false;
   }
 
-  public clearThreats(): void {
+  clearThreats(): void {
     this.threats = [];
+    secureLog.info('Todas as ameaças foram limpas');
   }
 
-  public stopMonitoring(): void {
-    if (this.monitoringInterval) {
-      clearInterval(this.monitoringInterval);
-      this.monitoringInterval = null;
+  addThreatListener(listener: (threat: SecurityThreat) => void): void {
+    this.threatListeners.push(listener);
+  }
+
+  removeThreatListener(listener: (threat: SecurityThreat) => void): void {
+    const index = this.threatListeners.indexOf(listener);
+    if (index > -1) {
+      this.threatListeners.splice(index, 1);
     }
   }
 
-  public async performSecurityHealthCheck(): Promise<{
+  async performSecurityHealthCheck(): Promise<{
     status: 'healthy' | 'warning' | 'critical';
     issues: string[];
     recommendations: string[];
@@ -207,59 +169,43 @@ class SecurityMonitor {
     const recommendations: string[] = [];
 
     try {
-      // Verificar sessão atual
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        issues.push('Nenhuma sessão ativa encontrada');
-        recommendations.push('Fazer login novamente');
-        return { status: 'warning', issues, recommendations };
-      }
+      const metrics = this.getSecurityMetrics();
+      const activeThreats = this.threats.filter(threat => !threat.resolved);
 
-      // Verificar se a sessão expira em breve
-      const expiresAt = new Date(session.expires_at || 0);
-      const now = new Date();
-      const timeToExpiry = expiresAt.getTime() - now.getTime();
-      
-      if (timeToExpiry < 10 * 60 * 1000) { // 10 minutos
-        issues.push('Sessão expirando em breve');
-        recommendations.push('Renovar sessão automaticamente');
-      }
-
-      // Verificar ameaças recentes
-      const recentThreats = this.getRecentThreats(5);
-      const criticalThreats = recentThreats.filter(t => t.severity === 'critical');
-      
+      // Verificar ameaças críticas
+      const criticalThreats = activeThreats.filter(threat => threat.severity === 'critical');
       if (criticalThreats.length > 0) {
-        issues.push(`${criticalThreats.length} ameaças críticas detectadas`);
-        recommendations.push('Revisar atividade recente e alterar credenciais');
-        return { status: 'critical', issues, recommendations };
+        issues.push(`${criticalThreats.length} ameaças críticas ativas`);
+        recommendations.push('Resolver imediatamente as ameaças críticas');
       }
 
-      const highThreats = recentThreats.filter(t => t.severity === 'high');
-      if (highThreats.length > 0) {
-        issues.push(`${highThreats.length} ameaças de alta prioridade detectadas`);
-        recommendations.push('Monitorar atividade e considerar medidas preventivas');
-        return { status: 'warning', issues, recommendations };
+      // Verificar ameaças de alta severidade
+      const highThreats = activeThreats.filter(threat => threat.severity === 'high');
+      if (highThreats.length > 2) {
+        issues.push(`${highThreats.length} ameaças de alta severidade`);
+        recommendations.push('Investigar e resolver ameaças de alta severidade');
       }
 
-      return { status: 'healthy', issues, recommendations };
+      // Verificar volume de ameaças
+      if (activeThreats.length > 10) {
+        issues.push('Volume alto de ameaças ativas');
+        recommendations.push('Revisar configurações de segurança');
+      }
+
+      return {
+        status: metrics.systemHealth,
+        issues,
+        recommendations
+      };
     } catch (error) {
       secureLog.error('Erro durante verificação de saúde de segurança', error);
       return {
         status: 'critical',
-        issues: ['Erro interno durante verificação de segurança'],
-        recommendations: ['Contactar suporte técnico']
+        issues: ['Erro ao verificar status de segurança'],
+        recommendations: ['Verificar logs do sistema']
       };
     }
   }
 }
 
-export const securityMonitor = new SecurityMonitor();
-
-// Limpar monitoramento quando a janela for fechada
-if (typeof window !== 'undefined') {
-  window.addEventListener('beforeunload', () => {
-    securityMonitor.stopMonitoring();
-  });
-}
+export const securityMonitor = new SecurityMonitoringService();

@@ -1,190 +1,199 @@
 
 import React from 'react';
+import { Shield, AlertTriangle, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, AlertTriangle, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { useSecurityMonitoring } from '@/hooks/useSecurityMonitoring';
-import { SecurityThreat } from '@/utils/securityMonitoring';
 
-const SecurityDashboard: React.FC = () => {
+export const SecurityDashboard = () => {
   const { threats, healthStatus, clearThreats, refreshHealthStatus } = useSecurityMonitoring();
 
-  const getThreatBadgeVariant = (severity: SecurityThreat['severity']) => {
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'warning':
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+      case 'critical':
+        return <AlertTriangle className="h-5 w-5 text-red-500" />;
+      default:
+        return <Shield className="h-5 w-5 text-gray-500" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return 'bg-green-50 border-green-200';
+      case 'warning':
+        return 'bg-yellow-50 border-yellow-200';
+      case 'critical':
+        return 'bg-red-50 border-red-200';
+      default:
+        return 'bg-gray-50 border-gray-200';
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'destructive';
-      case 'high': return 'destructive';
-      case 'medium': return 'secondary';
-      case 'low': return 'outline';
-      default: return 'outline';
-    }
-  };
-
-  const getHealthStatusIcon = () => {
-    switch (healthStatus.status) {
-      case 'healthy': return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'warning': return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
-      case 'critical': return <XCircle className="h-5 w-5 text-red-500" />;
-      default: return <Shield className="h-5 w-5 text-gray-500" />;
-    }
-  };
-
-  const getHealthStatusColor = () => {
-    switch (healthStatus.status) {
-      case 'healthy': return 'text-green-600';
-      case 'warning': return 'text-yellow-600';
-      case 'critical': return 'text-red-600';
-      default: return 'text-gray-600';
+      case 'critical':
+        return 'bg-red-100 text-red-800';
+      case 'high':
+        return 'bg-orange-100 text-orange-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Dashboard de Segurança</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Dashboard de Segurança</h2>
         <Button onClick={refreshHealthStatus} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Atualizar
+          Atualizar Status
         </Button>
       </div>
 
-      {/* Status de Saúde */}
-      <Card>
-        <CardHeader>
+      {/* Status Geral */}
+      <Card className={`${getStatusColor(healthStatus.status)} border-2`}>
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
-            {getHealthStatusIcon()}
-            Status de Segurança
+            {getStatusIcon(healthStatus.status)}
+            Status de Segurança: {healthStatus.status === 'healthy' ? 'Saudável' : 
+                                  healthStatus.status === 'warning' ? 'Atenção' : 'Crítico'}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Status:</span>
-              <Badge 
-                variant={healthStatus.status === 'healthy' ? 'outline' : 'destructive'}
-                className={getHealthStatusColor()}
-              >
-                {healthStatus.status.toUpperCase()}
-              </Badge>
+          {healthStatus.issues.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="font-medium">Problemas Identificados:</h4>
+              <ul className="list-disc pl-5 space-y-1">
+                {healthStatus.issues.map((issue, index) => (
+                  <li key={index} className="text-sm">{issue}</li>
+                ))}
+              </ul>
             </div>
-
-            {healthStatus.issues.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium mb-2">Problemas Detectados:</h4>
-                <ul className="text-sm space-y-1">
-                  {healthStatus.issues.map((issue, index) => (
-                    <li key={index} className="flex items-center gap-2">
-                      <XCircle className="h-3 w-3 text-red-500" />
-                      {issue}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {healthStatus.recommendations.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium mb-2">Recomendações:</h4>
-                <ul className="text-sm space-y-1">
-                  {healthStatus.recommendations.map((rec, index) => (
-                    <li key={index} className="flex items-center gap-2">
-                      <CheckCircle className="h-3 w-3 text-blue-500" />
-                      {rec}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Ameaças Recentes */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Ameaças Recentes</span>
-            {threats.length > 0 && (
-              <Button onClick={clearThreats} variant="outline" size="sm">
-                Limpar Histórico
-              </Button>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {threats.length === 0 ? (
-            <div className="text-center py-8">
-              <Shield className="h-12 w-12 text-green-500 mx-auto mb-4" />
-              <p className="text-gray-600">Nenhuma ameaça detectada</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {threats.map((threat, index) => (
-                <Alert key={index} className="border-l-4 border-l-red-500">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant={getThreatBadgeVariant(threat.severity)}>
-                            {threat.severity.toUpperCase()}
-                          </Badge>
-                          <span className="text-sm text-gray-500">
-                            {threat.type.replace('_', ' ').toUpperCase()}
-                          </span>
-                        </div>
-                        <p className="text-sm">{threat.description}</p>
-                      </div>
-                      <span className="text-xs text-gray-500 whitespace-nowrap ml-4">
-                        {threat.timestamp.toLocaleString()}
-                      </span>
-                    </div>
-                  </AlertDescription>
-                </Alert>
-              ))}
+          )}
+          
+          {healthStatus.recommendations.length > 0 && (
+            <div className="space-y-2 mt-4">
+              <h4 className="font-medium">Recomendações:</h4>
+              <ul className="list-disc pl-5 space-y-1">
+                {healthStatus.recommendations.map((rec, index) => (
+                  <li key={index} className="text-sm">{rec}</li>
+                ))}
+              </ul>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Estatísticas de Segurança */}
+      {/* Estatísticas Rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Ameaças Críticas</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Ameaças Ativas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {threats.filter(t => t.severity === 'critical').length}
-            </div>
+            <div className="text-2xl font-bold">{threats.filter(t => !t.resolved).length}</div>
+            <p className="text-xs text-muted-foreground">Total de ameaças não resolvidas</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Ameaças de Alta Prioridade</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total de Ameaças</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {threats.filter(t => t.severity === 'high').length}
-            </div>
+            <div className="text-2xl font-bold">{threats.length}</div>
+            <p className="text-xs text-muted-foreground">Detectadas recentemente</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Total de Ameaças</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Última Ameaça</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {threats.length}
+            <div className="text-2xl font-bold">
+              {threats.length > 0 ? (
+                <div className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  {new Date(threats[0].timestamp).toLocaleTimeString()}
+                </div>
+              ) : (
+                'Nenhuma'
+              )}
             </div>
+            <p className="text-xs text-muted-foreground">
+              {threats.length > 0 ? 'Detectada' : 'Nenhuma ameaça detectada'}
+            </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Lista de Ameaças */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Ameaças Recentes
+            </CardTitle>
+            {threats.length > 0 && (
+              <Button onClick={clearThreats} variant="outline" size="sm">
+                Limpar Todas
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {threats.length === 0 ? (
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertDescription>
+                Nenhuma ameaça detectada. Sistema funcionando normalmente.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="space-y-3">
+              {threats.slice(0, 10).map((threat) => (
+                <div key={threat.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge className={getSeverityColor(threat.severity)}>
+                        {threat.severity}
+                      </Badge>
+                      <span className="text-sm font-medium">{threat.type}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{threat.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {new Date(threat.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {threat.resolved ? (
+                      <Badge variant="outline" className="bg-green-50 text-green-700">
+                        Resolvida
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-red-50 text-red-700">
+                        Ativa
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
-
-export default SecurityDashboard;
