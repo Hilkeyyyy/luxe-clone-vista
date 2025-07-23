@@ -131,52 +131,70 @@ export const validateDataIntegrity = (data: any): boolean => {
   }
 };
 
-// Validação de dados de produto
-export const validateProductData = (productData: any): boolean => {
+// Validação de dados de produto - CORRIGIDO para retornar array de erros
+export const validateProductData = (productData: any): string[] => {
+  const errors: string[] = [];
+  
   try {
     if (!productData || typeof productData !== 'object') {
-      return false;
+      errors.push('Dados do produto inválidos');
+      return errors;
     }
     
     // Verificar campos obrigatórios
-    const requiredFields = ['name', 'brand', 'price'];
-    for (const field of requiredFields) {
-      if (!productData[field]) {
-        return false;
-      }
+    if (!productData.name || !productData.name.trim()) {
+      errors.push('Nome do produto é obrigatório');
     }
     
-    // Verificar se price é um número válido
-    if (typeof productData.price !== 'number' || productData.price < 0) {
-      return false;
+    if (!productData.brand || !productData.brand.trim()) {
+      errors.push('Marca do produto é obrigatória');
     }
     
-    return validateDataIntegrity(productData);
+    if (productData.price === undefined || productData.price === null) {
+      errors.push('Preço é obrigatório');
+    } else if (typeof productData.price !== 'number' || productData.price < 0) {
+      errors.push('Preço deve ser um número válido maior ou igual a zero');
+    }
+    
+    // Verificar integridade dos dados
+    if (!validateDataIntegrity(productData)) {
+      errors.push('Dados do produto contêm propriedades perigosas');
+    }
+    
+    return errors;
   } catch (error) {
     secureLog.error('Erro na validação de dados do produto', error);
-    return false;
+    return ['Erro interno na validação do produto'];
   }
 };
 
-// Validação de configurações de admin
-export const validateAdminSettings = (settings: any): boolean => {
+// Validação de configurações de admin - CORRIGIDO para retornar array de erros
+export const validateAdminSettings = (settings: any): string[] => {
+  const errors: string[] = [];
+  
   try {
     if (!settings || typeof settings !== 'object') {
-      return false;
+      errors.push('Configurações inválidas');
+      return errors;
     }
     
     // Verificar se não há propriedades perigosas
     const dangerousProps = ['__proto__', 'constructor', 'prototype'];
     for (const prop of dangerousProps) {
       if (prop in settings) {
-        return false;
+        errors.push(`Propriedade perigosa detectada: ${prop}`);
       }
     }
     
-    return validateDataIntegrity(settings);
+    // Verificar integridade dos dados
+    if (!validateDataIntegrity(settings)) {
+      errors.push('Configurações contêm dados perigosos');
+    }
+    
+    return errors;
   } catch (error) {
     secureLog.error('Erro na validação de configurações de admin', error);
-    return false;
+    return ['Erro interno na validação das configurações'];
   }
 };
 
