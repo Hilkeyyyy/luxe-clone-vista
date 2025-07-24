@@ -35,7 +35,6 @@ const preloadComponents = () => {
 
 const Index = () => {
   const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
-  // CORREÇÃO: Usar activeOnly=true para mostrar apenas marcas com produtos
   const { categories, loading: categoriesLoading } = useBrandCategories(true);
 
   // Preload componentes após carregamento inicial
@@ -46,18 +45,39 @@ const Index = () => {
 
   // Memoizar transformação de dados para evitar re-renders
   const brands = useMemo(() => {
-    console.log('🔄 Atualizando lista de marcas para o carrossel:', categories.length);
-    return categories.map(category => ({
+    console.log('🔄 Transformando categorias para carrossel...');
+    console.log('📊 Categorias recebidas:', categories.length);
+    console.log('📋 Detalhes das categorias:', categories.map(c => ({
+      name: c.name,
+      count: c.products_count,
+      active: c.is_active
+    })));
+    
+    const transformedBrands = categories.map(category => ({
       name: category.name,
       count: category.products_count || 0,
       image: category.image_url || undefined
     }));
+    
+    console.log('✅ Marcas transformadas para carrossel:', transformedBrands.length);
+    console.log('📋 Marcas finais:', transformedBrands.map(b => `${b.name} (${b.count} produtos)`));
+    
+    return transformedBrands;
   }, [categories]);
 
   // Debug: Log quando as marcas mudam
   React.useEffect(() => {
-    console.log('📊 Marcas disponíveis para carrossel:', brands.map(b => `${b.name} (${b.count})`));
-  }, [brands]);
+    if (brands.length > 0) {
+      console.log('🎯 Marcas disponíveis para carrossel:', brands.map(b => `${b.name} (${b.count})`));
+    } else {
+      console.log('⚠️ Nenhuma marca disponível para o carrossel');
+      console.log('🔍 Status das categorias:', { 
+        loading: categoriesLoading,
+        categoriesCount: categories.length,
+        categories: categories.map(c => c.name)
+      });
+    }
+  }, [brands, categoriesLoading, categories]);
 
   // Componente de loading otimizado
   const OptimizedSkeleton = React.memo(() => <CarouselSkeleton />);
@@ -133,7 +153,6 @@ const Index = () => {
         </div>
       </motion.section>
 
-      {/* New Arrivals - Lazy loading */}
       <motion.section 
         className="py-16 sm:py-20 bg-white"
         initial={{ opacity: 0, y: 20 }}
@@ -150,7 +169,6 @@ const Index = () => {
         </Suspense>
       </motion.section>
 
-      {/* Offers - Lazy loading */}
       <motion.section 
         className="py-16 sm:py-20 bg-neutral-50"
         initial={{ opacity: 0, y: 20 }}

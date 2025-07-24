@@ -65,39 +65,37 @@ export class SecureApiClient {
           sanitizeInput(productData.custom_badge, { maxLength: 50 }) : null
       };
 
-      console.log('🔄 Criando produto com dados:', sanitizedData);
+      console.log('🔄 Criando produto com dados sanitizados:', sanitizedData);
 
-      // NOVO: Criar ou obter categoria de marca automaticamente
+      // CRIAR/OBTER CATEGORIA DE MARCA AUTOMATICAMENTE
       console.log('🏷️ Criando/obtendo categoria de marca para:', sanitizedData.brand);
       
-      const { data: brandCategoryId, error: brandCategoryError } = await supabase
-        .rpc('get_or_create_brand_category', {
-          category_name: sanitizedData.brand
-        });
+      try {
+        const { data: brandCategoryId, error: brandCategoryError } = await supabase
+          .rpc('get_or_create_brand_category', {
+            category_name: sanitizedData.brand
+          });
 
-      if (brandCategoryError) {
-        console.error('❌ Erro ao criar/obter categoria de marca:', brandCategoryError);
-        throw new Error(`Erro ao processar marca: ${brandCategoryError.message}`);
+        if (brandCategoryError) {
+          console.error('❌ Erro ao criar/obter categoria de marca:', brandCategoryError);
+          // Não falhar a operação, apenas logar o erro
+          console.warn('⚠️ Continuando sem categoria de marca...');
+        } else if (brandCategoryId) {
+          console.log('✅ Categoria de marca criada/obtida com ID:', brandCategoryId);
+          // Adicionar brand_category_id aos dados do produto
+          sanitizedData.brand_category_id = brandCategoryId;
+        }
+      } catch (categoryError) {
+        console.error('❌ Erro na função get_or_create_brand_category:', categoryError);
+        console.warn('⚠️ Continuando sem categoria de marca...');
       }
 
-      if (!brandCategoryId) {
-        console.error('❌ Nenhum ID de categoria retornado');
-        throw new Error('Não foi possível criar/obter categoria de marca');
-      }
+      console.log('🔄 Inserindo produto (com ou sem categoria):', sanitizedData);
 
-      console.log('✅ Categoria de marca criada/obtida com ID:', brandCategoryId);
-
-      // Adicionar brand_category_id aos dados do produto
-      const productWithBrandCategory = {
-        ...sanitizedData,
-        brand_category_id: brandCategoryId
-      };
-
-      console.log('🔄 Inserindo produto com categoria de marca:', productWithBrandCategory);
-
+      // Inserir produto
       const { data, error } = await supabase
         .from('products')
-        .insert([productWithBrandCategory])
+        .insert([sanitizedData])
         .select()
         .maybeSingle();
 
@@ -111,15 +109,14 @@ export class SecureApiClient {
         throw new Error('Produto não foi criado. Verifique as permissões.');
       }
 
-      console.log('✅ Produto criado com sucesso e categoria de marca associada:', data);
+      console.log('✅ Produto criado com sucesso:', data);
       
-      // Trigger manual da atualização de contagem (caso o trigger automático não funcione)
+      // Atualizar contagem de produtos nas categorias
       try {
         await supabase.rpc('update_brand_category_products_count');
-        console.log('✅ Contagem de produtos atualizada manualmente');
+        console.log('✅ Contagem de produtos atualizada');
       } catch (countError) {
-        console.warn('⚠️ Aviso: Erro ao atualizar contagem manualmente:', countError);
-        // Não falhar a operação por causa disso
+        console.warn('⚠️ Erro ao atualizar contagem (não crítico):', countError);
       }
 
       return data;
