@@ -35,7 +35,7 @@ const preloadComponents = () => {
 
 const Index = () => {
   const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
-  const { categories, loading: categoriesLoading } = useBrandCategories(true);
+  const { categories, loading: categoriesLoading } = useBrandCategories(false);
 
   // Preload componentes após carregamento inicial
   React.useEffect(() => {

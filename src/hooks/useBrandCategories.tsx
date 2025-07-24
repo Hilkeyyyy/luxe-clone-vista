@@ -141,9 +141,9 @@ export const useBrandCategories = (activeOnly: boolean = false) => {
         })
       );
 
-      // Filtrar categorias com produtos se activeOnly for true
+      // Filtrar apenas categorias ativas, não por contagem de produtos
       const filteredCategories = activeOnly 
-        ? categoriesWithCount.filter(cat => cat.products_count > 0)
+        ? categoriesWithCount.filter(cat => cat.is_active)
         : categoriesWithCount;
 
       console.log('✅ Categorias finais:', filteredCategories.length);
