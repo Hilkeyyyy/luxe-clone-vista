@@ -20,9 +20,9 @@ export const useBrandCategories = (activeOnly: boolean = false) => {
   useEffect(() => {
     fetchCategories();
     
-    // Configurar realtime para atualizações instantâneas - CORRIGIDO
+    // REALTIME APRIMORADO: Escutar mudanças em brand_categories E products
     const channel = supabase
-      .channel('brand-categories-real-time')
+      .channel('brand-categories-realtime-enhanced')
       .on(
         'postgres_changes',
         {
@@ -30,21 +30,56 @@ export const useBrandCategories = (activeOnly: boolean = false) => {
           schema: 'public',
           table: 'brand_categories'
         },
-        () => {
-          console.log('🔄 Categoria atualizada, recarregando...');
+        (payload) => {
+          console.log('🔄 Categoria de marca alterada:', payload.eventType, payload.new || payload.old);
           fetchCategories();
         }
       )
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'products'
         },
-        () => {
-          console.log('🔄 Produto atualizado, recarregando categorias...');
-          fetchCategories();
+        (payload) => {
+          console.log('🔄 Produto inserido, atualizando contagem de categorias:', payload.new);
+          // Delay pequeno para garantir que triggers do banco rodaram
+          setTimeout(() => {
+            fetchCategories();
+          }, 500);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'products'
+        },
+        (payload) => {
+          console.log('🔄 Produto atualizado, verificando mudança de marca:', payload.new);
+          // Verificar se a marca mudou
+          if (payload.old && payload.new && payload.old.brand !== payload.new.brand) {
+            console.log('🔄 Marca do produto mudou, atualizando categorias');
+            setTimeout(() => {
+              fetchCategories();
+            }, 500);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'products'
+        },
+        (payload) => {
+          console.log('🔄 Produto deletado, atualizando contagem:', payload.old);
+          setTimeout(() => {
+            fetchCategories();
+          }, 500);
         }
       )
       .subscribe();
@@ -56,9 +91,9 @@ export const useBrandCategories = (activeOnly: boolean = false) => {
 
   const fetchCategories = async () => {
     try {
-      console.log('🔍 Buscando categorias com contagem CORRETA em tempo real...');
+      console.log('🔍 Buscando categorias de marca com contagem atualizada...');
       
-      // CORREÇÃO: Buscar categorias e contar produtos corretamente por marca
+      // Buscar categorias ordenadas por posição
       let query = supabase
         .from('brand_categories')
         .select('*')
@@ -75,30 +110,44 @@ export const useBrandCategories = (activeOnly: boolean = false) => {
         throw categoriesError;
       }
 
-      // Para cada categoria, contar produtos CORRETAMENTE por marca
+      if (!categoriesData || categoriesData.length === 0) {
+        console.log('⚠️ Nenhuma categoria encontrada');
+        setCategories([]);
+        return;
+      }
+
+      // Para cada categoria, contar produtos ativos da marca correspondente
       const categoriesWithCount = await Promise.all(
-        (categoriesData || []).map(async (category) => {
+        categoriesData.map(async (category) => {
           const { count, error: countError } = await supabase
             .from('products')
             .select('*', { count: 'exact', head: true })
-            .ilike('brand', category.name) // Buscar por marca que corresponde ao nome da categoria
+            .ilike('brand', category.name)
             .eq('in_stock', true)
-            .eq('is_sold_out', false);
+            .neq('is_sold_out', true);
 
           if (countError) {
             console.error(`❌ Erro ao contar produtos para ${category.name}:`, countError);
             return { ...category, products_count: 0 };
           }
 
-          console.log(`✅ ${category.name}: ${count || 0} produtos`);
-          return { ...category, products_count: count || 0 };
+          const productCount = count || 0;
+          console.log(`✅ ${category.name}: ${productCount} produtos`);
+          
+          return { ...category, products_count: productCount };
         })
       );
 
-      console.log('✅ Categorias carregadas com contagem correta:', categoriesWithCount.map(c => `${c.name}: ${c.products_count} produtos`));
-      setCategories(categoriesWithCount);
+      // Filtrar categorias com produtos se necessário
+      const filteredCategories = activeOnly 
+        ? categoriesWithCount.filter(cat => cat.products_count > 0)
+        : categoriesWithCount;
+
+      console.log('✅ Categorias carregadas:', filteredCategories.map(c => `${c.name} (${c.products_count} produtos)`));
+      setCategories(filteredCategories);
     } catch (error) {
       console.error('❌ Erro ao buscar categorias:', error);
+      setCategories([]);
     } finally {
       setLoading(false);
     }

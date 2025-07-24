@@ -35,6 +35,7 @@ const preloadComponents = () => {
 
 const Index = () => {
   const { newProducts, featuredProducts, offerProducts, loading } = useProductsByType();
+  // CORREÇÃO: Usar activeOnly=true para mostrar apenas marcas com produtos
   const { categories, loading: categoriesLoading } = useBrandCategories(true);
 
   // Preload componentes após carregamento inicial
@@ -45,12 +46,18 @@ const Index = () => {
 
   // Memoizar transformação de dados para evitar re-renders
   const brands = useMemo(() => {
+    console.log('🔄 Atualizando lista de marcas para o carrossel:', categories.length);
     return categories.map(category => ({
       name: category.name,
       count: category.products_count || 0,
       image: category.image_url || undefined
     }));
   }, [categories]);
+
+  // Debug: Log quando as marcas mudam
+  React.useEffect(() => {
+    console.log('📊 Marcas disponíveis para carrossel:', brands.map(b => `${b.name} (${b.count})`));
+  }, [brands]);
 
   // Componente de loading otimizado
   const OptimizedSkeleton = React.memo(() => <CarouselSkeleton />);

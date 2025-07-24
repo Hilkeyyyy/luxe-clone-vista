@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { csrfManager, sanitizeInput } from './securityEnhancements';
 import { rateLimiter } from './security';
@@ -68,9 +67,37 @@ export class SecureApiClient {
 
       console.log('🔄 Criando produto com dados:', sanitizedData);
 
+      // NOVO: Criar ou obter categoria de marca automaticamente
+      console.log('🏷️ Criando/obtendo categoria de marca para:', sanitizedData.brand);
+      
+      const { data: brandCategoryId, error: brandCategoryError } = await supabase
+        .rpc('get_or_create_brand_category', {
+          category_name: sanitizedData.brand
+        });
+
+      if (brandCategoryError) {
+        console.error('❌ Erro ao criar/obter categoria de marca:', brandCategoryError);
+        throw new Error(`Erro ao processar marca: ${brandCategoryError.message}`);
+      }
+
+      if (!brandCategoryId) {
+        console.error('❌ Nenhum ID de categoria retornado');
+        throw new Error('Não foi possível criar/obter categoria de marca');
+      }
+
+      console.log('✅ Categoria de marca criada/obtida com ID:', brandCategoryId);
+
+      // Adicionar brand_category_id aos dados do produto
+      const productWithBrandCategory = {
+        ...sanitizedData,
+        brand_category_id: brandCategoryId
+      };
+
+      console.log('🔄 Inserindo produto com categoria de marca:', productWithBrandCategory);
+
       const { data, error } = await supabase
         .from('products')
-        .insert([sanitizedData])
+        .insert([productWithBrandCategory])
         .select()
         .maybeSingle();
 
@@ -84,7 +111,17 @@ export class SecureApiClient {
         throw new Error('Produto não foi criado. Verifique as permissões.');
       }
 
-      console.log('✅ Produto criado com sucesso:', data);
+      console.log('✅ Produto criado com sucesso e categoria de marca associada:', data);
+      
+      // Trigger manual da atualização de contagem (caso o trigger automático não funcione)
+      try {
+        await supabase.rpc('update_brand_category_products_count');
+        console.log('✅ Contagem de produtos atualizada manualmente');
+      } catch (countError) {
+        console.warn('⚠️ Aviso: Erro ao atualizar contagem manualmente:', countError);
+        // Não falhar a operação por causa disso
+      }
+
       return data;
     }, 'CREATE_PRODUCT');
   }
