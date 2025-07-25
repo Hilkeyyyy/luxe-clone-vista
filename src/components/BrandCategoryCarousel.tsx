@@ -23,6 +23,15 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ brands })
     navigate(`/produtos?selectedCategory=${encodeURIComponent(cleanBrandName)}`);
   };
 
+  // Debug das marcas recebidas
+  React.useEffect(() => {
+    console.log('🏷️ BrandCategoryCarousel recebeu marcas:', brands);
+    console.log('📊 Total de marcas:', brands.length);
+    brands.forEach(brand => {
+      console.log(`   ${brand.name}: ${brand.count} produtos`);
+    });
+  }, [brands]);
+
   if (!brands || brands.length === 0) {
     return (
       <div className="text-center py-12">
@@ -33,7 +42,6 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ brands })
 
   return (
     <div className="relative">
-      {/* Carousel - Cards MAIORES e mais retangulares horizontalmente, SEM SETAS VISUAIS */}
       <div 
         ref={scrollRef}
         className="flex overflow-x-auto space-x-8 pb-6 scrollbar-hide px-8"
@@ -70,7 +78,7 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ brands })
             {/* Dark Overlay */}
             <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-all duration-500" />
 
-            {/* Content - Ajustado para cards mais retangulares */}
+            {/* Content */}
             <div className="relative z-10 h-full flex flex-col justify-between p-10">
               {/* Brand Name */}
               <div className="text-left">
@@ -82,7 +90,7 @@ const BrandCategoryCarousel: React.FC<BrandCategoryCarouselProps> = ({ brands })
                 </p>
               </div>
 
-              {/* Product Count Badge - Contagem em TEMPO REAL */}
+              {/* Product Count Badge - Contagem em TEMPO REAL corrigida */}
               <div className="self-start">
                 <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-4 border border-white/30">
                   <span className="text-white font-semibold text-lg">

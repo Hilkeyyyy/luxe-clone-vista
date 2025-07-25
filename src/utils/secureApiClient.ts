@@ -78,11 +78,9 @@ export class SecureApiClient {
 
         if (brandCategoryError) {
           console.error('❌ Erro ao criar/obter categoria de marca:', brandCategoryError);
-          // Não falhar a operação, apenas logar o erro
           console.warn('⚠️ Continuando sem categoria de marca...');
         } else if (brandCategoryId) {
           console.log('✅ Categoria de marca criada/obtida com ID:', brandCategoryId);
-          // Adicionar brand_category_id aos dados do produto
           sanitizedData.brand_category_id = brandCategoryId;
         }
       } catch (categoryError) {
@@ -90,14 +88,12 @@ export class SecureApiClient {
         console.warn('⚠️ Continuando sem categoria de marca...');
       }
 
-      console.log('🔄 Inserindo produto (com ou sem categoria):', sanitizedData);
-
       // Inserir produto
       const { data, error } = await supabase
         .from('products')
         .insert([sanitizedData])
         .select()
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error('❌ Erro ao inserir produto:', error);
@@ -111,10 +107,11 @@ export class SecureApiClient {
 
       console.log('✅ Produto criado com sucesso:', data);
       
-      // Atualizar contagem de produtos nas categorias
+      // Forçar atualização das contagens (o trigger já deve fazer isso, mas garantindo)
       try {
+        console.log('🔄 Atualizando contagens de categorias...');
         await supabase.rpc('update_brand_category_products_count');
-        console.log('✅ Contagem de produtos atualizada');
+        console.log('✅ Contagens atualizadas com sucesso');
       } catch (countError) {
         console.warn('⚠️ Erro ao atualizar contagem (não crítico):', countError);
       }
