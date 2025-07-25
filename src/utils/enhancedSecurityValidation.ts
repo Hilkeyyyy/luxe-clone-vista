@@ -115,12 +115,23 @@ export const validateDataIntegrity = (data: any): boolean => {
     
     // Verificar se é um objeto válido
     if (typeof data === 'object' && data !== null) {
-      // Verificar se não há propriedades perigosas
+      // Verificar se há propriedades perigosas definidas diretamente no objeto
+      // Usar hasOwnProperty para evitar falsos positivos com propriedades herdadas
       const dangerousProps = ['__proto__', 'constructor', 'prototype'];
       for (const prop of dangerousProps) {
-        if (prop in data) {
+        if (Object.prototype.hasOwnProperty.call(data, prop)) {
+          secureLog.warn('Propriedade perigosa detectada no objeto', { 
+            property: prop,
+            dataKeys: Object.keys(data)
+          });
           return false;
         }
+      }
+      
+      // Verificar se o valor de __proto__ foi modificado
+      if (data.__proto__ !== Object.prototype && data.__proto__ !== Array.prototype && data.__proto__ !== null) {
+        secureLog.warn('Prototype modificado detectado');
+        return false;
       }
     }
     
@@ -178,10 +189,10 @@ export const validateAdminSettings = (settings: any): string[] => {
       return errors;
     }
     
-    // Verificar se não há propriedades perigosas
+    // Verificar se não há propriedades perigosas definidas diretamente
     const dangerousProps = ['__proto__', 'constructor', 'prototype'];
     for (const prop of dangerousProps) {
-      if (prop in settings) {
+      if (Object.prototype.hasOwnProperty.call(settings, prop)) {
         errors.push(`Propriedade perigosa detectada: ${prop}`);
       }
     }
