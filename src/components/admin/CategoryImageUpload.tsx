@@ -22,18 +22,17 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Verificar se é admin pelos UIDs específicos
-  const isAdmin = user && (
-    user.id === '589069fc-fb82-4388-a802-40d373950011' ||
-    user.id === '0fef94be-d716-4b9c-8053-e351a66927dc'
-  );
+  // Verificar se é admin baseado na role do banco de dados (UNIVERSAL)
+  const isAdmin = user?.isAdmin === true;
 
   const uploadImage = async (file: File) => {
     console.log('🔄 UPLOAD CATEGORIA: Iniciando...', {
       fileName: file.name,
       fileSize: file.size,
       userId: user?.id?.substring(0, 8),
-      isAdmin
+      userEmail: user?.email,
+      isAdmin,
+      userRole: user?.profile?.role || 'no-role'
     });
     
     if (!file) {
@@ -43,10 +42,16 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
 
     // Verificar se usuário está autenticado e é admin
     if (!user || !isAdmin) {
-      console.error('❌ Usuário não é admin:', { user: !!user, isAdmin });
+      console.error('❌ Usuário não é admin:', { 
+        user: !!user, 
+        isAdmin, 
+        userEmail: user?.email,
+        userRole: user?.profile?.role,
+        userIsAdminFlag: user?.isAdmin 
+      });
       toast({
         title: "Erro de Autenticação",
-        description: "Você precisa estar logado como administrador para fazer upload de imagens.",
+        description: `Acesso negado. Você precisa ser administrador. Email: ${user?.email || 'não logado'} | Role: ${user?.profile?.role || 'no-role'}`,
         variant: "destructive",
       });
       return;
@@ -209,7 +214,7 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
           <p className="font-medium">Acesso Restrito</p>
           <p className="text-sm">Apenas administradores podem fazer upload de imagens.</p>
           <p className="text-xs text-neutral-500">
-            ID atual: {user?.id?.substring(0, 8) || 'não logado'}
+            Email: {user?.email || 'não logado'} | Role: {user?.profile?.role || 'no-role'} | Admin: {user?.isAdmin ? 'SIM' : 'NÃO'}
           </p>
         </div>
       </div>
@@ -281,7 +286,7 @@ const CategoryImageUpload: React.FC<CategoryImageUploadProps> = ({
                 PNG, JPG ou WEBP até 5MB
               </p>
               <p className="text-xs text-green-600">
-                ✅ Admin reconhecido: {user.id.substring(0, 8)}
+                ✅ Admin Universal: {user.email} | Role: {user.profile?.role}
               </p>
             </div>
           )}
