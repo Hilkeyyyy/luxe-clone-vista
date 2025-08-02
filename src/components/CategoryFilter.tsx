@@ -13,7 +13,7 @@ const CategoryFilter = ({ categories, selectedCategory, onCategoryChange }: Cate
 
   const getCategoryBadgeColor = (category: string) => {
     switch (category) {
-      case 'ETA Base':
+      case 'BASE ETA':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'Clone':
         return 'bg-amber-100 text-amber-800 border-amber-200';

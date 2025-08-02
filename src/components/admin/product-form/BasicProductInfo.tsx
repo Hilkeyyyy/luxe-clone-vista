@@ -20,7 +20,7 @@ const BasicProductInfo: React.FC<BasicProductInfoProps> = ({
   onUpdate
 }) => {
   const cloneTypes = [
-    { value: 'ETA Base', label: 'ETA Base' },
+    { value: 'BASE ETA', label: 'BASE ETA' },
     { value: 'Clone', label: 'Clone' },
     { value: 'Super Clone', label: 'Super Clone' }
   ];

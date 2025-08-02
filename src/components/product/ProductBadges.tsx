@@ -41,8 +41,9 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
     if (!category) return null;
     
     const categoryMap: { [key: string]: string } = {
-      'ETA Base': 'ETA BASE',
-      'ETA Básico': 'ETA BASE',
+      'BASE ETA': 'BASE ETA',
+      'ETA Base': 'BASE ETA',
+      'ETA Básico': 'BASE ETA',
       'Clone': 'CLONE',
       'Super Clone': 'SUPER CLONE'  // SEMPRE POR EXTENSO EM UMA LINHA
     };

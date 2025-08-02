@@ -13,6 +13,8 @@ interface SystemSettings {
   return_policy: string;
   terms_of_service: string;
   privacy_policy: string;
+  hero_title: string;
+  hero_background_image: string;
 }
 
 interface GeneralSettingsProps {
@@ -96,6 +98,27 @@ const GeneralSettings = ({ settings, updateSetting }: GeneralSettingsProps) => {
             rows={4}
             placeholder="Descreva a política de privacidade..."
           />
+        </div>
+
+        <div>
+          <Label htmlFor="hero_title">Título do Hero</Label>
+          <Input
+            id="hero_title"
+            value={settings.hero_title || ''}
+            onChange={(e) => updateSetting('hero_title', e.target.value)}
+            placeholder="RELÓGIOS PREMIUM E COM QUALIDADE"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="hero_background_image">Imagem de Fundo do Hero</Label>
+          <Input
+            id="hero_background_image"
+            value={settings.hero_background_image || ''}
+            onChange={(e) => updateSetting('hero_background_image', e.target.value)}
+            placeholder="URL da imagem de fundo"
+          />
+          <p className="text-xs text-neutral-500 mt-1">URL da imagem que aparecerá como fundo do hero da página inicial</p>
         </div>
       </CardContent>
     </Card>

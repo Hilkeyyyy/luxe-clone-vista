@@ -375,14 +375,15 @@ const CategoryManager = () => {
             </div>
 
             <div>
-              <Label htmlFor="description">Descrição</Label>
+              <Label htmlFor="description">Texto da Categoria</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                placeholder="Descreva a categoria... (será preenchida automaticamente com o nome se deixada em branco)"
+                placeholder="Texto que aparecerá na categoria... (será preenchido automaticamente com o nome se deixado em branco)"
               />
+              <p className="text-xs text-neutral-500 mt-1">Este texto aparecerá na descrição da categoria no site</p>
             </div>
 
             <div>

@@ -17,7 +17,8 @@ const ProductBadgesSimple: React.FC<ProductBadgesSimpleProps> = ({
     if (!category) return null;
     
     const categoryMap: { [key: string]: string } = {
-      'ETA Base': 'ETA BASE',
+      'BASE ETA': 'BASE ETA',
+      'ETA Base': 'BASE ETA',
       'Clone': 'CLONE',
       'Super Clone': 'SUPER CLONE'
     };

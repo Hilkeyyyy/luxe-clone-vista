@@ -16,6 +16,7 @@ const CloneCategoryHighlight: React.FC<CloneCategoryHighlightProps> = ({
 }) => {
   const getCloneCategoryIcon = (category: string) => {
     switch (category) {
+      case 'BASE ETA':
       case 'ETA Base':
         return <Star className="w-4 h-4" />;
       case 'Super Clone':
@@ -29,6 +30,7 @@ const CloneCategoryHighlight: React.FC<CloneCategoryHighlightProps> = ({
 
   const getCloneCategoryColor = (category: string) => {
     switch (category) {
+      case 'BASE ETA':
       case 'ETA Base':
         return 'bg-amber-100 text-amber-800 border-amber-200';
       case 'Super Clone':
@@ -64,7 +66,7 @@ const CloneCategoryHighlight: React.FC<CloneCategoryHighlightProps> = ({
               <div className="text-left">
                 <h3 className="font-semibold">{category}</h3>
                 <p className="text-sm opacity-70">
-                  {category === 'ETA Base' && 'Movimento ETA suíço'}
+                  {(category === 'BASE ETA' || category === 'ETA Base') && 'Movimento ETA suíço'}
                   {category === 'Super Clone' && 'Máxima qualidade'}
                   {category === 'Clone' && 'Ótimo custo-benefício'}
                 </p>

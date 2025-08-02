@@ -3,10 +3,34 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { useHeroSettings } from '@/hooks/useHeroSettings';
 
 const HeroSection = () => {
+  const { heroSettings, loading } = useHeroSettings();
+
+  if (loading) {
+    return (
+      <section className="relative overflow-hidden bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin mx-auto mb-4"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const backgroundStyle = heroSettings.backgroundImage 
+    ? { 
+        backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url(${heroSettings.backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }
+    : {};
+
   return (
-    <section className="relative overflow-hidden bg-white">
+    <section className="relative overflow-hidden bg-white" style={backgroundStyle}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
         <div className="text-center">
           {/* Title - PURE BLACK TEXT */}
@@ -16,7 +40,7 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            RELÓGIOS PREMIUM E COM QUALIDADE
+            {heroSettings.title}
           </motion.h1>
 
           {/* Action Buttons */}

@@ -86,7 +86,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
           </SelectTrigger>
           <SelectContent className="bg-white/95 backdrop-blur-md border-neutral-200">
             <SelectItem value="all">Todos os Tipos</SelectItem>
-            <SelectItem value="ETA Base">ETA Base</SelectItem>
+            <SelectItem value="BASE ETA">BASE ETA</SelectItem>
             <SelectItem value="Clone">Clone</SelectItem>
             <SelectItem value="Super Clone">Super Clone</SelectItem>
           </SelectContent>
