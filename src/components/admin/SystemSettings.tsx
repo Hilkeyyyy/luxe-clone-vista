@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Save, Phone, Building, Settings } from 'lucide-react';
+import { Save, Phone, Building, Settings, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import WhatsAppSettings from './settings/WhatsAppSettings';
 import CompanySettings from './settings/CompanySettings';
 import ProductOptionsSettings from './settings/ProductOptionsSettings';
+import HeroSettings from './settings/HeroSettings';
 
 interface SystemSettings {
   // WhatsApp
@@ -25,6 +26,15 @@ interface SystemSettings {
   company_phone: string;
   company_email: string;
   instagram_url: string;
+  
+  // Hero
+  hero_title: string;
+  hero_subtitle: string;
+  hero_background_image: string;
+  hero_button_primary_text: string;
+  hero_button_secondary_text: string;
+  hero_overlay_opacity: string;
+  hero_text_position: string;
 }
 
 const SystemSettings = () => {
@@ -43,6 +53,15 @@ const SystemSettings = () => {
     company_phone: '(19) 99941-3755',
     company_email: 'contato@velarwatches.com',
     instagram_url: 'https://www.instagram.com/velar.watches/',
+    
+    // Hero
+    hero_title: 'RELÓGIOS PREMIUM E COM QUALIDADE',
+    hero_subtitle: '',
+    hero_background_image: '',
+    hero_button_primary_text: 'Explorar Coleção',
+    hero_button_secondary_text: 'Ver Destaques',
+    hero_overlay_opacity: '0.7',
+    hero_text_position: 'center',
   });
 
   useEffect(() => {
@@ -149,8 +168,12 @@ const SystemSettings = () => {
         </Button>
       </div>
 
-      <Tabs defaultValue="whatsapp" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="hero" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="hero" className="flex items-center space-x-2">
+            <Palette size={16} />
+            <span>Hero</span>
+          </TabsTrigger>
           <TabsTrigger value="whatsapp" className="flex items-center space-x-2">
             <Phone size={16} />
             <span>WhatsApp</span>
@@ -161,9 +184,19 @@ const SystemSettings = () => {
           </TabsTrigger>
           <TabsTrigger value="product-options" className="flex items-center space-x-2">
             <Settings size={16} />
-            <span>Opções do Produto</span>
+            <span>Produto</span>
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="hero">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <HeroSettings settings={settings} updateSetting={updateSetting} />
+          </motion.div>
+        </TabsContent>
 
         <TabsContent value="whatsapp">
           <motion.div
