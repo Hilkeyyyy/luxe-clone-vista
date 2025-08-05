@@ -20,22 +20,34 @@ const HeroSection = () => {
     );
   }
 
+  const overlayOpacity = parseFloat(heroSettings.overlayOpacity);
   const backgroundStyle = heroSettings.backgroundImage 
     ? { 
-        backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url(${heroSettings.backgroundImage})`,
+        backgroundImage: `linear-gradient(rgba(255, 255, 255, ${overlayOpacity}), rgba(255, 255, 255, ${overlayOpacity})), url(${heroSettings.backgroundImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       }
     : {};
 
+  const textPositionClass = heroSettings.textPosition === 'left' 
+    ? 'text-left' 
+    : heroSettings.textPosition === 'right' 
+    ? 'text-right' 
+    : 'text-center';
+
+  const justifyClass = heroSettings.textPosition === 'left' 
+    ? 'justify-start' 
+    : heroSettings.textPosition === 'right' 
+    ? 'justify-end' 
+    : 'justify-center';
+
   return (
     <section className="relative overflow-hidden bg-white" style={backgroundStyle}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-        <div className="text-center">
-          {/* Title - PURE BLACK TEXT */}
+        <div className={textPositionClass}>
           <motion.h1
-            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-black mb-8 leading-tight"
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-black mb-4 leading-tight"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
@@ -43,9 +55,19 @@ const HeroSection = () => {
             {heroSettings.title}
           </motion.h1>
 
-          {/* Action Buttons */}
+          {heroSettings.subtitle && (
+            <motion.p
+              className="text-xl text-gray-600 mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              {heroSettings.subtitle}
+            </motion.p>
+          )}
+
           <motion.div
-            className="flex flex-col sm:flex-row gap-4 justify-center"
+            className={`flex flex-col sm:flex-row gap-4 ${justifyClass}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
@@ -54,7 +76,7 @@ const HeroSection = () => {
               to="/produtos"
               className="group inline-flex items-center justify-center px-8 py-4 bg-black text-white rounded-lg font-semibold hover:bg-neutral-800 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
             >
-              Explorar Coleção
+              {heroSettings.buttonPrimaryText}
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             
@@ -62,7 +84,7 @@ const HeroSection = () => {
               onClick={() => document.getElementById('featured-section')?.scrollIntoView({ behavior: 'smooth' })}
               className="inline-flex items-center justify-center px-8 py-4 bg-white border-2 border-black text-black rounded-lg font-semibold hover:bg-neutral-50 transition-all duration-300 hover:scale-105"
             >
-              Ver Destaques
+              {heroSettings.buttonSecondaryText}
             </button>
           </motion.div>
         </div>
