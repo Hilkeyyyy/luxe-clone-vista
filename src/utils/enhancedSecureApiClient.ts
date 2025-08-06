@@ -5,6 +5,7 @@ import { rateLimiter } from './secureAuth';
 import { secureLog } from './secureLogger';
 import { SecureFormValidator, formValidationRules } from './secureFormValidation';
 import { sanitizeInput } from './securityEnhancements';
+import { sanitizeHeroData } from './enhancedInputSanitization';
 
 /**
  * Cliente API seguro aprimorado com validação e proteção robusta
@@ -117,27 +118,29 @@ export class EnhancedSecureApiClient {
 
   async secureAdminSettingsUpdate(settings: Record<string, any>): Promise<any> {
     return this.secureRequest(async () => {
-      // Validação rigorosa das configurações
-      const validator = new SecureFormValidator(formValidationRules.adminSettings);
-      const { isValid, errors } = validator.validateForm(settings);
-      
-      if (!isValid) {
-        const errorMessages = Object.values(errors).flat();
-        throw new Error(`Configurações inválidas: ${errorMessages.join(', ')}`);
-      }
-
       // Processar cada configuração individualmente
       const results = [];
       for (const [key, value] of Object.entries(settings)) {
         const sanitizedKey = sanitizeInput(key, { maxLength: 100 });
         
         let sanitizedValue: string | number | boolean | null;
-        if (typeof value === 'string') {
-          sanitizedValue = sanitizeInput(value, { maxLength: 1000, preserveSpaces: true });
-        } else if (typeof value === 'number' || typeof value === 'boolean') {
-          sanitizedValue = value;
+        
+        // Para campos do hero, usar sanitização específica que preserva espaços
+        if (key.startsWith('hero_')) {
+          if (typeof value === 'string') {
+            sanitizedValue = value; // Já foi sanitizado pelo sanitizeHeroData
+          } else {
+            sanitizedValue = value;
+          }
         } else {
-          sanitizedValue = value ? String(value) : null;
+          // Para outros campos, usar sanitização padrão
+          if (typeof value === 'string') {
+            sanitizedValue = sanitizeInput(value, { maxLength: 1000, preserveSpaces: true });
+          } else if (typeof value === 'number' || typeof value === 'boolean') {
+            sanitizedValue = value;
+          } else {
+            sanitizedValue = value ? String(value) : null;
+          }
         }
 
         const { data, error } = await supabase

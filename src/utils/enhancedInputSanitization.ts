@@ -26,14 +26,14 @@ const dangerousPatterns = [
   /url\s*\(/gi
 ];
 
-// Sanitizar string básica (preservando espaços necessários)
+// Sanitizar string básica (preservando TODOS os espaços)
 export const sanitizeString = (input: string, maxLength: number = 1000): string => {
   if (!input || typeof input !== 'string') return '';
   
   // Truncar se muito longo
   let sanitized = input.slice(0, maxLength);
   
-  // Remover apenas caracteres de controle perigosos (preservando espaços)
+  // Remover apenas caracteres de controle perigosos (PRESERVANDO ESPAÇOS)
   sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
   
   // Detectar padrões perigosos
@@ -42,12 +42,12 @@ export const sanitizeString = (input: string, maxLength: number = 1000): string 
     secureLog.warn('Padrão perigoso detectado na entrada', { 
       input: input.substring(0, 50) 
     });
-    // Em caso de padrão perigoso, remover tags maliciosas mas preservar texto
+    // Em caso de padrão perigoso, remover tags maliciosas mas preservar texto e espaços
     sanitized = sanitized.replace(/[<>'"]/g, '');
   }
   
-  // Trim apenas espaços no início e fim, preservando espaços internos
-  return sanitized.replace(/^\s+|\s+$/g, '');
+  // PRESERVAR ESPAÇOS - apenas remover espaços excessivos no início e fim, mas manter espaços internos
+  return sanitized.trim();
 };
 
 // Sanitizar HTML com configurações restritivas
@@ -87,7 +87,7 @@ export const sanitizeEmail = (email: string): string => {
   return sanitized;
 };
 
-// Sanitizar dados de produto
+// Sanitizar dados de produto (PRESERVANDO ESPAÇOS)
 export const sanitizeProductData = (data: any) => {
   if (!data || typeof data !== 'object') return {};
   
@@ -107,6 +107,21 @@ export const sanitizeProductData = (data: any) => {
     images: Array.isArray(data.images) ? data.images.filter(img => typeof img === 'string' && img.length > 0) : [],
     colors: Array.isArray(data.colors) ? data.colors.map(color => sanitizeString(color, 50)).filter(Boolean) : [],
     sizes: Array.isArray(data.sizes) ? data.sizes.map(size => sanitizeString(size, 50)).filter(Boolean) : []
+  };
+};
+
+// Sanitizar dados do hero (PRESERVANDO ESPAÇOS)
+export const sanitizeHeroData = (data: any) => {
+  if (!data || typeof data !== 'object') return {};
+  
+  return {
+    hero_title: data.hero_title ? sanitizeString(data.hero_title, 300) : '',
+    hero_subtitle: data.hero_subtitle ? sanitizeString(data.hero_subtitle, 500) : '',
+    hero_button_primary_text: data.hero_button_primary_text ? sanitizeString(data.hero_button_primary_text, 100) : '',
+    hero_button_secondary_text: data.hero_button_secondary_text ? sanitizeString(data.hero_button_secondary_text, 100) : '',
+    hero_background_image: data.hero_background_image ? data.hero_background_image : '',
+    hero_text_position: ['left', 'center', 'right'].includes(data.hero_text_position) ? data.hero_text_position : 'center',
+    hero_overlay_opacity: typeof data.hero_overlay_opacity === 'string' ? data.hero_overlay_opacity : '0.7'
   };
 };
 

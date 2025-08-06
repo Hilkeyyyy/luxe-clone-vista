@@ -33,10 +33,8 @@ export const sanitizeInput = (input: string, options?: {
     .replace(/vbscript:/gi, '')
     .replace(/on\w+=/gi, '');
   
-  // Preservar espaços internos mas remover espaços desnecessários apenas nas extremidades
-  return options?.preserveSpaces !== false ? 
-    sanitized.replace(/^\s+|\s+$/g, '') : 
-    sanitized.trim();
+  // SEMPRE preservar espaços internos - apenas fazer trim normal
+  return sanitized.trim();
 };
 
 // CSRF token management

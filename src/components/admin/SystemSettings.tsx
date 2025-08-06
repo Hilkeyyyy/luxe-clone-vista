@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { enhancedSecureApiClient } from '@/utils/enhancedSecureApiClient';
 import { sanitizeInput } from '@/utils/securityEnhancements';
+import { sanitizeHeroData } from '@/utils/enhancedInputSanitization';
 import { enhancedCsrfManager } from '@/utils/enhancedCsrfProtection';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -113,18 +114,27 @@ const SystemSettings = () => {
   const saveSettings = async () => {
     setSaving(true);
     try {
+      // Sanitização específica para dados do hero
+      const sanitizedHeroData = sanitizeHeroData(settings);
+      
+      // Combinar com outros dados não-hero
+      const finalSettings = {
+        ...settings,
+        ...sanitizedHeroData // Sobrescrever com dados do hero sanitizados
+      };
+
       // Usar cliente API seguro aprimorado
-      await enhancedSecureApiClient.secureAdminSettingsUpdate(settings);
+      await enhancedSecureApiClient.secureAdminSettingsUpdate(finalSettings);
 
       toast({
         title: "Sucesso",
-        description: "Configurações salvas com segurança!",
+        description: "Configurações salvas com sucesso!",
       });
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
       toast({
-        title: "Erro de Segurança",
-        description: error instanceof Error ? error.message : "Erro ao salvar configurações com segurança.",
+        title: "Erro ao Salvar",
+        description: error instanceof Error ? error.message : "Erro ao salvar configurações.",
         variant: "destructive",
       });
     } finally {
@@ -136,11 +146,16 @@ const SystemSettings = () => {
     key: K, 
     value: SystemSettings[K]
   ) => {
-    // Enhanced sanitization for string inputs (preservando espaços)
-    const sanitizedValue = typeof value === 'string' ? 
-      sanitizeInput(value, { maxLength: 1000, preserveSpaces: true }) : value;
-    
-    setSettings(prev => ({ ...prev, [key]: sanitizedValue }));
+    // Para campos de hero, preservar espaços completamente
+    if (key.toString().startsWith('hero_')) {
+      setSettings(prev => ({ ...prev, [key]: value }));
+    } else {
+      // Para outros campos, usar sanitização padrão
+      const sanitizedValue = typeof value === 'string' ? 
+        sanitizeInput(value, { maxLength: 1000, preserveSpaces: true }) : value;
+      
+      setSettings(prev => ({ ...prev, [key]: sanitizedValue }));
+    }
   };
 
   if (loading) {
