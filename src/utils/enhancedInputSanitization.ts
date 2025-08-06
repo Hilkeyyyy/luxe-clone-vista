@@ -26,15 +26,15 @@ const dangerousPatterns = [
   /url\s*\(/gi
 ];
 
-// Sanitizar string básica
+// Sanitizar string básica (preservando espaços necessários)
 export const sanitizeString = (input: string, maxLength: number = 1000): string => {
   if (!input || typeof input !== 'string') return '';
   
   // Truncar se muito longo
   let sanitized = input.slice(0, maxLength);
   
-  // Remover caracteres de controle
-  sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
+  // Remover apenas caracteres de controle perigosos (preservando espaços)
+  sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
   
   // Detectar padrões perigosos
   const hasDangerousPattern = dangerousPatterns.some(pattern => pattern.test(sanitized));
@@ -42,11 +42,12 @@ export const sanitizeString = (input: string, maxLength: number = 1000): string 
     secureLog.warn('Padrão perigoso detectado na entrada', { 
       input: input.substring(0, 50) 
     });
-    // Em caso de padrão perigoso, remover completamente
-    sanitized = sanitized.replace(/[<>'"&]/g, '');
+    // Em caso de padrão perigoso, remover tags maliciosas mas preservar texto
+    sanitized = sanitized.replace(/[<>'"]/g, '');
   }
   
-  return sanitized.trim();
+  // Trim apenas espaços no início e fim, preservando espaços internos
+  return sanitized.replace(/^\s+|\s+$/g, '');
 };
 
 // Sanitizar HTML com configurações restritivas

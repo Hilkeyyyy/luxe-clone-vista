@@ -133,7 +133,7 @@ export class EnhancedSecureApiClient {
         
         let sanitizedValue: string | number | boolean | null;
         if (typeof value === 'string') {
-          sanitizedValue = sanitizeInput(value, { maxLength: 1000 });
+          sanitizedValue = sanitizeInput(value, { maxLength: 1000, preserveSpaces: true });
         } else if (typeof value === 'number' || typeof value === 'boolean') {
           sanitizedValue = value;
         } else {

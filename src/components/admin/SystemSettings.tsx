@@ -136,9 +136,9 @@ const SystemSettings = () => {
     key: K, 
     value: SystemSettings[K]
   ) => {
-    // Enhanced sanitization for string inputs
+    // Enhanced sanitization for string inputs (preservando espaços)
     const sanitizedValue = typeof value === 'string' ? 
-      sanitizeInput(value, { maxLength: 1000 }) : value;
+      sanitizeInput(value, { maxLength: 1000, preserveSpaces: true }) : value;
     
     setSettings(prev => ({ ...prev, [key]: sanitizedValue }));
   };

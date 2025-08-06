@@ -2,15 +2,16 @@
 import DOMPurify from 'dompurify';
 import { secureLog } from './secureLogger';
 
-// Enhanced input sanitization
+// Enhanced input sanitization (preservando espaços)
 export const sanitizeInput = (input: string, options?: { 
   allowBasicHtml?: boolean;
   maxLength?: number;
+  preserveSpaces?: boolean;
 }): string => {
   if (!input || typeof input !== 'string') return '';
   
   const maxLength = options?.maxLength || 1000;
-  let sanitized = input.trim().substring(0, maxLength);
+  let sanitized = input.substring(0, maxLength);
   
   if (options?.allowBasicHtml) {
     sanitized = DOMPurify.sanitize(sanitized, {
@@ -31,8 +32,11 @@ export const sanitizeInput = (input: string, options?: {
     .replace(/data:/gi, '')
     .replace(/vbscript:/gi, '')
     .replace(/on\w+=/gi, '');
-    
-  return sanitized;
+  
+  // Preservar espaços internos mas remover espaços desnecessários apenas nas extremidades
+  return options?.preserveSpaces !== false ? 
+    sanitized.replace(/^\s+|\s+$/g, '') : 
+    sanitized.trim();
 };
 
 // CSRF token management
