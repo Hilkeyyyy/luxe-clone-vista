@@ -143,6 +143,14 @@ class EnhancedRateLimiter {
   private readonly blockDurationMs = 30 * 60 * 1000; // 30 minutos
 
   async isRateLimited(key: string): Promise<boolean> {
+    // Para operações de configuração de sistema e admin, não aplicar rate limiting
+    if (key.includes('UPDATE_ADMIN_SETTINGS') || 
+        key.includes('HERO_') || 
+        key.includes('admin_') ||
+        key.includes('settings_')) {
+      return false;
+    }
+
     const now = Date.now();
     
     // Verificar se está bloqueado
@@ -172,7 +180,10 @@ class EnhancedRateLimiter {
     record.lastAttempt = now;
     this.attempts.set(key, record);
     
-    if (record.count > this.maxAttempts) {
+    // Aumentar limite para operações críticas de admin
+    const currentMaxAttempts = key.includes('admin') ? this.maxAttempts * 3 : this.maxAttempts;
+    
+    if (record.count > currentMaxAttempts) {
       this.blocked.add(key);
       await logSecurityEvent('rate_limit_exceeded', {
         key: key.substring(0, 10),

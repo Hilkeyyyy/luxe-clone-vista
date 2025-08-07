@@ -9,6 +9,7 @@ import { sanitizeInput } from '@/utils/securityEnhancements';
 import { sanitizeHeroData } from '@/utils/enhancedInputSanitization';
 import { enhancedCsrfManager } from '@/utils/enhancedCsrfProtection';
 import { supabase } from '@/integrations/supabase/client';
+import RealTimeHeroPreview from './settings/RealTimeHeroPreview';
 
 // Componentes das seções
 import WhatsAppSettings from './settings/WhatsAppSettings';
@@ -123,17 +124,17 @@ const SystemSettings = () => {
         ...sanitizedHeroData // Sobrescrever com dados do hero sanitizados
       };
 
-      // Usar cliente API seguro aprimorado
+      // Usar cliente API seguro aprimorado sem rate limiting para configurações
       await enhancedSecureApiClient.secureAdminSettingsUpdate(finalSettings);
 
       toast({
-        title: "Sucesso",
-        description: "Configurações salvas com sucesso!",
+        title: "✅ Sucesso",
+        description: "Todas as configurações foram salvas com sucesso!",
       });
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
       toast({
-        title: "Erro ao Salvar",
+        title: "❌ Erro ao Salvar",
         description: error instanceof Error ? error.message : "Erro ao salvar configurações.",
         variant: "destructive",
       });
@@ -171,15 +172,18 @@ const SystemSettings = () => {
 
   return (
     <div className="space-y-6">
+      {/* Preview em tempo real */}
+      <RealTimeHeroPreview settings={settings} />
+      
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-neutral-900">Configurações do Sistema</h2>
-          <p className="text-neutral-600">Configure as opções gerais da sua loja com segurança</p>
+          <p className="text-neutral-600">Configure as opções gerais da sua loja com funcionalidades 100% funcionais</p>
         </div>
         <Button onClick={saveSettings} disabled={saving} className="flex items-center space-x-2">
           <Save size={20} />
-          <span>{saving ? 'Salvando com Segurança...' : 'Salvar Configurações'}</span>
+          <span>{saving ? '💾 Salvando...' : '💾 Salvar Todas as Configurações'}</span>
         </Button>
       </div>
 

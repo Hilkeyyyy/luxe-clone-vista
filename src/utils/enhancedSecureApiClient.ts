@@ -38,11 +38,23 @@ export class EnhancedSecureApiClient {
     operationType: string,
     userIdentifier?: string
   ): Promise<T> {
+    // Para operações de configuração do sistema, não aplicar rate limiting
+    if (operationType === 'UPDATE_ADMIN_SETTINGS' || operationType.includes('HERO_')) {
+      try {
+        const result = await operation();
+        secureLog.info(`Operação ${operationType} realizada com sucesso`);
+        return result;
+      } catch (error) {
+        secureLog.error(`Erro na operação ${operationType}`, error);
+        throw error;
+      }
+    }
+
     const identifier = userIdentifier || 'anonymous';
     const rateLimitKey = `${operationType}_${identifier}`;
 
-    // Rate limiting aprimorado
-    if (rateLimiter.isRateLimited(rateLimitKey)) {
+    // Rate limiting apenas para operações críticas
+    if (await rateLimiter.isRateLimited(rateLimitKey)) {
       secureLog.warn('Rate limit excedido', { operationType, identifier: identifier.substring(0, 8) });
       throw new Error('Muitas tentativas. Aguarde um momento.');
     }
