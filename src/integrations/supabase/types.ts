@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -146,6 +146,7 @@ export type Database = {
       }
       products: {
         Row: {
+          active: boolean | null
           brand: string
           brand_category_id: string | null
           category: string
@@ -156,6 +157,7 @@ export type Database = {
           description: string | null
           diameter: string | null
           id: string
+          image_url: string | null
           images: string[]
           in_stock: boolean | null
           is_bestseller: boolean | null
@@ -171,10 +173,12 @@ export type Database = {
           sizes: string[]
           specifications: Json | null
           stock_status: string
+          store_id: string | null
           updated_at: string
           water_resistance: string | null
         }
         Insert: {
+          active?: boolean | null
           brand: string
           brand_category_id?: string | null
           category: string
@@ -185,6 +189,7 @@ export type Database = {
           description?: string | null
           diameter?: string | null
           id?: string
+          image_url?: string | null
           images?: string[]
           in_stock?: boolean | null
           is_bestseller?: boolean | null
@@ -200,10 +205,12 @@ export type Database = {
           sizes?: string[]
           specifications?: Json | null
           stock_status?: string
+          store_id?: string | null
           updated_at?: string
           water_resistance?: string | null
         }
         Update: {
+          active?: boolean | null
           brand?: string
           brand_category_id?: string | null
           category?: string
@@ -214,6 +221,7 @@ export type Database = {
           description?: string | null
           diameter?: string | null
           id?: string
+          image_url?: string | null
           images?: string[]
           in_stock?: boolean | null
           is_bestseller?: boolean | null
@@ -229,6 +237,7 @@ export type Database = {
           sizes?: string[]
           specifications?: Json | null
           stock_status?: string
+          store_id?: string | null
           updated_at?: string
           water_resistance?: string | null
         }
@@ -238,6 +247,13 @@ export type Database = {
             columns: ["brand_category_id"]
             isOneToOne: false
             referencedRelation: "brand_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -269,6 +285,104 @@ export type Database = {
         }
         Relationships: []
       }
+      store_users: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["store_role"]
+          store_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["store_role"]
+          store_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["store_role"]
+          store_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_users_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stores: {
+        Row: {
+          banner_image_url: string | null
+          created_at: string
+          custom_domain: string | null
+          description: string | null
+          hero_image_url: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          id: string
+          is_published: boolean
+          logo_url: string | null
+          owner_id: string
+          primary_color: string | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          store_name: string
+          theme: Json
+          updated_at: string
+          whatsapp_phone: string
+        }
+        Insert: {
+          banner_image_url?: string | null
+          created_at?: string
+          custom_domain?: string | null
+          description?: string | null
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          is_published?: boolean
+          logo_url?: string | null
+          owner_id: string
+          primary_color?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          store_name: string
+          theme?: Json
+          updated_at?: string
+          whatsapp_phone: string
+        }
+        Update: {
+          banner_image_url?: string | null
+          created_at?: string
+          custom_domain?: string | null
+          description?: string | null
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          is_published?: boolean
+          logo_url?: string | null
+          owner_id?: string
+          primary_color?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          store_name?: string
+          theme?: Json
+          updated_at?: string
+          whatsapp_phone?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -286,13 +400,25 @@ export type Database = {
         Args: { category_name: string }
         Returns: string
       }
+      has_store_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["store_role"]
+          _store_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_store_owner: {
+        Args: { _store_id: string; _user_id: string }
+        Returns: boolean
+      }
       update_brand_category_products_count: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
     }
     Enums: {
-      [_ in never]: never
+      store_role: "owner" | "editor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -419,6 +545,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      store_role: ["owner", "editor"],
+    },
   },
 } as const
