@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
@@ -25,12 +24,18 @@ const FeaturedProductsGrid = lazy(() =>
     default: module.default 
   }))
 );
+const InstagramCarousel = lazy(() => 
+  import('@/components/InstagramCarousel').then(module => ({ 
+    default: module.default 
+  }))
+);
 
 // Preload crítico
 const preloadComponents = () => {
   import('@/components/BrandCategoryCarousel');
   import('@/components/ProductCarousel');
   import('@/components/FeaturedProductsGrid');
+  import('@/components/InstagramCarousel');
 };
 
 const Index = () => {
@@ -182,6 +187,18 @@ const Index = () => {
             products={offerProducts}
             loading={loading}
           />
+        </Suspense>
+      </motion.section>
+
+      {/* Instagram Carousel */}
+      <motion.section 
+        className="py-16 bg-background"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 1.0 }}
+      >
+        <Suspense fallback={<OptimizedSkeleton />}>
+          <InstagramCarousel />
         </Suspense>
       </motion.section>
 

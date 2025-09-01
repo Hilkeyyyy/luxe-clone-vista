@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import HeroImageUpload from './HeroImageUpload';
 import VisualHeroEditor from './VisualHeroEditor';
+import HeroStyleControls from './HeroStyleControls';
 
 interface SystemSettings {
   // WhatsApp
@@ -31,6 +32,9 @@ interface SystemSettings {
   hero_button_secondary_text: string;
   hero_overlay_opacity: string;
   hero_text_position: string;
+  
+  // Instagram
+  instagram_images: string[];
 }
 
 interface HeroSettingsProps {
@@ -302,6 +306,17 @@ const HeroSettings: React.FC<HeroSettingsProps> = ({ settings, updateSetting }) 
               <div>✓ Auto-save opcional</div>
             </div>
           </div>
+
+          {/* Advanced Style Controls */}
+          <HeroStyleControls 
+            settings={settings} 
+            updateSetting={updateSetting}
+            onAutoSave={async (key, value) => {
+              if (autoSave) {
+                toast.success('💾 Estilo salvo automaticamente!');
+              }
+            }}
+          />
         </CardContent>
       </Card>
     </motion.div>

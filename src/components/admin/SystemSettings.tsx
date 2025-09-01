@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Save, Phone, Building, Settings, Palette } from 'lucide-react';
+import { Save, Phone, Building, Settings, Palette, Instagram } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +16,7 @@ import WhatsAppSettings from './settings/WhatsAppSettings';
 import CompanySettings from './settings/CompanySettings';
 import ProductOptionsSettings from './settings/ProductOptionsSettings';
 import HeroSettings from './settings/HeroSettings';
+import InstagramSettings from './settings/InstagramSettings';
 
 interface SystemSettings {
   // WhatsApp
@@ -37,6 +38,9 @@ interface SystemSettings {
   hero_button_secondary_text: string;
   hero_overlay_opacity: string;
   hero_text_position: string;
+  
+  // Instagram
+  instagram_images: string[];
 }
 
 const SystemSettings = () => {
@@ -64,6 +68,9 @@ const SystemSettings = () => {
     hero_button_secondary_text: 'Ver Destaques',
     hero_overlay_opacity: '0.7',
     hero_text_position: 'center',
+    
+    // Instagram
+    instagram_images: [],
   });
 
   useEffect(() => {
@@ -91,10 +98,14 @@ const SystemSettings = () => {
           if (key === 'whatsapp_enabled') {
             loadedSettings[key] = Boolean(value);
           }
+          // For array fields (Instagram images)
+          else if (key === 'instagram_images') {
+            loadedSettings[key] = Array.isArray(value) ? (value as any[]).map(String) : [];
+          }
           // For string fields - sanitize on load with enhanced security
           else {
             const stringValue = String(value || '').replace(/"/g, '');
-            loadedSettings[key] = sanitizeInput(stringValue, { maxLength: 1000 });
+            (loadedSettings as any)[key] = sanitizeInput(stringValue, { maxLength: 1000 });
           }
         }
       });
@@ -150,7 +161,12 @@ const SystemSettings = () => {
     // Para campos de hero, preservar espaços completamente
     if (key.toString().startsWith('hero_')) {
       setSettings(prev => ({ ...prev, [key]: value }));
-    } else {
+    } 
+    // Para campos de array (como instagram_images), não sanitizar
+    else if (Array.isArray(value)) {
+      setSettings(prev => ({ ...prev, [key]: value }));
+    }
+    else {
       // Para outros campos, usar sanitização padrão
       const sanitizedValue = typeof value === 'string' ? 
         sanitizeInput(value, { maxLength: 1000, preserveSpaces: true }) : value;
@@ -188,7 +204,7 @@ const SystemSettings = () => {
       </div>
 
       <Tabs defaultValue="hero" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="hero" className="flex items-center space-x-2">
             <Palette size={16} />
             <span>Hero</span>
@@ -204,6 +220,10 @@ const SystemSettings = () => {
           <TabsTrigger value="product-options" className="flex items-center space-x-2">
             <Settings size={16} />
             <span>Produto</span>
+          </TabsTrigger>
+          <TabsTrigger value="instagram" className="flex items-center space-x-2">
+            <Instagram size={16} />
+            <span>Instagram</span>
           </TabsTrigger>
         </TabsList>
 
@@ -244,6 +264,16 @@ const SystemSettings = () => {
             transition={{ duration: 0.4 }}
           >
             <ProductOptionsSettings />
+          </motion.div>
+        </TabsContent>
+
+        <TabsContent value="instagram">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <InstagramSettings settings={settings} updateSetting={updateSetting} />
           </motion.div>
         </TabsContent>
       </Tabs>
